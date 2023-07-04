@@ -1,0 +1,52 @@
+<div class="container">
+  <div class="row">
+    <div class="hstack gap-3">
+      <div class="btn-group" role="group" aria-label="Basic example">
+        <button type="button" class="btn btn-primary" [ngClass]="{ 'active': editMode == 0 }" (click)="editMode = 0; table.focus()">
+          Answers
+        </button>
+        <button type="button" class="btn btn-primary" [ngClass]="{ 'active': editMode == 1 }" (click)="editMode = 1; table.focus()">
+          Spacers
+        </button>
+        <button type="button" class="btn btn-primary" [ngClass]="{ 'active': editMode == 2 }" (click)="editMode = 2; table.focus()">
+          Circles
+        </button>
+      </div>
+      <button class="btn btn-secondary" type="submit">Hide Answers</button>
+      <button class="btn btn-success" type="submit" (click)="numberPuzzle()">Number</button>
+      <button class="btn btn-danger" type="submit" (click)="clearGrid()">Clear</button>
+    </div>
+  </div>
+  <div class="row mt-4">
+    <div class="col">
+      <table
+        #table
+        class="table table-bordered"
+        [ngStyle]="{ 'width.px': numCols * squareHeight }"
+        (keydown)="onKeyDown($event)"
+        tabindex="0">
+        <tbody>
+          <tr *ngFor="let row of grid; index as i">
+            <td
+              class="square"
+              *ngFor="let col of row; index as j"
+              [ngClass]="{ 'spacer': col.type == 1, 'selected': col.index == selectedIndex }"
+              (click)="onClickSquare(col.index)">
+              <div class="square-contents" [ngStyle]="{ 'height.px': squareHeight, 'width.px': squareHeight }">
+                <div class="number"></div>
+                <div class="circle" [ngStyle]="{ 'border': col.circled ? 'solid' : 'none' }">
+                  <div class="value text-center">
+                    <span>{{ col.value }}</span>
+                  </div>
+                </div>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="col">
+      <app-clue-list></app-clue-list>
+    </div>
+  </div>
+</div>
