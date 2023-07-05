@@ -26,17 +26,17 @@
         (keydown)="onKeyDown($event)"
         tabindex="0">
         <tbody>
-          <tr *ngFor="let row of grid; index as i">
+          <tr *ngFor="let row of [].constructor(numRows); index as i">
             <td
               class="square"
-              *ngFor="let col of row; index as j"
-              [ngClass]="{ 'spacer': col.type == 1, 'selected': col.index == selectedIndex }"
-              (click)="onClickSquare(col.index)">
+              *ngFor="let square of getPuzzleRow(i * numCols); index as j"
+              [ngClass]="{ 'spacer': square.type == 1, 'selected': square.index == selectedIndex }"
+              (click)="onClickSquare(square.index)">
               <div class="square-contents" [ngStyle]="{ 'height.px': squareHeight, 'width.px': squareHeight }">
-                <div class="number" *ngIf="col.clueNum != 0">{{ col.clueNum }}</div>
-                <div class="circle" [ngStyle]="{ 'border': col.circled ? 'solid' : 'none' }">
+                <div class="number" *ngIf="square.clueNum != 0">{{ square.clueNum }}</div>
+                <div class="circle" [ngStyle]="{ 'border': square.circled ? 'solid' : 'none' }">
                   <div class="value text-center">
-                    <span>{{ col.value }}</span>
+                    <span>{{ square.value }}</span>
                   </div>
                 </div>
               </div>

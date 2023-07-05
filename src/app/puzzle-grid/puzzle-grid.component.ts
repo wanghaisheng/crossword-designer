@@ -45,7 +45,7 @@ export class PuzzleGridComponent implements OnInit {
   public editMode: EditMode = EditMode.Value;
   public selectedIndex: number = 0;
 
-  public grid: Array<Array<Square>> = [];
+  public puzzle: Array<Square> = [];
 
   public $across: BehaviorSubject<Array<Clue>> = new BehaviorSubject([{ index: 0, clue: "" }]);
   public $down: BehaviorSubject<Array<Clue>> = new BehaviorSubject([{ index: 0, clue: "" }]);
@@ -55,22 +55,14 @@ export class PuzzleGridComponent implements OnInit {
   constructor() {}
 
   ngOnInit(): void {
-    for (let i = 0; i < this.numRows; ++i) {
-      let row = [];
-      for (let j = 0; j < this.numCols; ++j) {
-        row.push(new Square(i * this.numRows + j));
-      }
-
-      this.grid.push(row);
+    for (let i = 0; i < this.numRows * this.numCols; ++i) {
+      this.puzzle.push(new Square(i));
     }
   }
 
   onClickSquare(index: number) {
-    let row = this.getRow(index);
-    let col = this.getCol(index);
-
-    let square = this.grid[row][col];
-    let reflectSquare = this.grid[this.numRows - 1 - row][this.numCols - 1 - col];
+    let square = this.puzzle[index];
+    let reflectSquare = this.puzzle[this.getReflectIndex(index)];
 
     if (this.editMode == EditMode.Spacer) {
       this.toggleSquareType(square.index);
@@ -85,7 +77,7 @@ export class PuzzleGridComponent implements OnInit {
   }
 
   onKeyDown(event: KeyboardEvent) {
-    let square = this.grid[this.getRow(this.selectedIndex)][this.getCol(this.selectedIndex)];
+    let square = this.puzzle[this.selectedIndex];
 
     if (this.isArrowKey(event.key)) {
       this.selectedIndex = this.getNextIndex(square.index, event.key);
@@ -104,11 +96,9 @@ export class PuzzleGridComponent implements OnInit {
 
   numberPuzzle() {
     let num = 1;
-    for (let i = 0; i < this.numRows; ++i) {
-      for (let j = 0; j < this.numCols; ++j) {
-        let square = this.grid[i][j];
-        if (this.setNumber(square.index, num)) num++;
-      }
+    for (let i = 0; i < this.numRows * this.numCols; ++i) {
+      let square = this.puzzle[i];
+      if (this.setNumber(square.index, num)) num++;
     }
 
     this.$across.next(this.acrossClues);
@@ -116,78 +106,73 @@ export class PuzzleGridComponent implements OnInit {
   }
 
   clearGrid() {
-    for (let i = 0; i < this.numRows; ++i) {
-      for (let j = 0; j < this.numCols; ++j) {
-        let square = this.grid[i][j];
-        square.circled = false;
-        square.type = SquareType.Letter;
-        square.value = "";
-        square.clueNum = 0;
-      }
+    for (let i = 0; i < this.numRows * this.numCols; ++i) {
+      let square = this.puzzle[i];
+      square.circled = false;
+      square.type = SquareType.Letter;
+      square.value = "";
+      square.clueNum = 0;
     }
   }
 
+  getPuzzleRow(index: number): Array<Square> {
+    let rowStart = index - (index % this.numCols);
+
+    return this.puzzle.slice(rowStart, rowStart + this.numCols);
+  }
+
   private getNextIndex(index: number, key: string): number {
-    let row = this.getRow(index);
-    let col = this.getCol(index);
+    let rowStart = index - (index % this.numCols);
+    let rowNum = Math.floor(index / this.numCols);
+    let colNum = index % this.numCols;
 
     if (key == "ArrowDown") {
-      return ((row + 1) % this.numRows) * this.numCols + col;
+      return colNum + this.numCols * ((rowNum + 1) % this.numRows);
     } else if (key == "ArrowUp") {
-      return row - 1 > -1 ? this.numRows * (row - 1) + col : this.numRows * (this.numRows - 1) + col;
+      return colNum + this.numCols * ((rowNum + this.numRows - 1) % this.numRows);
     } else if (key == "ArrowRight") {
-      return ((col + 1) % this.numCols) + this.numRows * row;
+      return rowStart + ((colNum + 1) % this.numCols);
     } else if (key == "ArrowLeft") {
-      return col - 1 > -1 ? this.numRows * row + col - 1 : this.numRows * row + this.numCols - 1;
+      return rowStart + ((colNum + this.numCols - 1) % this.numCols);
     }
 
     return -1;
   }
 
-  private getIndex(row: number, col: number): number {
-    return this.numRows * row + col;
-  }
-
-  private getRow(index: number): number {
-    return Math.floor(index / this.numCols);
-  }
-
-  private getCol(index: number): number {
-    return index % this.numCols;
+  private getReflectIndex(index: number): number {
+    return this.numRows * this.numCols - 1 - index;
   }
 
   private toggleSquareType(index: number): void {
-    let square = this.grid[this.getRow(index)][this.getCol(index)];
+    let square = this.puzzle[index];
     square.type = square.type == SquareType.Letter ? SquareType.Spacer : SquareType.Letter;
     square.circled = false;
     square.value = "";
 
-    let reflectSquare = this.grid[this.numRows - this.getRow(index) - 1][this.numCols - this.getCol(index) - 1];
+    let reflectSquare = this.puzzle[this.getReflectIndex(index)];
     reflectSquare.type = square.type;
     reflectSquare.value = "";
   }
 
   private setSquareValue(index: number, value: string): void {
-    let square = this.grid[this.getRow(index)][this.getCol(index)];
+    let square = this.puzzle[index];
     square.value = value.toUpperCase();
   }
 
   private setNumber(index: number, num: number): boolean {
-    let row = this.getRow(index);
-    let col = this.getCol(index);
-    let square = this.grid[row][col];
+    let square = this.puzzle[index];
     let ret = false;
 
     if (square.type == SquareType.Spacer) return ret;
 
-    if (row == 0 || this.grid[row - 1][col].type == SquareType.Spacer) {
+    if (index < this.numCols || this.puzzle[index - this.numRows].type == SquareType.Spacer) {
       square.clueNum = num;
       square.downClue = true;
       this.downClues.push({ index: num, clue: "Some down clue" });
       ret = true;
     }
 
-    if (col == 0 || this.grid[row][col - 1].type == SquareType.Spacer) {
+    if (index % this.numCols == 0 || this.puzzle[index - 1].type == SquareType.Spacer) {
       square.clueNum = num;
       square.acrossClue = true;
       this.acrossClues.push({ index: num, clue: "Some across clue" });
