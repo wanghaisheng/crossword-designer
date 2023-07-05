@@ -33,7 +33,7 @@
               [ngClass]="{ 'spacer': col.type == 1, 'selected': col.index == selectedIndex }"
               (click)="onClickSquare(col.index)">
               <div class="square-contents" [ngStyle]="{ 'height.px': squareHeight, 'width.px': squareHeight }">
-                <div class="number"></div>
+                <div class="number" *ngIf="col.clueNum != 0">{{ col.clueNum }}</div>
                 <div class="circle" [ngStyle]="{ 'border': col.circled ? 'solid' : 'none' }">
                   <div class="value text-center">
                     <span>{{ col.value }}</span>
@@ -46,7 +46,7 @@
       </table>
     </div>
     <div class="col">
-      <app-clue-list></app-clue-list>
+      <app-clue-list [$across]="$across" [$down]="$down"></app-clue-list>
     </div>
   </div>
 </div>

@@ -1,4 +1,6 @@
 import { Component, OnInit } from "@angular/core";
+import { BehaviorSubject } from "rxjs";
+import { Clue } from "../clue-list/clue-list.component";
 
 enum EditMode {
   Value,
@@ -14,12 +16,18 @@ export class Square {
   index: number;
   value: string;
   type: SquareType;
+  clueNum: number;
+  downClue: boolean;
+  acrossClue: boolean;
   circled: boolean;
 
   constructor(index: number = -1) {
     this.index = index;
     this.value = "";
     this.type = SquareType.Letter;
+    this.clueNum = 0;
+    this.downClue = false;
+    this.acrossClue = false;
     this.circled = false;
   }
 }
@@ -38,6 +46,11 @@ export class PuzzleGridComponent implements OnInit {
   public selectedIndex: number = 0;
 
   public grid: Array<Array<Square>> = [];
+
+  public $across: BehaviorSubject<Array<Clue>> = new BehaviorSubject([{ index: 0, clue: "" }]);
+  public $down: BehaviorSubject<Array<Clue>> = new BehaviorSubject([{ index: 0, clue: "" }]);
+  private acrossClues: Array<Clue> = [];
+  private downClues: Array<Clue> = [];
 
   constructor() {}
 
@@ -90,7 +103,16 @@ export class PuzzleGridComponent implements OnInit {
   }
 
   numberPuzzle() {
-    // TODO
+    let num = 1;
+    for (let i = 0; i < this.numRows; ++i) {
+      for (let j = 0; j < this.numCols; ++j) {
+        let square = this.grid[i][j];
+        if (this.setNumber(square.index, num)) num++;
+      }
+    }
+
+    this.$across.next(this.acrossClues);
+    this.$down.next(this.downClues);
   }
 
   clearGrid() {
@@ -100,6 +122,7 @@ export class PuzzleGridComponent implements OnInit {
         square.circled = false;
         square.type = SquareType.Letter;
         square.value = "";
+        square.clueNum = 0;
       }
     }
   }
@@ -147,6 +170,31 @@ export class PuzzleGridComponent implements OnInit {
   private setSquareValue(index: number, value: string): void {
     let square = this.grid[this.getRow(index)][this.getCol(index)];
     square.value = value.toUpperCase();
+  }
+
+  private setNumber(index: number, num: number): boolean {
+    let row = this.getRow(index);
+    let col = this.getCol(index);
+    let square = this.grid[row][col];
+    let ret = false;
+
+    if (square.type == SquareType.Spacer) return ret;
+
+    if (row == 0 || this.grid[row - 1][col].type == SquareType.Spacer) {
+      square.clueNum = num;
+      square.downClue = true;
+      this.downClues.push({ index: num, clue: "Some down clue" });
+      ret = true;
+    }
+
+    if (col == 0 || this.grid[row][col - 1].type == SquareType.Spacer) {
+      square.clueNum = num;
+      square.acrossClue = true;
+      this.acrossClues.push({ index: num, clue: "Some across clue" });
+      ret = true;
+    }
+
+    return ret;
   }
 
   private isAlphaChar(text: string): boolean {

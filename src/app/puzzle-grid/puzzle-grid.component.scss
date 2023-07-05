@@ -21,6 +21,11 @@ table {
 .square {
   padding: 0px;
 
+  .number {
+    position: absolute;
+    font-size: x-small;
+  }
+
   .circle {
     width: 100%;
     height: 100%;
