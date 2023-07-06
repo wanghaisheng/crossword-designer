@@ -14,8 +14,11 @@ table {
   background-color: #495057;
 }
 
-.selected {
-  background-color: #dee7f6;
+.highlighted {
+  background-color: #0d6dfd13;
+}
+.highlighted.selected {
+  background-color: #0d6dfd3b;
 }
 
 .square {

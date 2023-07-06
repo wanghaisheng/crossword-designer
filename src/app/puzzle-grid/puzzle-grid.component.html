@@ -13,7 +13,6 @@
         </button>
       </div>
       <button class="btn btn-secondary" type="submit">Hide Answers</button>
-      <button class="btn btn-success" type="submit" (click)="numberPuzzle()">Number</button>
       <button class="btn btn-danger" type="submit" (click)="clearGrid()">Clear</button>
     </div>
   </div>
@@ -30,10 +29,17 @@
             <td
               class="square"
               *ngFor="let square of getPuzzleRow(i * numCols); index as j"
-              [ngClass]="{ 'spacer': square.type == 1, 'selected': square.index == selectedIndex }"
-              (click)="onClickSquare(square.index)">
+              [ngClass]="{
+                'spacer': square.type == 1,
+                'selected': square.index == selectedIndex,
+                'highlighted':
+                  editMode != 1 &&
+                  puzzle[selectedIndex].type != 1 &&
+                  (square.acrossClueNum == puzzle[selectedIndex].acrossClueNum || square.downClueNum == puzzle[selectedIndex].downClueNum)
+              }"
+              (click)="onSelectSquare(square.index)">
               <div class="square-contents" [ngStyle]="{ 'height.px': squareHeight, 'width.px': squareHeight }">
-                <div class="number" *ngIf="square.clueNum != 0">{{ square.clueNum }}</div>
+                <div class="number" *ngIf="square.boxNum != undefined">{{ square.boxNum }}</div>
                 <div class="circle" [ngStyle]="{ 'border': square.circled ? 'solid' : 'none' }">
                   <div class="value text-center">
                     <span>{{ square.value }}</span>
