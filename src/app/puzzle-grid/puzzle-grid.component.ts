@@ -1,35 +1,11 @@
 import { Component, OnInit } from "@angular/core";
-import { BehaviorSubject } from "rxjs";
-import { Clue } from "../clue-list/clue-list.component";
+import { Clue, OverlayType, PuzzleService, Square, SquareType } from "../services/puzzle.service";
 
 enum EditMode {
   Value,
   Spacer,
   Circle,
-}
-
-enum SquareType {
-  Letter,
-  Spacer,
-}
-export class Square {
-  index: number;
-  value: string;
-  type: SquareType;
-  circled: boolean;
-  boxNum?: number;
-  downClueNum?: number;
-  acrossClueNum?: number;
-
-  constructor(index: number = -1, size: number = 21) {
-    this.index = index;
-    this.value = "";
-    this.type = SquareType.Letter;
-    this.boxNum = index < size ? index + 1 : index % size == 0 ? size + Math.floor(index / size) : undefined;
-    this.downClueNum = (index % size) + 1;
-    this.acrossClueNum = Math.floor(index / size) + 1;
-    this.circled = false;
-  }
+  Shade,
 }
 
 @Component({
@@ -43,122 +19,78 @@ export class PuzzleGridComponent implements OnInit {
   public squareHeight: number = 30;
 
   public editMode: EditMode = EditMode.Value;
+  public answersHidden: boolean = false;
   public selectedIndex: number = 0;
 
-  public puzzle: Array<Square> = [];
+  public puzzleGrid: Array<Square> = [];
 
-  public $across: BehaviorSubject<Array<Clue>> = new BehaviorSubject([{ index: 0, clue: "" }]);
-  public $down: BehaviorSubject<Array<Clue>> = new BehaviorSubject([{ index: 0, clue: "" }]);
-  private acrossClues: Array<Clue> = [];
-  private downClues: Array<Clue> = [];
-
-  constructor() {}
+  constructor(private puzzleService: PuzzleService) {}
 
   ngOnInit(): void {
-    for (let i = 0; i < this.numRows * this.numCols; ++i) {
-      this.puzzle.push(new Square(i));
-    }
+    this.puzzleService.activatePuzzle("test");
+    this.puzzleService.$activeGrid.subscribe((grid: Array<Square>) => {
+      this.puzzleGrid = grid;
+    });
+
+    this.puzzleService.messenger.subscribe((msg: string) => {
+      if (msg == "clear") {
+        this.onClickSquare(0);
+      }
+    });
   }
 
-  onSelectSquare(index: number) {
-    let square = this.puzzle[index];
-    let reflectSquare = this.puzzle[this.getReflectIndex(index)];
+  public onClickSquare(index: number) {
+    let square = this.puzzleGrid[index];
+    this.onSelectSquare(index);
 
     if (this.editMode == EditMode.Spacer) {
-      this.toggleSquareType(square.index);
-      this.renumberPuzzle();
+      this.puzzleService.toggleSquareType(square.index);
     } else if (this.editMode == EditMode.Circle) {
-      square.circled = !square.circled;
-      square.type = SquareType.Letter;
-      reflectSquare.type = SquareType.Letter;
+      this.puzzleService.toggleSquareOverlay(square.index, OverlayType.Circle);
+    } else if (this.editMode == EditMode.Shade) {
+      this.puzzleService.toggleSquareOverlay(square.index, OverlayType.Shade);
     } else if (this.editMode == EditMode.Value) {
     }
-
-    this.selectedIndex = square.index;
   }
 
-  onKeyDown(event: KeyboardEvent) {
-    let square = this.puzzle[this.selectedIndex];
+  public onKeyDown(event: KeyboardEvent) {
+    let square = this.puzzleGrid[this.selectedIndex];
 
     if (this.isArrowKey(event.key)) {
-      this.selectedIndex = this.getNextIndex(square.index, event.key);
+      this.onSelectSquare(this.getNextIndex(square.index, event.key));
     } else if (event.key == "Enter") {
-      this.onSelectSquare(square.index);
+      this.onClickSquare(square.index);
     } else if (event.key == "Backspace") {
-      this.setSquareValue(square.index, "");
+      this.puzzleService.setSquareValue(square.index, "");
     } else if (this.isAlphaChar(event.key)) {
-      if (square.type == SquareType.Letter) this.setSquareValue(square.index, event.key);
+      if (square.type == SquareType.Letter) this.puzzleService.setSquareValue(square.index, event.key);
     }
   }
 
-  hideAnswers() {
-    // TODO
-  }
-
-  renumberPuzzle(): void {
-    let num = 1;
-
-    // Keep track of current across/down clue numbers
-    let acrossNum = 1;
-    let downNums = [...Array(this.numCols).keys()];
-
-    // Update the box and clue numbers for each square
-    for (let i = 0; i < this.numRows * this.numCols; ++i) {
-      let square = this.puzzle[i];
-      const across = this.needsAcrossNumber(square.index);
-      const down = this.needsDownNumber(square.index);
-
-      // Spacer
-      if (square.type == SquareType.Spacer) {
-        square.boxNum = undefined;
-        square.acrossClueNum = undefined;
-        square.downClueNum = undefined;
-        continue;
-      }
-
-      // Letter
-      if (across || down) {
-        // Numbered Square
-        if (across) acrossNum = num;
-        if (down) downNums[this.getColNum(square.index)] = num;
-        square.boxNum = num++;
-      } else {
-        // Un-numbered Square
-        square.boxNum = undefined;
-      }
-
-      square.acrossClueNum = acrossNum;
-      square.downClueNum = downNums[this.getColNum(square.index)];
-    }
-
-    this.$across.next(this.acrossClues);
-    this.$down.next(this.downClues);
-  }
-
-  clearGrid(): void {
-    for (let i = 0; i < this.numRows * this.numCols; ++i) {
-      this.puzzle[i] = new Square(i, this.numCols);
-    }
-  }
-
-  getPuzzleRow(index: number): Array<Square> {
+  public getPuzzleRow(index: number): Array<Square> {
     let rowStart = index - (index % this.numCols);
 
-    return this.puzzle.slice(rowStart, rowStart + this.numCols);
+    return this.puzzleGrid.slice(rowStart, rowStart + this.numCols);
   }
 
-  getRowNum(index: number): number {
-    return Math.floor(index / this.numCols);
+  public saveGrid(): void {
+    this.puzzleService.savePuzzle();
   }
 
-  getColNum(index: number): number {
-    return index % this.numCols;
+  public clearGrid(): void {
+    this.puzzleService.clearPuzzle();
+  }
+
+  private onSelectSquare(index: number): void {
+    this.selectedIndex = index;
+    this.puzzleService.selectSquare(index);
   }
 
   private getNextIndex(index: number, key: string): number {
+    // TODO: skip over spacers in Letter mode
     let rowStart = index - (index % this.numCols);
-    let rowNum = this.getRowNum(index);
-    let colNum = this.getColNum(index);
+    let rowNum = this.puzzleService.getRowNum(index);
+    let colNum = this.puzzleService.getColNum(index);
 
     if (key == "ArrowDown") {
       return colNum + this.numCols * ((rowNum + 1) % this.numRows);
@@ -171,44 +103,6 @@ export class PuzzleGridComponent implements OnInit {
     }
 
     return -1;
-  }
-
-  private getReflectIndex(index: number): number {
-    return this.numRows * this.numCols - 1 - index;
-  }
-
-  private toggleSquareType(index: number): void {
-    let square = this.puzzle[index];
-    square.type = square.type == SquareType.Letter ? SquareType.Spacer : SquareType.Letter;
-    square.circled = false;
-    square.value = "";
-
-    let reflectSquare = this.puzzle[this.getReflectIndex(index)];
-    reflectSquare.type = square.type;
-    reflectSquare.value = "";
-  }
-
-  private setSquareValue(index: number, value: string): void {
-    let square = this.puzzle[index];
-    square.value = value.toUpperCase();
-  }
-
-  private needsAcrossNumber(index: number): boolean {
-    let square = this.puzzle[index];
-
-    if (square.type == SquareType.Spacer) return false;
-    else if (index % this.numCols == 0 || this.puzzle[index - 1].type == SquareType.Spacer) return true;
-
-    return false;
-  }
-
-  private needsDownNumber(index: number): boolean {
-    let square = this.puzzle[index];
-
-    if (square.type == SquareType.Spacer) return false;
-    else if (index < this.numCols || this.puzzle[index - this.numRows].type == SquareType.Spacer) return true;
-
-    return false;
   }
 
   private isAlphaChar(text: string): boolean {

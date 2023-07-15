@@ -1,0 +1,24 @@
+<div class="container">
+  <form #ClueForm="ngForm">
+    <div class="p-3">
+      <div class="hstack gap-2 p-3">
+        <div class="p-1">
+          <strong>{{ acrossClue.index }} Across</strong>
+        </div>
+        <div class="vr"></div>
+        <div class="p-1">{{ acrossClue.answer }}</div>
+      </div>
+      <textarea [formControl]="acrossInput" class="form-control" id="acrossText" rows="2" placeholder="Your clue here..."></textarea>
+    </div>
+    <div class="p-3">
+      <div class="hstack gap-2 p-3">
+        <div class="p-1">
+          <strong>{{ downClue.index }} Down</strong>
+        </div>
+        <div class="vr"></div>
+        <div class="p-1">{{ downClue.answer }}</div>
+      </div>
+      <textarea [formControl]="downInput" class="form-control" id="downText" rows="2" placeholder="Your clue here..."></textarea>
+    </div>
+  </form>
+</div>
