@@ -1,11 +1,17 @@
 import { Component, OnInit } from "@angular/core";
-import { Clue, OverlayType, PuzzleService, Square, SquareType } from "../services/puzzle.service";
+import { OverlayType, PuzzleService, Square, SquareType } from "../services/puzzle.service";
 
 enum EditMode {
   Value,
   Spacer,
   Circle,
   Shade,
+}
+
+enum HighlightMode {
+  Across,
+  Down,
+  Intersect,
 }
 
 @Component({
@@ -19,6 +25,7 @@ export class PuzzleGridComponent implements OnInit {
   public squareHeight: number = 30;
 
   public editMode: EditMode = EditMode.Value;
+  public highlightMode: HighlightMode = HighlightMode.Across;
   public answersHidden: boolean = false;
   public selectedIndex: number = 0;
 
@@ -27,29 +34,31 @@ export class PuzzleGridComponent implements OnInit {
   constructor(private puzzleService: PuzzleService) {}
 
   ngOnInit(): void {
-    this.puzzleService.activatePuzzle("test");
+    // this.puzzleService.activatePuzzle("test");
+    this.puzzleService.createPuzzle(this.numRows);
     this.puzzleService.$activeGrid.subscribe((grid: Array<Square>) => {
       this.puzzleGrid = grid;
     });
 
     this.puzzleService.messenger.subscribe((msg: string) => {
       if (msg == "clear") {
-        this.onClickSquare(0);
+        this.selectedIndex = 0;
       }
     });
   }
 
-  public onClickSquare(index: number) {
+  public onClickSquare(index: number, overrideMode?: EditMode) {
     let square = this.puzzleGrid[index];
+    let editMode = overrideMode ? overrideMode : this.editMode;
     this.onSelectSquare(index);
 
-    if (this.editMode == EditMode.Spacer) {
+    if (editMode == EditMode.Spacer) {
       this.puzzleService.toggleSquareType(square.index);
-    } else if (this.editMode == EditMode.Circle) {
+    } else if (editMode == EditMode.Circle) {
       this.puzzleService.toggleSquareOverlay(square.index, OverlayType.Circle);
-    } else if (this.editMode == EditMode.Shade) {
+    } else if (editMode == EditMode.Shade) {
       this.puzzleService.toggleSquareOverlay(square.index, OverlayType.Shade);
-    } else if (this.editMode == EditMode.Value) {
+    } else if (editMode == EditMode.Value) {
     }
   }
 
@@ -59,11 +68,22 @@ export class PuzzleGridComponent implements OnInit {
     if (this.isArrowKey(event.key)) {
       this.onSelectSquare(this.getNextIndex(square.index, event.key));
     } else if (event.key == "Enter") {
-      this.onClickSquare(square.index);
+      if (this.editMode == EditMode.Value) {
+        this.onClickSquare(square.index, EditMode.Spacer);
+        this.selectNextSquare(square.index);
+      } else {
+        this.onClickSquare(square.index);
+      }
     } else if (event.key == "Backspace") {
-      this.puzzleService.setSquareValue(square.index, "");
+      if (square.type == SquareType.Letter) {
+        this.puzzleService.setSquareValue(square.index, " ");
+        this.selectPrevSquare(square.index);
+      }
     } else if (this.isAlphaChar(event.key)) {
-      if (square.type == SquareType.Letter) this.puzzleService.setSquareValue(square.index, event.key);
+      if (square.type == SquareType.Letter) {
+        this.puzzleService.setSquareValue(square.index, event.key);
+        this.selectNextSquare(square.index);
+      }
     }
   }
 
@@ -81,28 +101,64 @@ export class PuzzleGridComponent implements OnInit {
     this.puzzleService.clearPuzzle();
   }
 
+  /**
+   * Determines whether or not the provided square should be highlighted in the current highlight and edit modes
+   * @param square square to highlight
+   * @returns true if square should be highlighted, false otherwise
+   */
+  public isHighlighted(square: Square): boolean {
+    if (this.editMode == EditMode.Value) {
+      if (this.highlightMode == HighlightMode.Across) {
+        return square.acrossClueNum == this.puzzleGrid[this.selectedIndex].acrossClueNum;
+      } else if (this.highlightMode == HighlightMode.Down) {
+        return square.downClueNum == this.puzzleGrid[this.selectedIndex].downClueNum;
+      } else {
+        return (
+          square.acrossClueNum == this.puzzleGrid[this.selectedIndex].acrossClueNum ||
+          square.downClueNum == this.puzzleGrid[this.selectedIndex].downClueNum
+        );
+      }
+    } else {
+      return false;
+    }
+  }
+
+  private selectNextSquare(index: number): void {
+    if (!this.puzzleService.isPuzzleEnd(index)) {
+      if (this.highlightMode == HighlightMode.Across) {
+        this.onSelectSquare(this.getNextIndex(index, "ArrowRight"));
+      } else if (this.highlightMode == HighlightMode.Down) {
+        this.onSelectSquare(this.getNextIndex(index, "ArrowDown"));
+      }
+    }
+  }
+
+  private selectPrevSquare(index: number): void {
+    if (!this.puzzleService.isPuzzleStart(index)) {
+      if (this.highlightMode == HighlightMode.Across) {
+        this.onSelectSquare(this.getNextIndex(index, "ArrowLeft"));
+      } else if (this.highlightMode == HighlightMode.Down) {
+        this.onSelectSquare(this.getNextIndex(index, "ArrowUp"));
+      }
+    }
+  }
+
   private onSelectSquare(index: number): void {
     this.selectedIndex = index;
     this.puzzleService.selectSquare(index);
   }
 
   private getNextIndex(index: number, key: string): number {
-    // TODO: skip over spacers in Letter mode
-    let rowStart = index - (index % this.numCols);
-    let rowNum = this.puzzleService.getRowNum(index);
-    let colNum = this.puzzleService.getColNum(index);
+    let skipSpacers = this.editMode != EditMode.Spacer;
+    let vertical = key == "ArrowDown" || key == "ArrowUp";
 
-    if (key == "ArrowDown") {
-      return colNum + this.numCols * ((rowNum + 1) % this.numRows);
-    } else if (key == "ArrowUp") {
-      return colNum + this.numCols * ((rowNum + this.numRows - 1) % this.numRows);
-    } else if (key == "ArrowRight") {
-      return rowStart + ((colNum + 1) % this.numCols);
-    } else if (key == "ArrowLeft") {
-      return rowStart + ((colNum + this.numCols - 1) % this.numCols);
+    if (key == "ArrowDown" || key == "ArrowRight") {
+      return this.puzzleService.getNextIndex(index, vertical, skipSpacers);
+    } else if (key == "ArrowUp" || key == "ArrowLeft") {
+      return this.puzzleService.getPrevIndex(index, vertical, skipSpacers);
     }
 
-    return -1;
+    return index;
   }
 
   private isAlphaChar(text: string): boolean {

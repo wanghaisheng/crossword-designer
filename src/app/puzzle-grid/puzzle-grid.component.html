@@ -1,7 +1,7 @@
 <div class="container">
   <div class="row">
     <div class="hstack gap-3">
-      <div class="btn-group" role="group" aria-label="Basic example">
+      <div class="btn-group" role="group" aria-label="Edit Mode">
         <button type="button" class="btn btn-primary" [ngClass]="{ 'active': editMode == 0 }" (click)="editMode = 0; table.focus()">
           Answers
         </button>
@@ -15,9 +15,32 @@
           Shades
         </button>
       </div>
-      <button class="btn btn-secondary" type="submit" (click)="answersHidden = !answersHidden">Hide Answers</button>
-      <button class="btn btn-success" type="submit" (click)="saveGrid()">Save</button>
-      <button class="btn btn-danger" type="submit" (click)="clearGrid()">Clear</button>
+      <div class="btn-group" role="group" aria-label="Highlight Mode">
+        <button
+          type="button"
+          class="btn btn-info"
+          [ngClass]="{ 'active': highlightMode == 0, 'disabled': editMode != 0 }"
+          (click)="highlightMode = 0; table.focus()">
+          Across
+        </button>
+        <button
+          type="button"
+          class="btn btn-info"
+          [ngClass]="{ 'active': highlightMode == 1, 'disabled': editMode != 0 }"
+          (click)="highlightMode = 1; table.focus()">
+          Down
+        </button>
+        <button
+          type="button"
+          class="btn btn-info"
+          [ngClass]="{ 'active': highlightMode == 2, 'disabled': editMode != 0 }"
+          (click)="highlightMode = 2; table.focus()">
+          Intersect
+        </button>
+      </div>
+      <button class="btn btn-secondary" type="submit" (click)="answersHidden = !answersHidden; table.focus()">Hide Answers</button>
+      <button class="btn btn-success" type="submit" (click)="saveGrid(); table.focus()">Save</button>
+      <button class="btn btn-danger" type="submit" (click)="clearGrid(); table.focus()">Clear</button>
     </div>
   </div>
   <div class="row mt-4">
@@ -37,11 +60,7 @@
                 'spacer': square.type == 1,
                 'shaded': square.overlay == 2,
                 'selected': square.index == selectedIndex,
-                'highlighted':
-                  editMode != 1 &&
-                  puzzleGrid[selectedIndex].type != 1 &&
-                  (square.acrossClueNum == puzzleGrid[selectedIndex].acrossClueNum ||
-                    square.downClueNum == puzzleGrid[selectedIndex].downClueNum)
+                'highlighted': isHighlighted(square)
               }"
               (click)="onClickSquare(square.index)">
               <div class="square-contents" [ngStyle]="{ 'height.px': squareHeight, 'width.px': squareHeight }">
