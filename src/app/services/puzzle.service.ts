@@ -1,6 +1,7 @@
 import { EventEmitter, Injectable } from "@angular/core";
-import { BehaviorSubject } from "rxjs";
-import { TestPuzzle } from "src/environments/environment";
+import { BehaviorSubject, from, Observable } from "rxjs";
+import { catchError, map } from "rxjs/operators";
+import { collection, doc, DocumentData, DocumentSnapshot, getDoc, setDoc, getFirestore } from "firebase/firestore";
 
 export interface Puzzle {
   id: string;
@@ -8,6 +9,32 @@ export interface Puzzle {
   grid: Array<Square>;
   acrossClues: Array<Clue>;
   downClues: Array<Clue>;
+}
+
+export class PuzzleDoc {
+  id: string;
+  name: string;
+  size: number;
+  answers: string;
+  spacers: Array<number>;
+  circles: Array<number>;
+  shades: Array<number>;
+  "across-clues": Array<string>;
+  "down-clues": Array<string>;
+
+  constructor(size: number = 21) {
+    this.id = "";
+    this.name = "";
+    this.size = size;
+    this.answers = Array(size * size + 1)
+      .fill(" ")
+      .toString();
+    this.spacers = [];
+    this.circles = [];
+    this.shades = [];
+    this["across-clues"] = [];
+    this["down-clues"] = [];
+  }
 }
 
 export class Clue {
@@ -94,27 +121,63 @@ export class PuzzleService {
     // TODO: create unique id service to generate id
     this.activePuzzle.id = "new-puzzle";
     this.activePuzzle.name = "New Puzzle";
-    this.buildGrid(size, Array(size * size + 1).join(" "), [], [], []);
-    this.numberPuzzle();
-    this.activatePuzzle();
-  }
-
-  public activatePuzzle(id?: string) {
-    if (id) {
-      this.loadPuzzle(id);
-    }
+    this.activePuzzle.grid = this.buildGrid(new PuzzleDoc());
+    this.numberPuzzle(this.activePuzzle);
 
     this.$activeGrid.next(this.activePuzzle.grid);
     this.$activeAcrossClue.next(this.activePuzzle.acrossClues[0]);
     this.$activeDownClue.next(this.activePuzzle.downClues[0]);
   }
 
+  public activatePuzzle(id: string): Observable<boolean> {
+    return this.loadPuzzle(id).pipe(
+      map((puzzle) => {
+        if (puzzle) {
+          this.activePuzzle.id = id;
+          this.activePuzzle.name = puzzle.name;
+          this.activePuzzle.grid = this.buildGrid(puzzle as PuzzleDoc);
+          this.activePuzzle.acrossClues = this.buildAcrossClues(puzzle as PuzzleDoc);
+          this.activePuzzle.downClues = this.buildDownClues(puzzle as PuzzleDoc);
+          this.numberPuzzle(this.activePuzzle);
+
+          this.$activeGrid.next(this.activePuzzle.grid);
+          this.$activeAcrossClue.next(this.activePuzzle.acrossClues[0]);
+          this.$activeDownClue.next(this.activePuzzle.downClues[0]);
+
+          return true;
+        }
+
+        return false;
+      }),
+      catchError((error: ErrorEvent) => {
+        throw error;
+      })
+    );
+  }
+
+  /**
+   * Save active puzzle to database
+   * TODO: return observable that can be subscribed to to alert save success/failure
+   */
   public savePuzzle() {
-    // TODO: save to database
-    this.messenger.emit("save");
-    console.log(this.activePuzzle.acrossClues);
-    console.log(this.activePuzzle.downClues);
-    console.log(this.activePuzzle.grid);
+    const db = getFirestore();
+    const puzzles = collection(db, "puzzle");
+
+    let puzzle = {
+      id: this.activePuzzle.id,
+      name: this.activePuzzle.name,
+      size: this.numRows,
+      answers: this.activePuzzle.grid.map((square: Square) => square.value),
+      spacers: this.activePuzzle.grid.filter((square: Square) => square.type == SquareType.Spacer).map((square: Square) => square.index),
+      circles: this.activePuzzle.grid
+        .filter((square: Square) => square.overlay == OverlayType.Circle)
+        .map((square: Square) => square.index),
+      shades: this.activePuzzle.grid.filter((square: Square) => square.overlay == OverlayType.Shade).map((square: Square) => square.index),
+      "across-clues": this.activePuzzle.acrossClues.map((clue: Clue) => clue.text),
+      "down-clues": this.activePuzzle.downClues.map((clue: Clue) => clue.text),
+    };
+
+    setDoc(doc(puzzles, this.activePuzzle.id), puzzle);
   }
 
   public clearPuzzle(): void {
@@ -124,7 +187,7 @@ export class PuzzleService {
 
     this.activePuzzle.acrossClues = [];
     this.activePuzzle.downClues = [];
-    this.numberPuzzle();
+    this.numberPuzzle(this.activePuzzle);
 
     this.messenger.emit("clear");
     this.$activeGrid.next(this.activePuzzle.grid);
@@ -177,7 +240,7 @@ export class PuzzleService {
       }
     }
 
-    this.numberPuzzle();
+    this.numberPuzzle(this.activePuzzle);
     this.$activeGrid.next(this.activePuzzle.grid);
 
     if (square.type == SquareType.Letter) {
@@ -355,7 +418,7 @@ export class PuzzleService {
     square.boxNum = reflectSquare.boxNum = -1;
   }
 
-  private numberPuzzle(start: number = 0): void {
+  private numberPuzzle(puzzle: Puzzle, start: number = 0): void {
     let num = 1;
     let acrossCount = 0;
     let downCount = 0;
@@ -366,7 +429,7 @@ export class PuzzleService {
     });
 
     for (let i = start; i < this.numRows * this.numCols; ++i) {
-      let square = this.activePuzzle.grid[i];
+      let square = puzzle.grid[i];
       let colNum = this.getColNum(square.index);
 
       // Set Spacer
@@ -406,50 +469,32 @@ export class PuzzleService {
 
       // Associate answers with clues
       if (this.isAcrossEnd(square.index)) {
-        this.addOrUpdateClue(this.activePuzzle.acrossClues, across.pos, square.acrossClueNum, across.ans, across.squares);
+        this.addOrUpdateClue(puzzle.acrossClues, across.pos, square.acrossClueNum, across.ans, across.squares);
         across.ans = "";
         across.squares = [];
       }
 
       if (this.isDownEnd(square.index)) {
-        this.addOrUpdateClue(this.activePuzzle.downClues, down[colNum].pos, square.downClueNum, down[colNum].ans, down[colNum].squares);
+        this.addOrUpdateClue(puzzle.downClues, down[colNum].pos, square.downClueNum, down[colNum].ans, down[colNum].squares);
         down[colNum].ans = "";
         down[colNum].squares = [];
       }
     }
 
     // Ensure down clues are in order
-    this.activePuzzle.downClues.sort((a: Clue, b: Clue) => a.index - b.index);
+    puzzle.downClues.sort((a: Clue, b: Clue) => a.index - b.index);
   }
 
-  private loadPuzzle(id: string): void {
-    let size = 21;
-    let name = "New Puzzle";
-    let answers = "";
-    let spacers: Array<number> = [];
-    let circles: Array<number> = [];
-    let shades: Array<number> = [];
-    let acrossClues: Array<string> = [];
-    let downClues: Array<string> = [];
+  // TODO: this should be private but making it public makes testing not a complete nightmare
+  public loadPuzzle(id: string): Observable<DocumentData | undefined> {
+    const db = getFirestore();
+    const puzzles = collection(db, "puzzle");
 
-    if (id == "test") {
-      name = TestPuzzle.name;
-      size = TestPuzzle.size;
-      answers = TestPuzzle.answerString;
-      spacers = TestPuzzle.spacerIndeces;
-      circles = TestPuzzle.circleIndeces;
-      shades = TestPuzzle.shadeIndeces;
-      acrossClues = TestPuzzle.acrossClues;
-      downClues = TestPuzzle.downClues;
-    } else {
-      // TODO: load from database
-    }
-
-    this.activePuzzle.id = id;
-    this.activePuzzle.name = name;
-    this.buildGrid(size, answers, spacers, circles, shades);
-    this.buildClues(acrossClues, downClues);
-    this.numberPuzzle();
+    return from(getDoc(doc(puzzles, id))).pipe(
+      map((doc: DocumentSnapshot<DocumentData>) => {
+        return doc.data();
+      })
+    );
   }
 
   private addOrUpdateClue(clues: Array<Clue>, pos: number, clueNum: number, answer: string, squares: Array<number>): void {
@@ -465,37 +510,51 @@ export class PuzzleService {
     }
   }
 
-  private buildGrid(size: number, answers: string, spacers: Array<number>, circles: Array<number>, shades: Array<number>): void {
+  private buildGrid(puzzle: PuzzleDoc): Array<Square> {
     let stringPos = 0;
+    let grid = [];
 
-    for (let i = 0; i < size * size; i++) {
+    for (let i = 0; i < puzzle.size * puzzle.size; i++) {
       let square = new Square(i);
 
-      if (spacers.includes(i)) {
+      if (puzzle.spacers.includes(i)) {
         square.type = SquareType.Spacer;
         square.value = "";
       } else {
-        if (circles.includes(i)) {
+        if (puzzle.circles.includes(i)) {
           square.overlay = OverlayType.Circle;
         }
 
-        if (shades.includes(i)) {
+        if (puzzle.shades.includes(i)) {
           square.overlay = OverlayType.Shade;
         }
 
-        square.value = answers[stringPos++].toUpperCase();
+        square.value = puzzle.answers[stringPos++].toUpperCase();
       }
 
-      this.activePuzzle.grid.push(square);
+      grid.push(square);
     }
+
+    return grid;
   }
 
-  private buildClues(acrossClues: Array<string>, downClues: Array<string>): void {
-    acrossClues.map((clueText: string, i: number) => {
-      this.activePuzzle.acrossClues.push(new Clue(0, clueText, ""));
+  private buildAcrossClues(puzzle: PuzzleDoc): Array<Clue> {
+    let clues: Array<Clue> = [];
+
+    puzzle["across-clues"].map((clueText: string) => {
+      clues.push(new Clue(0, clueText, ""));
     });
-    downClues.map((clueText: string, i: number) => {
-      this.activePuzzle.downClues.push(new Clue(0, clueText, ""));
+
+    return clues;
+  }
+
+  private buildDownClues(puzzle: PuzzleDoc): Array<Clue> {
+    let clues: Array<Clue> = [];
+
+    puzzle["down-clues"].map((clueText: string) => {
+      clues.push(new Clue(0, clueText, ""));
     });
+
+    return clues;
   }
 }
