@@ -34,7 +34,6 @@ export class PuzzleGridComponent implements OnInit {
   constructor(private puzzleService: PuzzleService) {}
 
   ngOnInit(): void {
-    // this.puzzleService.activatePuzzle("test");
     this.puzzleService.createPuzzle(this.numRows);
     this.puzzleService.$activeGrid.subscribe((grid: Array<Square>) => {
       this.puzzleGrid = grid;
@@ -45,6 +44,10 @@ export class PuzzleGridComponent implements OnInit {
         this.selectedIndex = 0;
       }
     });
+  }
+
+  public loadTestPuzzle(): void {
+    this.puzzleService.activatePuzzle("10YwRO5RjX6XNDXAe1iD").subscribe();
   }
 
   public onClickSquare(index: number, overrideMode?: EditMode) {

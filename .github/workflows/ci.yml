@@ -7,7 +7,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
 
     steps:
       - uses: actions/checkout@v2
@@ -23,4 +23,4 @@ jobs:
           npm run build
       - name: Test
         run: |
-          npm run test
+          npm run test-headless

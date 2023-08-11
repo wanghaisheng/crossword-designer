@@ -1,2 +1,7 @@
 node_modules
 coverage
+
+# Firebase
+.firebase
+*-debug.log
+.runtimeconfig.json
