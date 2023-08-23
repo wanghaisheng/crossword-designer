@@ -1,14 +1,15 @@
 import { Component, OnInit } from "@angular/core";
-import { OverlayType, PuzzleService, Square, SquareType } from "../services/puzzle.service";
+import { OverlayType, Puzzle, PuzzleDoc, PuzzleService, Square, SquareType } from "../services/puzzle.service";
+import { FormControl, FormGroup } from "@angular/forms";
 
-enum EditMode {
+export enum EditMode {
   Value,
   Spacer,
   Circle,
   Shade,
 }
 
-enum HighlightMode {
+export enum HighlightMode {
   Across,
   Down,
   Intersect,
@@ -30,30 +31,62 @@ export class PuzzleGridComponent implements OnInit {
   public selectedIndex: number = 0;
 
   public puzzleGrid: Array<Square> = [];
+  public puzzleList: Array<PuzzleDoc> = [];
+
+  public puzzleLoaded: boolean = false;
+
+  public loadPuzzleForm = new FormGroup({
+    id: new FormControl(""),
+  });
+
+  public newPuzzleForm = new FormGroup({
+    title: new FormControl(""),
+    width: new FormControl(""),
+    height: new FormControl(""),
+  });
 
   constructor(private puzzleService: PuzzleService) {}
 
   ngOnInit(): void {
-    this.puzzleService.createPuzzle(this.numRows);
-    this.puzzleService.$activeGrid.subscribe((grid: Array<Square>) => {
+    this.puzzleService.getPuzzleList().subscribe((puzzles: Array<PuzzleDoc>) => {
+      this.puzzleList = puzzles;
+    });
+    this.puzzleService.activeGrid$.subscribe((grid: Array<Square>) => {
       this.puzzleGrid = grid;
     });
-
     this.puzzleService.messenger.subscribe((msg: string) => {
       if (msg == "clear") {
-        this.selectedIndex = 0;
+        this.onClickSquare(0, EditMode.Value);
       }
     });
   }
 
-  public loadTestPuzzle(): void {
-    this.puzzleService.activatePuzzle("10YwRO5RjX6XNDXAe1iD").subscribe();
+  public loadPuzzle(): void {
+    this.puzzleService.activatePuzzle(this.loadPuzzleForm.value.id).subscribe((puzzle: Puzzle) => {
+      if (puzzle) {
+        this.numRows = puzzle.height;
+        this.numCols = puzzle.width;
+        this.puzzleLoaded = true;
+      }
+    });
+  }
+
+  public createPuzzle(): void {
+    this.puzzleService
+      .createPuzzle(this.newPuzzleForm.value.title, this.newPuzzleForm.value.width, this.newPuzzleForm.value.height)
+      .subscribe((puzzle: Puzzle) => {
+        if (puzzle) {
+          this.numRows = puzzle.height;
+          this.numCols = puzzle.width;
+          this.puzzleLoaded = true;
+        }
+      });
   }
 
   public onClickSquare(index: number, overrideMode?: EditMode) {
     let square = this.puzzleGrid[index];
     let editMode = overrideMode ? overrideMode : this.editMode;
-    this.onSelectSquare(index);
+    this.selectSquare(index);
 
     if (editMode == EditMode.Spacer) {
       this.puzzleService.toggleSquareType(square.index);
@@ -61,7 +94,6 @@ export class PuzzleGridComponent implements OnInit {
       this.puzzleService.toggleSquareOverlay(square.index, OverlayType.Circle);
     } else if (editMode == EditMode.Shade) {
       this.puzzleService.toggleSquareOverlay(square.index, OverlayType.Shade);
-    } else if (editMode == EditMode.Value) {
     }
   }
 
@@ -69,7 +101,7 @@ export class PuzzleGridComponent implements OnInit {
     let square = this.puzzleGrid[this.selectedIndex];
 
     if (this.isArrowKey(event.key)) {
-      this.onSelectSquare(this.getNextIndex(square.index, event.key));
+      this.selectSquare(this.getNextIndex(square.index, event.key));
     } else if (event.key == "Enter") {
       if (this.editMode == EditMode.Value) {
         this.onClickSquare(square.index, EditMode.Spacer);
@@ -77,16 +109,12 @@ export class PuzzleGridComponent implements OnInit {
       } else {
         this.onClickSquare(square.index);
       }
-    } else if (event.key == "Backspace") {
-      if (square.type == SquareType.Letter) {
-        this.puzzleService.setSquareValue(square.index, " ");
-        this.selectPrevSquare(square.index);
-      }
-    } else if (this.isAlphaChar(event.key)) {
-      if (square.type == SquareType.Letter) {
-        this.puzzleService.setSquareValue(square.index, event.key);
-        this.selectNextSquare(square.index);
-      }
+    } else if (event.key == "Backspace" && square.type == SquareType.Letter) {
+      this.puzzleService.setSquareValue(square.index, " ");
+      this.selectPrevSquare(square.index);
+    } else if (this.isAlphaChar(event.key) && square.type == SquareType.Letter) {
+      this.puzzleService.setSquareValue(square.index, event.key);
+      this.selectNextSquare(square.index);
     }
   }
 
@@ -129,9 +157,9 @@ export class PuzzleGridComponent implements OnInit {
   private selectNextSquare(index: number): void {
     if (!this.puzzleService.isPuzzleEnd(index)) {
       if (this.highlightMode == HighlightMode.Across) {
-        this.onSelectSquare(this.getNextIndex(index, "ArrowRight"));
+        this.selectSquare(this.getNextIndex(index, "ArrowRight"));
       } else if (this.highlightMode == HighlightMode.Down) {
-        this.onSelectSquare(this.getNextIndex(index, "ArrowDown"));
+        this.selectSquare(this.getNextIndex(index, "ArrowDown"));
       }
     }
   }
@@ -139,14 +167,14 @@ export class PuzzleGridComponent implements OnInit {
   private selectPrevSquare(index: number): void {
     if (!this.puzzleService.isPuzzleStart(index)) {
       if (this.highlightMode == HighlightMode.Across) {
-        this.onSelectSquare(this.getNextIndex(index, "ArrowLeft"));
+        this.selectSquare(this.getNextIndex(index, "ArrowLeft"));
       } else if (this.highlightMode == HighlightMode.Down) {
-        this.onSelectSquare(this.getNextIndex(index, "ArrowUp"));
+        this.selectSquare(this.getNextIndex(index, "ArrowUp"));
       }
     }
   }
 
-  private onSelectSquare(index: number): void {
+  private selectSquare(index: number): void {
     this.selectedIndex = index;
     this.puzzleService.selectSquare(index);
   }
