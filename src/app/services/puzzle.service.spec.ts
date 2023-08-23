@@ -12,7 +12,7 @@ import { provideStorage, getStorage } from "@angular/fire/storage";
 
 import { TestBed } from "@angular/core/testing";
 
-import { Clue, PuzzleService, Square, SquareType } from "./puzzle.service";
+import { Clue, ClueType, OverlayType, PuzzleService, Square, SquareType } from "./puzzle.service";
 import { of } from "rxjs";
 
 describe("PuzzleService", () => {
@@ -48,9 +48,9 @@ describe("PuzzleService", () => {
 
   describe("activatePuzzle", () => {
     it("should number squares", () => {
-      service.activatePuzzle(testPuzzleId).subscribe(() => {
-        const grid = service.getActiveGrid();
+      service.activatePuzzle(testPuzzleId).subscribe();
 
+      service.activeGrid$.subscribe((grid: Array<Square>) => {
         expect(grid[0]).toEqual(new Square(0, "Y", 1, 1, 1));
         expect(grid[198]).toEqual(new Square(198, "U", -1, 63, 50));
         expect(grid[223]).toEqual(new Square(223, "", -1, -1, -1, SquareType.Spacer));
@@ -59,11 +59,9 @@ describe("PuzzleService", () => {
     });
 
     it("should associate clues", () => {
-      service.activatePuzzle(testPuzzleId).subscribe((result: boolean) => {
+      service.activatePuzzle(testPuzzleId).subscribe(() => {
         const acrossClues = service.getActiveAcross();
         const downClues = service.getActiveDown();
-
-        expect(result).toEqual(true);
 
         expect(acrossClues[0]).toEqual(new Clue(1, "It's not that simple", "YESANDNO", [0, 1, 2, 3, 4, 5, 6, 7]));
         expect(downClues[0]).toEqual(new Clue(1, "Sharp bark", "YIP", [0, 21, 42]));
@@ -83,20 +81,212 @@ describe("PuzzleService", () => {
     });
   });
 
+  describe("clearPuzzle", () => {
+    it("should clear puzzle", () => {
+      service.activatePuzzle(testPuzzleId).subscribe(() => {
+        const grid = service.getActiveGrid();
+        const acrossClues = service.getActiveAcross();
+
+        expect(grid[0]).toEqual(new Square(0, "Y", 1, 1, 1));
+        expect(grid[8]).toEqual(new Square(8, "", -1, -1, -1, SquareType.Spacer));
+        expect(acrossClues[0]).toEqual(new Clue(1, "It's not that simple", "YESANDNO", [0, 1, 2, 3, 4, 5, 6, 7]));
+
+        service.clearPuzzle();
+      });
+
+      service.activeGrid$.subscribe((grid) => {
+        expect(grid[0]).toEqual(new Square(0, " ", 1, 1, 1));
+        expect(grid[8]).toEqual(new Square(8, " ", 9, 1, 9));
+      });
+
+      service.activeAcrossClue$.subscribe((clue) => {
+        expect(clue.index).toEqual(1);
+        expect(clue.answer).toEqual(Array(21).fill(" ").join(""));
+      });
+
+      service.activeDownClue$.subscribe((clue) => {
+        expect(clue.index).toEqual(1);
+        expect(clue.answer).toEqual(Array(21).fill(" ").join(""));
+      });
+    });
+  });
+
+  describe("selectSquare", () => {
+    it("should select letter square", () => {
+      service.activatePuzzle(testPuzzleId).subscribe(() => {
+        service.selectSquare(3);
+      });
+
+      service.activeAcrossClue$.subscribe((clue) => {
+        expect(clue).toEqual(new Clue(1, "It's not that simple", "YESANDNO", [0, 1, 2, 3, 4, 5, 6, 7]));
+      });
+
+      service.activeDownClue$.subscribe((clue) => {
+        expect(clue).toEqual(new Clue(4, "Draw", "ATTRACT", [3, 24, 45, 66, 87, 108, 129]));
+      });
+    });
+
+    it("should select spacer square", () => {
+      service.selectSquare(432);
+
+      service.activeAcrossClue$.subscribe((clue) => {
+        // TODO: not really sure what behavior I want here (do with bug #13)
+      });
+
+      service.activeDownClue$.subscribe((clue) => {
+        // TODO: not really sure what behavior I want here
+      });
+    });
+  });
+
+  describe("toggleSquareType", () => {
+    it("should create new across clues and displace down clue when toggling Letter to Spacer", () => {
+      service.activatePuzzle(testPuzzleId).subscribe(() => {
+        service.toggleSquareType(3);
+
+        const grid = service.getActiveGrid();
+        const acrossClues = service.getActiveAcross();
+        const downClues = service.getActiveDown();
+
+        expect(grid[3]).toEqual(new Square(3, "", -1, -1, -1, SquareType.Spacer));
+        expect(acrossClues[0]).toEqual(new Clue(1, "", "YES", [0, 1, 2]));
+        expect(acrossClues[1]).toEqual(new Clue(4, "", "NDNO", [4, 5, 6, 7]));
+        expect(downClues[17]).toEqual(new Clue(19, "", "TTRACT", [24, 45, 66, 87, 108, 129]));
+
+        expect(acrossClues.length).toEqual(63);
+        expect(downClues.length).toEqual(79);
+      });
+    });
+
+    it("should create new across clues and new down clues when toggling Letter to Spacer", () => {
+      service.activatePuzzle(testPuzzleId).subscribe(() => {
+        service.toggleSquareType(80);
+
+        const grid = service.getActiveGrid();
+        const acrossClues = service.getActiveAcross();
+        const downClues = service.getActiveDown();
+
+        expect(grid[80]).toEqual(new Square(80, "", -1, -1, -1, SquareType.Spacer));
+        expect(acrossClues[10]).toEqual(new Clue(28, "", "BLAN", [76, 77, 78, 79]));
+        expect(acrossClues[11]).toEqual(new Clue(30, "", "CDS", [81, 82, 83]));
+        expect(downClues[15]).toEqual(new Clue(16, "", "TAL", [17, 38, 59]));
+        expect(downClues[24]).toEqual(new Clue(37, "", "INCIRCLES", [101, 122, 143, 164, 185, 206, 227, 248, 269]));
+
+        expect(acrossClues.length).toEqual(63);
+        expect(downClues.length).toEqual(81);
+      });
+    });
+
+    it("should not create new down or across clue when toggling Letter to Spacer", () => {
+      service.activatePuzzle(testPuzzleId).subscribe(() => {
+        service.toggleSquareType(104);
+
+        const grid = service.getActiveGrid();
+        const acrossClues = service.getActiveAcross();
+        const downClues = service.getActiveDown();
+
+        expect(grid[104]).toEqual(new Square(104, "", -1, -1, -1, SquareType.Spacer));
+        expect(acrossClues[13]).toEqual(new Clue(35, "", "ARTIST", [98, 99, 100, 101, 102, 103]));
+        expect(downClues[18]).toEqual(new Clue(22, "", "SAS", [41, 62, 83]));
+
+        expect(acrossClues.length).toEqual(61);
+        expect(downClues.length).toEqual(79);
+      });
+    });
+
+    it("should remove across clues when toggling Spacer to Letter", () => {
+      service.activatePuzzle(testPuzzleId).subscribe(() => {
+        service.toggleSquareType(29);
+
+        const grid = service.getActiveGrid();
+        const acrossClues = service.getActiveAcross();
+        const downClues = service.getActiveDown();
+
+        expect(grid[29]).toEqual(new Square(29, " ", 20, 19, 20));
+        expect(acrossClues[3]).toEqual(new Clue(19, "", "IDITAROD ITPRO", [21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34]));
+        expect(downClues[18]).toEqual(new Clue(20, "", " NOTED", [29, 50, 71, 92, 113, 134]));
+
+        expect(acrossClues.length).toEqual(59);
+        expect(downClues.length).toEqual(79);
+      });
+    });
+
+    it("should remove down clue when toggling Spacer to Letter", () => {
+      service.activatePuzzle(testPuzzleId).subscribe(() => {
+        service.toggleSquareType(86);
+
+        const grid = service.getActiveGrid();
+        const acrossClues = service.getActiveAcross();
+        const downClues = service.getActiveDown();
+
+        expect(grid[86]).toEqual(new Square(86, " ", 30, 30, 3));
+        expect(acrossClues[11]).toEqual(new Clue(30, "", " AIDE", [86, 87, 88, 89, 90]));
+        expect(downClues[2]).toEqual(new Clue(3, "", "SIRE ESTER", [2, 23, 44, 65, 86, 107, 128, 149, 170, 191]));
+
+        expect(acrossClues.length).toEqual(61);
+        expect(downClues.length).toEqual(77);
+      });
+    });
+  });
+
+  describe("toggleSquareOverlay", () => {
+    it("should add overlay", () => {
+      service.activatePuzzle(testPuzzleId).subscribe(() => {
+        service.toggleSquareOverlay(0, OverlayType.Circle);
+      });
+
+      service.activeGrid$.subscribe((grid) => {
+        expect(grid[0]).toEqual(new Square(0, "Y", 1, 1, 1, SquareType.Letter, OverlayType.Circle));
+      });
+    });
+
+    it("should remove overlay", () => {
+      service.activatePuzzle(testPuzzleId).subscribe(() => {
+        service.toggleSquareOverlay(26, OverlayType.Circle);
+      });
+
+      service.activeGrid$.subscribe((grid) => {
+        expect(grid[26]).toEqual(new Square(26, "R", -1, 19, 6, SquareType.Letter, OverlayType.None));
+      });
+    });
+  });
+
+  describe("setClueText", () => {
+    it("should set across clue text", () => {
+      service.activatePuzzle(testPuzzleId).subscribe(() => {
+        service.setClueText(ClueType.Across, 1, "TEST");
+
+        const acrossClues = service.getActiveAcross();
+
+        expect(acrossClues[0].text).toEqual("TEST");
+      });
+    });
+
+    it("should set down clue text", () => {
+      service.activatePuzzle(testPuzzleId).subscribe(() => {
+        service.setClueText(ClueType.Down, 9, "TEST");
+
+        const downClues = service.getActiveDown();
+
+        expect(downClues[8].text).toEqual("TEST");
+      });
+    });
+  });
+
   describe("setSquareValue", () => {
     it("should set square value to new letter", () => {
       service.activatePuzzle(testPuzzleId).subscribe(() => {
         service.setSquareValue(23, "x");
 
-        service.$activeGrid.subscribe((grid) => {
+        service.activeGrid$.subscribe((grid) => {
           expect(grid[23].value).toEqual("X");
         });
 
-        service.$activeAcrossClue.subscribe((clue) => {
+        service.activeAcrossClue$.subscribe((clue) => {
           expect(clue.answer).toEqual("IDXTAROD");
         });
 
-        service.$activeDownClue.subscribe((clue) => {
+        service.activeDownClue$.subscribe((clue) => {
           expect(clue.answer).toEqual("SXRE");
         });
       });
@@ -106,15 +296,15 @@ describe("PuzzleService", () => {
       service.activatePuzzle(testPuzzleId).subscribe(() => {
         service.setSquareValue(440, " ");
 
-        service.$activeGrid.subscribe((grid) => {
+        service.activeGrid$.subscribe((grid) => {
           expect(grid[440].value).toEqual(" ");
         });
 
-        service.$activeAcrossClue.subscribe((clue) => {
+        service.activeAcrossClue$.subscribe((clue) => {
           expect(clue.answer).toEqual("TOTHEMA ");
         });
 
-        service.$activeDownClue.subscribe((clue) => {
+        service.activeDownClue$.subscribe((clue) => {
           expect(clue.answer).toEqual("SE ");
         });
       });
@@ -209,122 +399,122 @@ describe("PuzzleService", () => {
     });
   });
 
-  describe("isAcrossStart", () => {
+  describe("startsAcross", () => {
     it("should return true when spacer to the left", () => {
       service.activatePuzzle(testPuzzleId).subscribe(() => {
-        expect(service.isAcrossStart(9)).toBe(true);
-        expect(service.isAcrossStart(412)).toBe(true);
+        expect(service.startsAcross(9)).toBe(true);
+        expect(service.startsAcross(412)).toBe(true);
       });
     });
 
-    it("should return true when on left puzzle edge", () => {
+    it("should return return clue when on left puzzle edge", () => {
       service.activatePuzzle(testPuzzleId).subscribe(() => {
-        expect(service.isAcrossStart(105)).toBe(true);
-        expect(service.isAcrossStart(399)).toBe(true);
+        expect(service.startsAcross(105)).toBe(true);
+        expect(service.startsAcross(399)).toBe(true);
       });
     });
 
     it("should return false when spacer", () => {
       service.activatePuzzle(testPuzzleId).subscribe(() => {
-        expect(service.isAcrossStart(67)).toBe(false);
-        expect(service.isAcrossStart(356)).toBe(false);
+        expect(service.startsAcross(67)).toBe(false);
+        expect(service.startsAcross(356)).toBe(false);
       });
     });
 
     it("should return false when not across start", () => {
       service.activatePuzzle(testPuzzleId).subscribe(() => {
-        expect(service.isAcrossStart(24)).toBe(false);
-        expect(service.isAcrossStart(376)).toBe(false);
+        expect(service.startsAcross(24)).toBe(false);
+        expect(service.startsAcross(376)).toBe(false);
       });
     });
   });
 
-  describe("isDownStart", () => {
+  describe("startsDown", () => {
     it("should return true when spacer above", () => {
       service.activatePuzzle(testPuzzleId).subscribe(() => {
-        expect(service.isDownStart(50)).toBe(true);
-        expect(service.isDownStart(394)).toBe(true);
+        expect(service.startsDown(50)).toBe(true);
+        expect(service.startsDown(394)).toBe(true);
       });
     });
 
     it("should return true when on top puzzle edge", () => {
       service.activatePuzzle(testPuzzleId).subscribe(() => {
-        expect(service.isDownStart(4)).toBe(true);
-        expect(service.isDownStart(19)).toBe(true);
+        expect(service.startsDown(4)).toBe(true);
+        expect(service.startsDown(19)).toBe(true);
       });
     });
 
     it("should return false when spacer", () => {
       service.activatePuzzle(testPuzzleId).subscribe(() => {
-        expect(service.isDownStart(317)).toBe(false);
-        expect(service.isDownStart(420)).toBe(false);
+        expect(service.startsDown(317)).toBe(false);
+        expect(service.startsDown(420)).toBe(false);
       });
     });
 
     it("should return false when not down start", () => {
       service.activatePuzzle(testPuzzleId).subscribe(() => {
-        expect(service.isDownStart(158)).toBe(false);
-        expect(service.isDownStart(433)).toBe(false);
+        expect(service.startsDown(158)).toBe(false);
+        expect(service.startsDown(433)).toBe(false);
       });
     });
   });
 
-  describe("isAcrossEnd", () => {
+  describe("endsAcross", () => {
     it("should return true when spacer to the right", () => {
       service.activatePuzzle(testPuzzleId).subscribe(() => {
-        expect(service.isAcrossEnd(7)).toBe(true);
-        expect(service.isAcrossEnd(431)).toBe(true);
+        expect(service.endsAcross(7)).toBe(true);
+        expect(service.endsAcross(431)).toBe(true);
       });
     });
 
     it("should return true when on right puzzle edge", () => {
       service.activatePuzzle(testPuzzleId).subscribe(() => {
-        expect(service.isAcrossEnd(167)).toBe(true);
-        expect(service.isAcrossEnd(440)).toBe(true);
+        expect(service.endsAcross(167)).toBe(true);
+        expect(service.endsAcross(440)).toBe(true);
       });
     });
 
     it("should return false when spacer", () => {
       service.activatePuzzle(testPuzzleId).subscribe(() => {
-        expect(service.isAcrossEnd(63)).toBe(false);
-        expect(service.isAcrossEnd(432)).toBe(false);
+        expect(service.endsAcross(63)).toBe(false);
+        expect(service.endsAcross(432)).toBe(false);
       });
     });
 
     it("should return false when not across end", () => {
       service.activatePuzzle(testPuzzleId).subscribe(() => {
-        expect(service.isAcrossEnd(0)).toBe(false);
-        expect(service.isAcrossEnd(416)).toBe(false);
+        expect(service.endsAcross(0)).toBe(false);
+        expect(service.endsAcross(416)).toBe(false);
       });
     });
   });
 
-  describe("isDownEnd", () => {
+  describe("endsDown", () => {
     it("should return true when spacer below", () => {
       service.activatePuzzle(testPuzzleId).subscribe(() => {
-        expect(service.isDownEnd(42)).toBe(true);
-        expect(service.isDownEnd(334)).toBe(true);
+        expect(service.endsDown(42)).toBe(true);
+        expect(service.endsDown(334)).toBe(true);
       });
     });
 
     it("should return true when on bottom puzzle edge", () => {
       service.activatePuzzle(testPuzzleId).subscribe(() => {
-        expect(service.isDownEnd(421)).toBe(true);
-        expect(service.isDownEnd(439)).toBe(true);
+        expect(service.endsDown(421)).toBe(true);
+        expect(service.endsDown(439)).toBe(true);
       });
     });
 
     it("should return false when spacer", () => {
       service.activatePuzzle(testPuzzleId).subscribe(() => {
-        expect(service.isDownEnd(63)).toBe(false);
-        expect(service.isDownEnd(432)).toBe(false);
+        expect(service.endsDown(63)).toBe(false);
+        expect(service.endsDown(432)).toBe(false);
       });
     });
 
     it("should return false when not down end", () => {
       service.activatePuzzle(testPuzzleId).subscribe(() => {
-        expect(service.isDownEnd(3)).toBe(false);
-        expect(service.isDownEnd(389)).toBe(false);
+        expect(service.endsDown(3)).toBe(false);
+        expect(service.endsDown(389)).toBe(false);
       });
     });
   });

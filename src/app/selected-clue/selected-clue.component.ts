@@ -17,31 +17,26 @@ export class SelectedClueComponent implements OnInit {
   constructor(private puzzleService: PuzzleService) {}
 
   ngOnInit(): void {
-    this.puzzleService.$activeAcrossClue.subscribe((clue: Clue) => {
-      if (this.acrossInput.dirty) {
-        this.puzzleService.setClueText(ClueType.Across, this.acrossClue.index, this.acrossInput.value);
-        this.acrossInput.markAsPristine();
-      }
-
+    this.puzzleService.activeAcrossClue$.subscribe((clue: Clue) => {
       this.acrossClue = clue;
       this.acrossInput.setValue(clue.text);
     });
 
-    this.puzzleService.$activeDownClue.subscribe((clue: Clue) => {
-      if (this.downInput.dirty) {
-        this.puzzleService.setClueText(ClueType.Down, this.downClue.index, this.downInput.value);
-        this.downInput.markAsPristine();
-      }
-
+    this.puzzleService.activeDownClue$.subscribe((clue: Clue) => {
       this.downClue = clue;
       this.downInput.setValue(clue.text);
     });
+  }
 
-    this.puzzleService.messenger.subscribe((msg: string) => {
-      if (msg == "save") {
-        this.puzzleService.setClueText(ClueType.Across, this.acrossClue.index, this.acrossInput.value);
-        this.puzzleService.setClueText(ClueType.Down, this.downClue.index, this.downInput.value);
-      }
-    });
+  public saveClues(): void {
+    if (this.acrossInput.dirty) {
+      this.puzzleService.setClueText(ClueType.Across, this.acrossClue.index, this.acrossInput.value);
+      this.acrossInput.markAsPristine();
+    }
+
+    if (this.downInput.dirty) {
+      this.puzzleService.setClueText(ClueType.Down, this.downClue.index, this.downInput.value);
+      this.downInput.markAsPristine();
+    }
   }
 }
