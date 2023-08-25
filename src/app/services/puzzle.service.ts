@@ -14,16 +14,6 @@ import {
   QuerySnapshot,
 } from "firebase/firestore";
 
-export interface Puzzle {
-  id: string;
-  name: string;
-  grid: Array<Square>;
-  width: number;
-  height: number;
-  acrossClues: Array<Clue>;
-  downClues: Array<Clue>;
-}
-
 export interface PuzzleDoc {
   id: string;
   name: string;
@@ -35,6 +25,26 @@ export interface PuzzleDoc {
   shades: Array<number>;
   "across-clues": Array<string>;
   "down-clues": Array<string>;
+}
+
+export class Puzzle {
+  id: string;
+  name: string;
+  grid: Array<Square>;
+  width: number;
+  height: number;
+  acrossClues: Array<Clue>;
+  downClues: Array<Clue>;
+
+  constructor() {
+    this.id = "";
+    this.name = "";
+    this.grid = [];
+    this.width = 0;
+    this.height = 0;
+    this.acrossClues = [];
+    this.downClues = [];
+  }
 }
 
 export class Clue {
@@ -99,7 +109,7 @@ export enum OverlayType {
   providedIn: "root",
 })
 export class PuzzleService {
-  public activeGrid$: BehaviorSubject<Array<Square>> = new BehaviorSubject([new Square()]);
+  public activePuzzle$: BehaviorSubject<Puzzle> = new BehaviorSubject(new Puzzle());
   public activeAcrossClue$: BehaviorSubject<Clue> = new BehaviorSubject(new Clue());
   public activeDownClue$: BehaviorSubject<Clue> = new BehaviorSubject(new Clue());
   public messenger: EventEmitter<string> = new EventEmitter();
@@ -122,9 +132,9 @@ export class PuzzleService {
    * @param title puzzle title
    * @param width number of columns in puzzle
    * @param height number of rows in puzzle
-   * @returns an Observable with the created Puzzle object
+   * @returns true if puzzle created successfully, false otherwise
    */
-  public createPuzzle(title: string, width: number, height: number): Observable<Puzzle> {
+  public createPuzzle(title: string, width: number, height: number): Observable<boolean> {
     const db = getFirestore();
     const puzzles = collection(db, "puzzle");
 
@@ -141,7 +151,15 @@ export class PuzzleService {
       "down-clues": Array(width).fill(""),
     };
 
-    return from(addDoc(puzzles, newPuzzle)).pipe(mergeMap((doc) => this.activatePuzzle(doc.id)));
+    return from(addDoc(puzzles, newPuzzle)).pipe(
+      mergeMap((doc) => this.activatePuzzle(doc.id)),
+      map(() => {
+        return true;
+      }),
+      catchError((error: ErrorEvent) => {
+        throw error;
+      })
+    );
   }
 
   /**
@@ -166,9 +184,9 @@ export class PuzzleService {
   /**
    * Loads and activates the puzzle with the provided id
    * @param id the puzzle id
-   * @returns and Observable containing the loaded Puzzle object
+   * @returns true if puzzle loaded successfully, false otherwise
    */
-  public activatePuzzle(id: string): Observable<Puzzle> {
+  public activatePuzzle(id: string): Observable<boolean> {
     return this.loadPuzzle(id).pipe(
       map((puzzle) => {
         if (puzzle) {
@@ -181,14 +199,14 @@ export class PuzzleService {
           this.activePuzzle.downClues = this.buildDownClues(puzzle as PuzzleDoc);
           this.numberPuzzle(this.activePuzzle);
 
-          this.activeGrid$.next(this.activePuzzle.grid);
+          this.activePuzzle$.next(this.activePuzzle);
           this.activeAcrossClue$.next(this.activePuzzle.acrossClues[0]);
           this.activeDownClue$.next(this.activePuzzle.downClues[0]);
 
-          return this.activePuzzle;
+          return true;
         }
 
-        return {} as Puzzle;
+        return false;
       }),
       catchError((error: ErrorEvent) => {
         throw error;
@@ -235,7 +253,7 @@ export class PuzzleService {
     this.numberPuzzle(this.activePuzzle);
 
     this.messenger.emit("clear");
-    this.activeGrid$.next(this.activePuzzle.grid);
+    this.activePuzzle$.next(this.activePuzzle);
     this.activeAcrossClue$.next(this.activePuzzle.acrossClues[0]);
     this.activeDownClue$.next(this.activePuzzle.downClues[0]);
   }
@@ -261,7 +279,7 @@ export class PuzzleService {
     this.setSquareType(index, newType);
     this.numberPuzzle(this.activePuzzle);
 
-    this.activeGrid$.next(this.activePuzzle.grid);
+    this.activePuzzle$.next(this.activePuzzle);
 
     if (square.type == SquareType.Letter) {
       this.activeAcrossClue$.next(this.getAcrossClue(index));
@@ -279,7 +297,7 @@ export class PuzzleService {
 
     if (square.type == SquareType.Letter) {
       square.overlay = square.overlay == type ? OverlayType.None : type;
-      this.activeGrid$.next(this.activePuzzle.grid);
+      this.activePuzzle$.next(this.activePuzzle);
     }
   }
 
@@ -295,7 +313,7 @@ export class PuzzleService {
 
     // Update puzzle grid
     square.value = value.toUpperCase();
-    this.activeGrid$.next(this.activePuzzle.grid);
+    this.activePuzzle$.next(this.activePuzzle);
 
     // Update across clue answer
     const acrossPos = acrossClue.squares.findIndex((i: number) => i == square.index);

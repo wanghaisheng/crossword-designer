@@ -1,23 +1,20 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from "@angular/core/testing";
+import { ComponentFixture, TestBed } from "@angular/core/testing";
 
-import { EditMode, HighlightMode, PuzzleGridComponent } from "./puzzle-grid.component";
+import { EditMode, HighlightMode, PuzzleEditingComponent } from "./puzzle-editing.component";
 import { OverlayType, Puzzle, PuzzleService, Square } from "../services/puzzle.service";
-import { BehaviorSubject, of } from "rxjs";
+import { BehaviorSubject } from "rxjs";
 import { DebugElement, EventEmitter } from "@angular/core";
 import { By } from "@angular/platform-browser";
 
 describe("PuzzleGridComponent", () => {
-  let component: PuzzleGridComponent;
-  let fixture: ComponentFixture<PuzzleGridComponent>;
+  let component: PuzzleEditingComponent;
+  let fixture: ComponentFixture<PuzzleEditingComponent>;
   let squareEls: Array<DebugElement>;
   let tableEl: DebugElement;
 
   const puzzleServiceSpy = jasmine.createSpyObj("PuzzleService", [
     "activeGrid$",
     "messenger",
-    "getPuzzleList",
-    "activatePuzzle",
-    "createPuzzle",
     "selectSquare",
     "toggleSquareType",
     "toggleSquareOverlay",
@@ -40,22 +37,9 @@ describe("PuzzleGridComponent", () => {
     downClues: [],
   };
 
-  const newTestPuzzle: Puzzle = {
-    id: "new-test-id",
-    name: "New Test",
-    width: 10,
-    height: 12,
-    grid: Array.from(Array(120).keys()).map((i) => new Square(i, "", -1, Math.floor(i / 10), i % 10)),
-    acrossClues: [],
-    downClues: [],
-  };
-
   beforeEach(async () => {
-    puzzleServiceSpy.activeGrid$ = new BehaviorSubject(testPuzzle.grid);
+    puzzleServiceSpy.activePuzzle$ = new BehaviorSubject(testPuzzle);
     puzzleServiceSpy.messenger = new EventEmitter<string>();
-    puzzleServiceSpy.getPuzzleList.and.returnValue(of([]));
-    puzzleServiceSpy.activatePuzzle.and.returnValue(of(testPuzzle));
-    puzzleServiceSpy.createPuzzle.and.returnValue(of(newTestPuzzle));
     puzzleServiceSpy.isPuzzleStart.and.returnValue(false);
     puzzleServiceSpy.isPuzzleEnd.and.returnValue(false);
     puzzleServiceSpy.selectSquare.calls.reset();
@@ -70,15 +54,17 @@ describe("PuzzleGridComponent", () => {
     });
 
     await TestBed.configureTestingModule({
-      declarations: [PuzzleGridComponent],
+      declarations: [PuzzleEditingComponent],
       providers: [{ provide: PuzzleService, useValue: puzzleServiceSpy }],
     }).compileComponents();
   });
 
   beforeEach(() => {
-    fixture = TestBed.createComponent(PuzzleGridComponent);
+    fixture = TestBed.createComponent(PuzzleEditingComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
+
+    squareEls = fixture.debugElement.queryAll(By.css(".square"));
   });
 
   it("should create", () => {
@@ -99,44 +85,7 @@ describe("PuzzleGridComponent", () => {
     });
   });
 
-  describe("loadPuzzle", () => {
-    it("should activate puzzle", () => {
-      component.loadPuzzleForm.value.id = "test-id";
-
-      fixture.detectChanges();
-      component.loadPuzzle();
-
-      expect(puzzleServiceSpy.activatePuzzle).toHaveBeenCalledWith("test-id");
-      expect(component.numRows).toEqual(5);
-      expect(component.numCols).toEqual(4);
-      expect(component.puzzleLoaded).toEqual(true);
-    });
-  });
-
-  describe("createPuzzle", () => {
-    it("should activate puzzle", () => {
-      component.newPuzzleForm.value.title = "New Puzzle";
-      component.newPuzzleForm.value.width = 10;
-      component.newPuzzleForm.value.height = 12;
-
-      fixture.detectChanges();
-      component.createPuzzle();
-
-      expect(puzzleServiceSpy.createPuzzle).toHaveBeenCalledWith("New Puzzle", 10, 12);
-      expect(component.numRows).toEqual(12);
-      expect(component.numCols).toEqual(10);
-      expect(component.puzzleLoaded).toEqual(true);
-    });
-  });
-
   describe("onClickSquare", () => {
-    beforeEach(() => {
-      component.loadPuzzle();
-      fixture.detectChanges();
-
-      squareEls = fixture.debugElement.queryAll(By.css(".square"));
-    });
-
     it("should select square when edit mode is Value", () => {
       component.editMode = EditMode.Value;
 
