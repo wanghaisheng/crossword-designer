@@ -12,7 +12,7 @@ import { provideStorage, getStorage } from "@angular/fire/storage";
 
 import { TestBed } from "@angular/core/testing";
 
-import { Clue, ClueType, OverlayType, PuzzleService, Square, SquareType } from "./puzzle.service";
+import { Clue, ClueType, OverlayType, Puzzle, PuzzleService, Square, SquareType } from "./puzzle.service";
 import { of } from "rxjs";
 
 describe("PuzzleService", () => {
@@ -47,21 +47,25 @@ describe("PuzzleService", () => {
   });
 
   describe("activatePuzzle", () => {
-    it("should number squares", () => {
-      service.activatePuzzle(testPuzzleId).subscribe();
+    it("should number squares and return true when successful", () => {
+      service.activatePuzzle(testPuzzleId).subscribe((response) => {
+        expect(response).toEqual(true);
+      });
 
-      service.activeGrid$.subscribe((grid: Array<Square>) => {
-        expect(grid[0]).toEqual(new Square(0, "Y", 1, 1, 1));
-        expect(grid[198]).toEqual(new Square(198, "U", -1, 63, 50));
-        expect(grid[223]).toEqual(new Square(223, "", -1, -1, -1, SquareType.Spacer));
-        expect(grid[440]).toEqual(new Square(440, "X", -1, 128, 122));
+      service.activePuzzle$.subscribe((puzzle) => {
+        expect(puzzle.grid[0]).toEqual(new Square(0, "Y", 1, 1, 1));
+        expect(puzzle.grid[198]).toEqual(new Square(198, "U", -1, 63, 50));
+        expect(puzzle.grid[223]).toEqual(new Square(223, "", -1, -1, -1, SquareType.Spacer));
+        expect(puzzle.grid[440]).toEqual(new Square(440, "X", -1, 128, 122));
       });
     });
 
-    it("should associate clues", () => {
-      service.activatePuzzle(testPuzzleId).subscribe(() => {
+    it("should associate clues and return true when successful", () => {
+      service.activatePuzzle(testPuzzleId).subscribe((response) => {
         const acrossClues = service.getActiveAcross();
         const downClues = service.getActiveDown();
+
+        expect(response).toEqual(true);
 
         expect(acrossClues[0]).toEqual(new Clue(1, "It's not that simple", "YESANDNO", [0, 1, 2, 3, 4, 5, 6, 7]));
         expect(downClues[0]).toEqual(new Clue(1, "Sharp bark", "YIP", [0, 21, 42]));
@@ -94,9 +98,9 @@ describe("PuzzleService", () => {
         service.clearPuzzle();
       });
 
-      service.activeGrid$.subscribe((grid) => {
-        expect(grid[0]).toEqual(new Square(0, " ", 1, 1, 1));
-        expect(grid[8]).toEqual(new Square(8, " ", 9, 1, 9));
+      service.activePuzzle$.subscribe((puzzle) => {
+        expect(puzzle.grid[0]).toEqual(new Square(0, " ", 1, 1, 1));
+        expect(puzzle.grid[8]).toEqual(new Square(8, " ", 9, 1, 9));
       });
 
       service.activeAcrossClue$.subscribe((clue) => {
@@ -235,8 +239,8 @@ describe("PuzzleService", () => {
         service.toggleSquareOverlay(0, OverlayType.Circle);
       });
 
-      service.activeGrid$.subscribe((grid) => {
-        expect(grid[0]).toEqual(new Square(0, "Y", 1, 1, 1, SquareType.Letter, OverlayType.Circle));
+      service.activePuzzle$.subscribe((puzzle: Puzzle) => {
+        expect(puzzle.grid[0]).toEqual(new Square(0, "Y", 1, 1, 1, SquareType.Letter, OverlayType.Circle));
       });
     });
 
@@ -245,8 +249,8 @@ describe("PuzzleService", () => {
         service.toggleSquareOverlay(26, OverlayType.Circle);
       });
 
-      service.activeGrid$.subscribe((grid) => {
-        expect(grid[26]).toEqual(new Square(26, "R", -1, 19, 6, SquareType.Letter, OverlayType.None));
+      service.activePuzzle$.subscribe((puzzle: Puzzle) => {
+        expect(puzzle.grid[26]).toEqual(new Square(26, "R", -1, 19, 6, SquareType.Letter, OverlayType.None));
       });
     });
   });
@@ -278,8 +282,8 @@ describe("PuzzleService", () => {
       service.activatePuzzle(testPuzzleId).subscribe(() => {
         service.setSquareValue(23, "x");
 
-        service.activeGrid$.subscribe((grid) => {
-          expect(grid[23].value).toEqual("X");
+        service.activePuzzle$.subscribe((puzzle: Puzzle) => {
+          expect(puzzle.grid[23].value).toEqual("X");
         });
 
         service.activeAcrossClue$.subscribe((clue) => {
@@ -296,8 +300,8 @@ describe("PuzzleService", () => {
       service.activatePuzzle(testPuzzleId).subscribe(() => {
         service.setSquareValue(440, " ");
 
-        service.activeGrid$.subscribe((grid) => {
-          expect(grid[440].value).toEqual(" ");
+        service.activePuzzle$.subscribe((puzzle: Puzzle) => {
+          expect(puzzle.grid[440].value).toEqual(" ");
         });
 
         service.activeAcrossClue$.subscribe((clue) => {

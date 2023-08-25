@@ -1,6 +1,6 @@
 import { Component, OnInit } from "@angular/core";
 import { OverlayType, Puzzle, PuzzleDoc, PuzzleService, Square, SquareType } from "../services/puzzle.service";
-import { FormControl, FormGroup } from "@angular/forms";
+// import { FormControl, FormGroup } from "@angular/forms";
 
 export enum EditMode {
   Value,
@@ -17,10 +17,10 @@ export enum HighlightMode {
 
 @Component({
   selector: "app-puzzle-grid",
-  templateUrl: "./puzzle-grid.component.html",
-  styleUrls: ["./puzzle-grid.component.scss"],
+  templateUrl: "./puzzle-editing.component.html",
+  styleUrls: ["./puzzle-editing.component.scss"],
 })
-export class PuzzleGridComponent implements OnInit {
+export class PuzzleEditingComponent implements OnInit {
   public numRows: number = 21;
   public numCols: number = 21;
   public squareHeight: number = 30;
@@ -31,29 +31,37 @@ export class PuzzleGridComponent implements OnInit {
   public selectedIndex: number = 0;
 
   public puzzleGrid: Array<Square> = [];
-  public puzzleList: Array<PuzzleDoc> = [];
+  // public puzzleList: Array<PuzzleDoc> = [];
 
   public puzzleLoaded: boolean = false;
 
-  public loadPuzzleForm = new FormGroup({
-    id: new FormControl(""),
-  });
+  // public loadPuzzleForm = new FormGroup({
+  //   id: new FormControl(""),
+  // });
 
-  public newPuzzleForm = new FormGroup({
-    title: new FormControl(""),
-    width: new FormControl(""),
-    height: new FormControl(""),
-  });
+  // public newPuzzleForm = new FormGroup({
+  //   title: new FormControl(""),
+  //   width: new FormControl(""),
+  //   height: new FormControl(""),
+  // });
 
   constructor(private puzzleService: PuzzleService) {}
 
   ngOnInit(): void {
-    this.puzzleService.getPuzzleList().subscribe((puzzles: Array<PuzzleDoc>) => {
-      this.puzzleList = puzzles;
+    // this.puzzleService.getPuzzleList().subscribe((puzzles: Array<PuzzleDoc>) => {
+    //   this.puzzleList = puzzles;
+    // });
+
+    this.puzzleService.activePuzzle$.subscribe((puzzle: Puzzle) => {
+      this.puzzleGrid = puzzle.grid;
+      this.numRows = puzzle.height;
+      this.numCols = puzzle.width;
+
+      if (puzzle.grid.length > 0) {
+        this.puzzleLoaded = true;
+      }
     });
-    this.puzzleService.activeGrid$.subscribe((grid: Array<Square>) => {
-      this.puzzleGrid = grid;
-    });
+
     this.puzzleService.messenger.subscribe((msg: string) => {
       if (msg == "clear") {
         this.onClickSquare(0, EditMode.Value);
@@ -61,27 +69,27 @@ export class PuzzleGridComponent implements OnInit {
     });
   }
 
-  public loadPuzzle(): void {
-    this.puzzleService.activatePuzzle(this.loadPuzzleForm.value.id).subscribe((puzzle: Puzzle) => {
-      if (puzzle) {
-        this.numRows = puzzle.height;
-        this.numCols = puzzle.width;
-        this.puzzleLoaded = true;
-      }
-    });
-  }
+  // public loadPuzzle(): void {
+  //   this.puzzleService.activatePuzzle(this.loadPuzzleForm.value.id).subscribe((puzzle: Puzzle) => {
+  //     if (puzzle) {
+  //       this.numRows = puzzle.height;
+  //       this.numCols = puzzle.width;
+  //       this.puzzleLoaded = true;
+  //     }
+  //   });
+  // }
 
-  public createPuzzle(): void {
-    this.puzzleService
-      .createPuzzle(this.newPuzzleForm.value.title, this.newPuzzleForm.value.width, this.newPuzzleForm.value.height)
-      .subscribe((puzzle: Puzzle) => {
-        if (puzzle) {
-          this.numRows = puzzle.height;
-          this.numCols = puzzle.width;
-          this.puzzleLoaded = true;
-        }
-      });
-  }
+  // public createPuzzle(): void {
+  //   this.puzzleService
+  //     .createPuzzle(this.newPuzzleForm.value.title, this.newPuzzleForm.value.width, this.newPuzzleForm.value.height)
+  //     .subscribe((puzzle: Puzzle) => {
+  //       if (puzzle) {
+  //         this.numRows = puzzle.height;
+  //         this.numCols = puzzle.width;
+  //         this.puzzleLoaded = true;
+  //       }
+  //     });
+  // }
 
   public onClickSquare(index: number, overrideMode?: EditMode) {
     let square = this.puzzleGrid[index];

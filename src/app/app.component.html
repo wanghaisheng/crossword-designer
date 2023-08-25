@@ -5,7 +5,14 @@
   </head>
   <body>
     <div class="container">
-      <app-puzzle-grid></app-puzzle-grid>
+      <div class="container-fluid">
+        <div class="row flex-nowrap">
+          <app-sidebar-nav class="col-1 bg-light"></app-sidebar-nav>
+          <div class="col py-3">
+            <router-outlet></router-outlet>
+          </div>
+        </div>
+      </div>
     </div>
   </body>
 </html>
