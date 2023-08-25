@@ -1,20 +1,20 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { ClueDraftingComponent } from './clue-drafting.component';
+import { AnswerDraftingComponent } from './answer-drafting.component';
 
-describe('ClueDraftingComponent', () => {
-  let component: ClueDraftingComponent;
-  let fixture: ComponentFixture<ClueDraftingComponent>;
+describe('AnswerDraftingComponent', () => {
+  let component: AnswerDraftingComponent;
+  let fixture: ComponentFixture<AnswerDraftingComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [ ClueDraftingComponent ]
+      declarations: [ AnswerDraftingComponent ]
     })
     .compileComponents();
   });
 
   beforeEach(() => {
-    fixture = TestBed.createComponent(ClueDraftingComponent);
+    fixture = TestBed.createComponent(AnswerDraftingComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

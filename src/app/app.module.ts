@@ -14,20 +14,22 @@ import { provideAuth, getAuth } from "@angular/fire/auth";
 import { provideFirestore, getFirestore } from "@angular/fire/firestore";
 import { provideFunctions, getFunctions } from "@angular/fire/functions";
 import { provideStorage, getStorage } from "@angular/fire/storage";
-import { ClueDraftingComponent } from "./clue-drafting/clue-drafting.component";
+import { ClueEditingComponent } from "./clue-editing/clue-editing.component";
 import { SidebarNavComponent } from "./sidebar-nav/sidebar-nav.component";
 import { PuzzleReviewComponent } from "./puzzle-review/puzzle-review.component";
 import { LoadPuzzleComponent } from "./load-puzzle/load-puzzle.component";
+import { AnswerDraftingComponent } from './answer-drafting/answer-drafting.component';
 
 @NgModule({
   declarations: [
     AppComponent,
     PuzzleEditingComponent,
     SelectedClueComponent,
-    ClueDraftingComponent,
+    ClueEditingComponent,
     SidebarNavComponent,
     PuzzleReviewComponent,
     LoadPuzzleComponent,
+    AnswerDraftingComponent,
   ],
   imports: [
     BrowserModule,
