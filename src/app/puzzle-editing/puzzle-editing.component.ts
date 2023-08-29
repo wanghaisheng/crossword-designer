@@ -115,7 +115,9 @@ export class PuzzleEditingComponent implements OnInit {
   }
 
   public onSave(): void {
-    this.puzzleService.savePuzzle();
+    this.puzzleService.savePuzzle().subscribe(() => {
+      alert("Puzzle saved!");
+    });
   }
 
   public onClear(): void {

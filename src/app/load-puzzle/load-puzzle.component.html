@@ -1,47 +1,49 @@
-<button class="btn btn-light ms-auto" type="button" data-bs-toggle="modal" data-bs-target="#loadModal">Load</button>
-<div class="modal fade" id="loadModal" tabindex="-1" aria-labelledby="loadModal" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h1 class="modal-title fs-5" id="exampleModalLabel">Load Puzzle</h1>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        <form [formGroup]="loadPuzzleForm" (ngSubmit)="loadPuzzle()">
-          <div class="mb-3">
-            <select class="form-select" aria-label="Puzzle select" formControlName="id">
-              <option>Select puzzle...</option>
-              <option *ngFor="let opt of puzzleList" [value]="opt.id">{{ opt.name }}</option>
-            </select>
-          </div>
-          <button type="submit" class="btn btn-primary" data-bs-dismiss="modal">Load</button>
-        </form>
+<div class="container">
+  <button class="btn btn-light ms-auto" type="button" data-bs-toggle="modal" data-bs-target="#loadModal">Load</button>
+  <div class="modal fade" id="loadModal" tabindex="-1" aria-labelledby="loadModal" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h1 class="modal-title fs-5" id="exampleModalLabel">Load Puzzle</h1>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form [formGroup]="loadPuzzleForm" (ngSubmit)="loadPuzzle()">
+            <div class="mb-3">
+              <select class="form-select" aria-label="Puzzle select" formControlName="id">
+                <option>Select puzzle...</option>
+                <option *ngFor="let opt of puzzleList" [value]="opt.id">{{ opt.name }}</option>
+              </select>
+            </div>
+            <button type="submit" class="btn btn-primary" data-bs-dismiss="modal">Load</button>
+          </form>
+        </div>
       </div>
     </div>
   </div>
-</div>
 
-<button class="btn btn-light" type="button" data-bs-toggle="modal" data-bs-target="#createModal">New</button>
-<div class="modal fade" id="createModal" tabindex="-1" aria-labelledby="createModal" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h1 class="modal-title fs-5" id="exampleModalLabel">Create New Puzzle</h1>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        <form [formGroup]="newPuzzleForm" (ngSubmit)="createPuzzle()">
-          <div class="mb-3">
-            <input type="text" class="form-control" aria-label="Puzzle Title" placeholder="Title" formControlName="title" />
-          </div>
-          <div class="mb-3">
-            <div class="input-group mb-3">
-              <input type="number" class="form-control" aria-label="Width" placeholder="Width" formControlName="width" />
-              <input type="number" class="form-control" aria-label="Height" placeholder="Height" formControlName="height" />
+  <button class="btn btn-light" type="button" data-bs-toggle="modal" data-bs-target="#createModal">New</button>
+  <div class="modal fade" id="createModal" tabindex="-1" aria-labelledby="createModal" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h1 class="modal-title fs-5" id="exampleModalLabel">Create New Puzzle</h1>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form [formGroup]="newPuzzleForm" (ngSubmit)="createPuzzle()">
+            <div class="mb-3">
+              <input type="text" class="form-control" aria-label="Puzzle Title" placeholder="Title" formControlName="title" />
             </div>
-          </div>
-          <button type="submit" class="btn btn-success" data-bs-dismiss="modal">Create</button>
-        </form>
+            <div class="mb-3">
+              <div class="input-group mb-3">
+                <input type="number" class="form-control" aria-label="Width" placeholder="Width" formControlName="width" />
+                <input type="number" class="form-control" aria-label="Height" placeholder="Height" formControlName="height" />
+              </div>
+            </div>
+            <button type="submit" class="btn btn-success" data-bs-dismiss="modal">Create</button>
+          </form>
+        </div>
       </div>
     </div>
   </div>

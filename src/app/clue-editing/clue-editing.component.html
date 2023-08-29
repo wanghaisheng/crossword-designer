@@ -1,1 +1,56 @@
-<p>clue-editing works!</p>
+<div class="container">
+  <div class="row">
+    <div class="hstack gap-3">
+      <button class="ms-auto btn btn-success" type="submit" (click)="onSave()">Save</button>
+      <button class="btn btn-danger" type="submit" (click)="onClear()">Clear</button>
+    </div>
+  </div>
+  <form class="row" [formGroup]="cluesForm">
+    <div class="col">
+      <h3>Across</h3>
+      <div [formArrayName]="'across'">
+        <div *ngFor="let clue of acrossClues; let i = index" class="form-group">
+          <div class="hstack gap-2 p-3">
+            <div class="p-1">
+              <strong>{{ acrossClues[i].index }}</strong>
+            </div>
+            <div class="vr"></div>
+            <div class="p-1">{{ acrossClues[i].answer }}</div>
+          </div>
+          <div class="col-sm-10">
+            <textarea
+              [formControlName]="i"
+              class="form-control"
+              id="acrossText"
+              rows="2"
+              placeholder="Your clue here..."
+              (blur)="updateAcrossClue(i)"></textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col">
+      <h3>Down</h3>
+      <div [formArrayName]="'down'">
+        <div *ngFor="let clue of downClues; let i = index" class="form-group">
+          <div class="hstack gap-2 p-3">
+            <div class="p-1">
+              <strong>{{ downClues[i].index }}</strong>
+            </div>
+            <div class="vr"></div>
+            <div class="p-1">{{ downClues[i].answer }}</div>
+          </div>
+          <div class="col-sm-10">
+            <textarea
+              [formControlName]="i"
+              class="form-control"
+              id="downText"
+              rows="2"
+              placeholder="Your clue here..."
+              (blur)="updateDownClue(i)"></textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+  </form>
+</div>
