@@ -2,22 +2,24 @@ import { ComponentFixture, TestBed } from "@angular/core/testing";
 
 import { EditMode, HighlightMode, PuzzleEditingComponent } from "./puzzle-editing.component";
 import { OverlayType, Puzzle, PuzzleService, Square } from "../services/puzzle.service";
-import { BehaviorSubject } from "rxjs";
+import { BehaviorSubject, of, throwError } from "rxjs";
 import { DebugElement, EventEmitter } from "@angular/core";
 import { By } from "@angular/platform-browser";
+import { LoadService } from "../services/load.service";
 
-describe("PuzzleGridComponent", () => {
+describe("PuzzleEditingComponent", () => {
   let component: PuzzleEditingComponent;
   let fixture: ComponentFixture<PuzzleEditingComponent>;
   let squareEls: Array<DebugElement>;
   let tableEl: DebugElement;
 
   const puzzleServiceSpy = jasmine.createSpyObj("PuzzleService", [
-    "activeGrid$",
+    "puzzle",
     "messenger",
     "selectSquare",
     "toggleSquareType",
     "toggleSquareOverlay",
+    "loadPuzzle",
     "savePuzzle",
     "clearPuzzle",
     "setSquareValue",
@@ -27,8 +29,12 @@ describe("PuzzleGridComponent", () => {
     "isPuzzleStart",
   ]);
 
+  const loadServiceSpy = jasmine.createSpyObj("LoadService", ["activePuzzleId$"]);
+
+  const testId = "testId";
+
   const testPuzzle: Puzzle = {
-    id: "test-id",
+    id: testId,
     name: "Test",
     width: 4,
     height: 5,
@@ -38,11 +44,14 @@ describe("PuzzleGridComponent", () => {
   };
 
   beforeEach(async () => {
-    puzzleServiceSpy.activePuzzle$ = new BehaviorSubject(testPuzzle);
+    puzzleServiceSpy.puzzle = testPuzzle;
     puzzleServiceSpy.messenger = new EventEmitter<string>();
     puzzleServiceSpy.isPuzzleStart.and.returnValue(false);
     puzzleServiceSpy.isPuzzleEnd.and.returnValue(false);
+    puzzleServiceSpy.loadPuzzle.and.returnValue(of(false));
     puzzleServiceSpy.selectSquare.calls.reset();
+    loadServiceSpy.activePuzzleId$ = new BehaviorSubject<string>(testId);
+    spyOn(window, "alert");
 
     puzzleServiceSpy.getNextIndex.and.callFake((index: number, vertical: boolean, skipSpacers: boolean = false) => {
       if (vertical) return index + testPuzzle.width;
@@ -55,16 +64,16 @@ describe("PuzzleGridComponent", () => {
 
     await TestBed.configureTestingModule({
       declarations: [PuzzleEditingComponent],
-      providers: [{ provide: PuzzleService, useValue: puzzleServiceSpy }],
+      providers: [
+        { provide: PuzzleService, useValue: puzzleServiceSpy },
+        { provide: LoadService, useValue: loadServiceSpy },
+      ],
     }).compileComponents();
   });
 
   beforeEach(() => {
     fixture = TestBed.createComponent(PuzzleEditingComponent);
     component = fixture.componentInstance;
-    fixture.detectChanges();
-
-    squareEls = fixture.debugElement.queryAll(By.css(".square"));
   });
 
   it("should create", () => {
@@ -72,20 +81,44 @@ describe("PuzzleGridComponent", () => {
   });
 
   describe("ngOnInit", () => {
-    it("should select square when message clear", () => {
-      puzzleServiceSpy.messenger.next("clear");
+    it("should alert success when loadPuzzle returns true", () => {
+      puzzleServiceSpy.loadPuzzle.and.returnValue(of(true));
 
-      expect(puzzleServiceSpy.selectSquare).toHaveBeenCalledWith(0);
+      fixture.detectChanges();
+
+      expect(puzzleServiceSpy.loadPuzzle).toHaveBeenCalledWith(testId);
+      expect(window.alert).toHaveBeenCalledWith("Puzzle loaded successfully!");
+      expect(component.puzzleLoaded).toEqual(true);
     });
 
-    it("should do nothing when message not clear", () => {
-      puzzleServiceSpy.messenger.next("save");
+    it("should do nothing when loadPuzzle returns false", () => {
+      puzzleServiceSpy.loadPuzzle.and.returnValue(of(false));
 
-      expect(puzzleServiceSpy.selectSquare).not.toHaveBeenCalled();
+      fixture.detectChanges();
+
+      expect(puzzleServiceSpy.loadPuzzle).toHaveBeenCalledWith(testId);
+      expect(window.alert).not.toHaveBeenCalled();
+    });
+
+    it("should alert failure when loadPuzzle throws error", () => {
+      const errorMsg = "Failed to get doc";
+      puzzleServiceSpy.loadPuzzle.and.callFake(() => {
+        return throwError(new Error(errorMsg));
+      });
+
+      fixture.detectChanges();
+
+      expect(puzzleServiceSpy.loadPuzzle).toHaveBeenCalledWith(testId);
+      expect(window.alert).toHaveBeenCalledWith("Puzzle load failed: Failed to get doc");
     });
   });
 
   describe("onClickSquare", () => {
+    beforeEach(() => {
+      fixture.detectChanges();
+      squareEls = fixture.debugElement.queryAll(By.css(".square"));
+    });
+
     it("should select square when edit mode is Value", () => {
       component.editMode = EditMode.Value;
 
@@ -250,19 +283,20 @@ describe("PuzzleGridComponent", () => {
     });
   });
 
-  describe("saveGrid", () => {
+  describe("onSave", () => {
     it("should call savePuzzle", () => {
-      component.saveGrid();
+      component.onSave();
 
       expect(puzzleServiceSpy.savePuzzle).toHaveBeenCalled();
     });
   });
 
-  describe("clearGrid", () => {
+  describe("onClear", () => {
     it("should call clearPuzzle", () => {
-      component.clearGrid();
+      component.onClear();
 
       expect(puzzleServiceSpy.clearPuzzle).toHaveBeenCalled();
+      expect(component.selectedIndex).toEqual(0);
     });
   });
 

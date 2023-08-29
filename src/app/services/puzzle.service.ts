@@ -1,18 +1,8 @@
 import { EventEmitter, Injectable } from "@angular/core";
-import { BehaviorSubject, from, Observable } from "rxjs";
-import { catchError, map, mergeMap } from "rxjs/operators";
-import {
-  collection,
-  doc,
-  DocumentData,
-  DocumentSnapshot,
-  addDoc,
-  getDoc,
-  getDocs,
-  setDoc,
-  getFirestore,
-  QuerySnapshot,
-} from "firebase/firestore";
+import { BehaviorSubject, from, Observable, of } from "rxjs";
+import { catchError, map } from "rxjs/operators";
+import { FirebaseService } from "./firebase.service";
+import { DocumentData } from "firebase/firestore";
 
 export interface PuzzleDoc {
   id: string;
@@ -36,14 +26,22 @@ export class Puzzle {
   acrossClues: Array<Clue>;
   downClues: Array<Clue>;
 
-  constructor() {
-    this.id = "";
-    this.name = "";
-    this.grid = [];
-    this.width = 0;
-    this.height = 0;
-    this.acrossClues = [];
-    this.downClues = [];
+  constructor(
+    id: string = "",
+    name: string = "",
+    grid: Array<Square> = [],
+    width: number = 0,
+    height: number = 0,
+    acrossClues: Array<Clue> = [],
+    downClues: Array<Clue> = []
+  ) {
+    this.id = id;
+    this.name = name;
+    this.grid = grid;
+    this.width = width;
+    this.height = height;
+    this.acrossClues = acrossClues;
+    this.downClues = downClues;
   }
 }
 
@@ -109,105 +107,43 @@ export enum OverlayType {
   providedIn: "root",
 })
 export class PuzzleService {
-  public activePuzzle$: BehaviorSubject<Puzzle> = new BehaviorSubject(new Puzzle());
+  public get puzzle(): Puzzle {
+    return this._puzzle;
+  }
+
   public activeAcrossClue$: BehaviorSubject<Clue> = new BehaviorSubject(new Clue());
   public activeDownClue$: BehaviorSubject<Clue> = new BehaviorSubject(new Clue());
   public messenger: EventEmitter<string> = new EventEmitter();
 
-  private activePuzzle: Puzzle;
-  constructor() {
-    this.activePuzzle = {
-      id: "default-id",
-      name: "",
-      width: 21,
-      height: 21,
-      grid: [],
-      acrossClues: [],
-      downClues: [],
-    };
-  }
+  private _puzzle: Puzzle = new Puzzle();
+  constructor(private firebaseService: FirebaseService) {}
 
   /**
-   * Creates a new puzzle in the database
-   * @param title puzzle title
-   * @param width number of columns in puzzle
-   * @param height number of rows in puzzle
-   * @returns true if puzzle created successfully, false otherwise
+   * Loads puzzle with the provided id from the database
+   * @param id puzzle id
+   * @returns an Observable boolean (true if puzzled loaded from the database, false if already loaded)
    */
-  public createPuzzle(title: string, width: number, height: number): Observable<boolean> {
-    const db = getFirestore();
-    const puzzles = collection(db, "puzzle");
+  public loadPuzzle(id: string): Observable<boolean> {
+    if (id == this._puzzle.id) {
+      return of(false);
+    }
 
-    let newPuzzle = {
-      id: "",
-      name: title,
-      width: width,
-      height: height,
-      answers: Array(width * height).fill(" "),
-      spacers: [],
-      circles: [],
-      shades: [],
-      "across-clues": Array(height).fill(""),
-      "down-clues": Array(width).fill(""),
-    };
+    return this.firebaseService.getDoc("puzzle", id).pipe(
+      map((docData: DocumentData | undefined) => {
+        this._puzzle = new Puzzle(
+          id,
+          docData?.name,
+          this.buildGrid(docData as PuzzleDoc),
+          docData?.width,
+          docData?.height,
+          this.buildAcrossClues(docData as PuzzleDoc),
+          this.buildDownClues(docData as PuzzleDoc)
+        );
 
-    return from(addDoc(puzzles, newPuzzle)).pipe(
-      mergeMap((doc) => this.activatePuzzle(doc.id)),
-      map(() => {
-        return true;
+        this.numberPuzzle(this._puzzle);
+        this.selectSquare(0);
       }),
-      catchError((error: ErrorEvent) => {
-        throw error;
-      })
-    );
-  }
-
-  /**
-   * Retrieves a list of puzzles from the database
-   * @returns an Observable containing an Array of PuzzleDocs
-   */
-  public getPuzzleList(): Observable<Array<PuzzleDoc>> {
-    const db = getFirestore();
-    const puzzles = collection(db, "puzzle");
-
-    return from(getDocs(puzzles)).pipe(
-      map((snap: QuerySnapshot) => {
-        return snap.docs.map((d) => {
-          let doc = d.data() as PuzzleDoc;
-          doc.id = d.id;
-          return doc;
-        });
-      })
-    );
-  }
-
-  /**
-   * Loads and activates the puzzle with the provided id
-   * @param id the puzzle id
-   * @returns true if puzzle loaded successfully, false otherwise
-   */
-  public activatePuzzle(id: string): Observable<boolean> {
-    return this.loadPuzzle(id).pipe(
-      map((puzzle) => {
-        if (puzzle) {
-          this.activePuzzle.id = id;
-          this.activePuzzle.name = puzzle.name;
-          this.activePuzzle.width = puzzle.width;
-          this.activePuzzle.height = puzzle.height;
-          this.activePuzzle.grid = this.buildGrid(puzzle as PuzzleDoc);
-          this.activePuzzle.acrossClues = this.buildAcrossClues(puzzle as PuzzleDoc);
-          this.activePuzzle.downClues = this.buildDownClues(puzzle as PuzzleDoc);
-          this.numberPuzzle(this.activePuzzle);
-
-          this.activePuzzle$.next(this.activePuzzle);
-          this.activeAcrossClue$.next(this.activePuzzle.acrossClues[0]);
-          this.activeDownClue$.next(this.activePuzzle.downClues[0]);
-
-          return true;
-        }
-
-        return false;
-      }),
+      map(() => true),
       catchError((error: ErrorEvent) => {
         throw error;
       })
@@ -219,43 +155,40 @@ export class PuzzleService {
    * @returns and Observable
    */
   public savePuzzle(): Observable<void> {
-    const db = getFirestore();
-    const puzzles = collection(db, "puzzle");
-
     let puzzle: PuzzleDoc = {
-      id: this.activePuzzle.id,
-      name: this.activePuzzle.name,
-      width: this.activePuzzle.width,
-      height: this.activePuzzle.height,
-      answers: this.activePuzzle.grid.filter((square: Square) => square.type == SquareType.Letter).map((square: Square) => square.value),
-      spacers: this.activePuzzle.grid.filter((square: Square) => square.type == SquareType.Spacer).map((square: Square) => square.index),
-      circles: this.activePuzzle.grid
-        .filter((square: Square) => square.overlay == OverlayType.Circle)
-        .map((square: Square) => square.index),
-      shades: this.activePuzzle.grid.filter((square: Square) => square.overlay == OverlayType.Shade).map((square: Square) => square.index),
-      "across-clues": this.activePuzzle.acrossClues.map((clue: Clue) => clue.text),
-      "down-clues": this.activePuzzle.downClues.map((clue: Clue) => clue.text),
+      id: this._puzzle.id,
+      name: this._puzzle.name,
+      width: this._puzzle.width,
+      height: this._puzzle.height,
+      answers: this._puzzle.grid.filter((square: Square) => square.type == SquareType.Letter).map((square: Square) => square.value),
+      spacers: this._puzzle.grid.filter((square: Square) => square.type == SquareType.Spacer).map((square: Square) => square.index),
+      circles: this._puzzle.grid.filter((square: Square) => square.overlay == OverlayType.Circle).map((square: Square) => square.index),
+      shades: this._puzzle.grid.filter((square: Square) => square.overlay == OverlayType.Shade).map((square: Square) => square.index),
+      "across-clues": this._puzzle.acrossClues.map((clue: Clue) => clue.text),
+      "down-clues": this._puzzle.downClues.map((clue: Clue) => clue.text),
     };
 
-    return from(setDoc(doc(puzzles, this.activePuzzle.id), puzzle));
+    return from(this.firebaseService.setDoc("puzzle", this._puzzle.id, puzzle)).pipe(
+      catchError((error: ErrorEvent) => {
+        throw error;
+      })
+    );
   }
 
   /**
-   * Clears all squares and renumbers the active puzzle
+   * Clears all squares and renumbers the puzzle
    */
   public clearPuzzle(): void {
-    for (let i = 0; i < this.activePuzzle.height * this.activePuzzle.width; ++i) {
-      this.activePuzzle.grid[i] = new Square(i);
+    for (let i = 0; i < this._puzzle.height * this._puzzle.width; ++i) {
+      this._puzzle.grid[i] = new Square(i);
     }
 
-    this.activePuzzle.acrossClues = [];
-    this.activePuzzle.downClues = [];
-    this.numberPuzzle(this.activePuzzle);
+    this._puzzle.acrossClues = [];
+    this._puzzle.downClues = [];
+    this.numberPuzzle(this._puzzle);
 
-    this.messenger.emit("clear");
-    this.activePuzzle$.next(this.activePuzzle);
-    this.activeAcrossClue$.next(this.activePuzzle.acrossClues[0]);
-    this.activeDownClue$.next(this.activePuzzle.downClues[0]);
+    this.activeAcrossClue$.next(this._puzzle.acrossClues[0]);
+    this.activeDownClue$.next(this._puzzle.downClues[0]);
   }
 
   /**
@@ -272,14 +205,12 @@ export class PuzzleService {
    * @param index square index
    */
   public toggleSquareType(index: number): void {
-    let square = this.activePuzzle.grid[index];
+    let square = this._puzzle.grid[index];
     let newType = square.type == SquareType.Letter ? SquareType.Spacer : SquareType.Letter;
 
     this.updateClueLists(index, newType);
     this.setSquareType(index, newType);
-    this.numberPuzzle(this.activePuzzle);
-
-    this.activePuzzle$.next(this.activePuzzle);
+    this.numberPuzzle(this._puzzle);
 
     if (square.type == SquareType.Letter) {
       this.activeAcrossClue$.next(this.getAcrossClue(index));
@@ -293,11 +224,10 @@ export class PuzzleService {
    * @param type
    */
   public toggleSquareOverlay(index: number, type: OverlayType): void {
-    let square = this.activePuzzle.grid[index];
+    let square = this._puzzle.grid[index];
 
     if (square.type == SquareType.Letter) {
       square.overlay = square.overlay == type ? OverlayType.None : type;
-      this.activePuzzle$.next(this.activePuzzle);
     }
   }
 
@@ -307,13 +237,12 @@ export class PuzzleService {
    * @param value new square value
    */
   public setSquareValue(index: number, value: string): void {
-    let square = this.activePuzzle.grid[index];
+    let square = this._puzzle.grid[index];
     let acrossClue = this.getAcrossClue(index);
     let downClue = this.getDownClue(index);
 
     // Update puzzle grid
     square.value = value.toUpperCase();
-    this.activePuzzle$.next(this.activePuzzle);
 
     // Update across clue answer
     const acrossPos = acrossClue.squares.findIndex((i: number) => i == square.index);
@@ -333,7 +262,7 @@ export class PuzzleService {
    * @param text new clue text
    */
   public setClueText(type: ClueType, index: number, text: string) {
-    let clues = type == ClueType.Across ? this.activePuzzle.acrossClues : this.activePuzzle.downClues;
+    let clues = type == ClueType.Across ? this._puzzle.acrossClues : this._puzzle.downClues;
     let clue = clues.find((clue) => clue.index == index);
 
     if (clue) {
@@ -342,40 +271,29 @@ export class PuzzleService {
   }
 
   public getRowNum(index: number): number {
-    return Math.floor(index / this.activePuzzle.width);
+    return Math.floor(index / this._puzzle.width);
   }
 
   public getColNum(index: number): number {
-    return index % this.activePuzzle.width;
-  }
-
-  // TODO: reconfigure tests so we don't need these
-  public getActiveGrid(): Array<Square> {
-    return this.activePuzzle.grid;
-  }
-  public getActiveAcross(): Array<Clue> {
-    return this.activePuzzle.acrossClues;
-  }
-  public getActiveDown(): Array<Clue> {
-    return this.activePuzzle.downClues;
+    return index % this._puzzle.width;
   }
 
   public getAcrossClue(index: number): Clue {
-    let square = this.activePuzzle.grid[index];
-    let across = this.activePuzzle.acrossClues.find((a) => square.acrossClueNum == a.index);
+    let square = this._puzzle.grid[index];
+    let across = this._puzzle.acrossClues.find((a) => square.acrossClueNum == a.index);
 
-    return across ? across : this.activePuzzle.acrossClues[0];
+    return across ? across : this._puzzle.acrossClues[0];
   }
 
   public getDownClue(index: number): Clue {
-    let square = this.activePuzzle.grid[index];
-    let down = this.activePuzzle.downClues.find((d) => square.downClueNum == d.index);
+    let square = this._puzzle.grid[index];
+    let down = this._puzzle.downClues.find((d) => square.downClueNum == d.index);
 
-    return down ? down : this.activePuzzle.downClues[0];
+    return down ? down : this._puzzle.downClues[0];
   }
 
   public getReflectIndex(index: number): number {
-    return this.activePuzzle.width * this.activePuzzle.height - 1 - index;
+    return this._puzzle.width * this._puzzle.height - 1 - index;
   }
 
   /**
@@ -387,13 +305,13 @@ export class PuzzleService {
    */
   public getNextIndex(index: number, vertical: boolean = false, skipSpacers: boolean = false): number {
     let next = index;
-    let step = vertical ? this.activePuzzle.width : 1;
+    let step = vertical ? this._puzzle.width : 1;
 
-    next = (next + step) % (this.activePuzzle.width * this.activePuzzle.height);
+    next = (next + step) % (this._puzzle.width * this._puzzle.height);
 
     if (skipSpacers) {
-      while (this.activePuzzle.grid[next].type == SquareType.Spacer) {
-        next = (next + step) % (this.activePuzzle.width * this.activePuzzle.height);
+      while (this._puzzle.grid[next].type == SquareType.Spacer) {
+        next = (next + step) % (this._puzzle.width * this._puzzle.height);
       }
     }
 
@@ -409,13 +327,13 @@ export class PuzzleService {
    */
   public getPrevIndex(index: number, vertical: boolean = false, skipSpacers: boolean = false): number {
     let prev = index;
-    let step = vertical ? this.activePuzzle.width : 1;
+    let step = vertical ? this._puzzle.width : 1;
 
-    prev = (this.activePuzzle.width * this.activePuzzle.height + prev - step) % (this.activePuzzle.width * this.activePuzzle.height);
+    prev = (this._puzzle.width * this._puzzle.height + prev - step) % (this._puzzle.width * this._puzzle.height);
 
     if (skipSpacers) {
-      while (this.activePuzzle.grid[prev].type == SquareType.Spacer) {
-        prev = (this.activePuzzle.width * this.activePuzzle.height + prev - step) % (this.activePuzzle.width * this.activePuzzle.height);
+      while (this._puzzle.grid[prev].type == SquareType.Spacer) {
+        prev = (this._puzzle.width * this._puzzle.height + prev - step) % (this._puzzle.width * this._puzzle.height);
       }
     }
 
@@ -429,8 +347,8 @@ export class PuzzleService {
    */
   public getPrevClueNum(index: number): number {
     while (index > 0) {
-      if (this.activePuzzle.grid[index].boxNum != -1) {
-        return this.activePuzzle.grid[index].boxNum;
+      if (this._puzzle.grid[index].boxNum != -1) {
+        return this._puzzle.grid[index].boxNum;
       }
 
       index--;
@@ -445,10 +363,10 @@ export class PuzzleService {
    * @returns the across clue number if true, -1 otherwise
    */
   public createsAcrossNumber(index: number): number {
-    let square = this.activePuzzle.grid[index];
-    let nextSquare = this.activePuzzle.grid[index + 1];
+    let square = this._puzzle.grid[index];
+    let nextSquare = this._puzzle.grid[index + 1];
 
-    if (square.type == SquareType.Spacer && this.getColNum(index) != this.activePuzzle.width - 1 && nextSquare.type == SquareType.Letter) {
+    if (square.type == SquareType.Spacer && this.getColNum(index) != this._puzzle.width - 1 && nextSquare.type == SquareType.Letter) {
       return nextSquare.acrossClueNum;
     }
 
@@ -461,10 +379,10 @@ export class PuzzleService {
    * @returns the down clue number if true, -1 otherwise
    */
   public createsDownNumber(index: number): number {
-    let square = this.activePuzzle.grid[index];
-    let nextSquare = this.activePuzzle.grid[index + this.activePuzzle.width];
+    let square = this._puzzle.grid[index];
+    let nextSquare = this._puzzle.grid[index + this._puzzle.width];
 
-    if (square.type == SquareType.Spacer && this.getRowNum(index) != this.activePuzzle.height - 1 && nextSquare.type == SquareType.Letter) {
+    if (square.type == SquareType.Spacer && this.getRowNum(index) != this._puzzle.height - 1 && nextSquare.type == SquareType.Letter) {
       return nextSquare.downClueNum;
     }
 
@@ -477,8 +395,8 @@ export class PuzzleService {
    * @returns the across clue number if true, -1 otherwise
    */
   public terminatesAcrossNumber(index: number): number {
-    let square = this.activePuzzle.grid[index];
-    let prevSquare = this.activePuzzle.grid[index - 1];
+    let square = this._puzzle.grid[index];
+    let prevSquare = this._puzzle.grid[index - 1];
 
     if (square.type == SquareType.Spacer && this.getColNum(index) != 0 && prevSquare.type == SquareType.Letter) {
       return prevSquare.acrossClueNum;
@@ -493,8 +411,8 @@ export class PuzzleService {
    * @returns the down clue number if true, -1 otherwise
    */
   public terminatesDownNumber(index: number): number {
-    let square = this.activePuzzle.grid[index];
-    let prevSquare = this.activePuzzle.grid[index - this.activePuzzle.width];
+    let square = this._puzzle.grid[index];
+    let prevSquare = this._puzzle.grid[index - this._puzzle.width];
 
     if (square.type == SquareType.Spacer && this.getRowNum(index) != 0 && prevSquare.type == SquareType.Letter) {
       return prevSquare.downClueNum;
@@ -509,8 +427,8 @@ export class PuzzleService {
    * @returns true or false
    */
   public startsAcross(index: number): boolean {
-    let square = this.activePuzzle.grid[index];
-    let prevSquare = this.activePuzzle.grid[index - 1];
+    let square = this._puzzle.grid[index];
+    let prevSquare = this._puzzle.grid[index - 1];
 
     if (square.type == SquareType.Letter && (this.getColNum(index) == 0 || prevSquare.type == SquareType.Spacer)) {
       return true;
@@ -525,8 +443,8 @@ export class PuzzleService {
    * @returns true or false
    */
   public startsDown(index: number): boolean {
-    let square = this.activePuzzle.grid[index];
-    let prevSquare = this.activePuzzle.grid[index - this.activePuzzle.width];
+    let square = this._puzzle.grid[index];
+    let prevSquare = this._puzzle.grid[index - this._puzzle.width];
 
     if (square.type == SquareType.Letter && (this.getRowNum(index) == 0 || prevSquare.type == SquareType.Spacer)) {
       return true;
@@ -541,13 +459,10 @@ export class PuzzleService {
    * @returns true or false
    */
   public endsAcross(index: number): boolean {
-    let square = this.activePuzzle.grid[index];
-    let nextSquare = this.activePuzzle.grid[index + 1];
+    let square = this._puzzle.grid[index];
+    let nextSquare = this._puzzle.grid[index + 1];
 
-    if (
-      square.type == SquareType.Letter &&
-      (this.getColNum(index) == this.activePuzzle.width - 1 || nextSquare.type == SquareType.Spacer)
-    ) {
+    if (square.type == SquareType.Letter && (this.getColNum(index) == this._puzzle.width - 1 || nextSquare.type == SquareType.Spacer)) {
       return true;
     }
 
@@ -560,13 +475,10 @@ export class PuzzleService {
    * @returns true or false
    */
   public endsDown(index: number): boolean {
-    let square = this.activePuzzle.grid[index];
-    let nextSquare = this.activePuzzle.grid[index + this.activePuzzle.width];
+    let square = this._puzzle.grid[index];
+    let nextSquare = this._puzzle.grid[index + this._puzzle.width];
 
-    if (
-      square.type == SquareType.Letter &&
-      (this.getRowNum(index) == this.activePuzzle.height - 1 || nextSquare.type == SquareType.Spacer)
-    ) {
+    if (square.type == SquareType.Letter && (this.getRowNum(index) == this._puzzle.height - 1 || nextSquare.type == SquareType.Spacer)) {
       return true;
     }
 
@@ -578,12 +490,12 @@ export class PuzzleService {
   }
 
   public isPuzzleEnd(index: number): boolean {
-    return index >= this.activePuzzle.width * this.activePuzzle.height - 1;
+    return index >= this._puzzle.width * this._puzzle.height - 1;
   }
 
   private setSquareType(index: number, type: SquareType) {
-    let square = this.activePuzzle.grid[index];
-    let reflectSquare = this.activePuzzle.grid[this.getReflectIndex(index)];
+    let square = this._puzzle.grid[index];
+    let reflectSquare = this._puzzle.grid[this.getReflectIndex(index)];
 
     square.type = reflectSquare.type = type;
     square.value = reflectSquare.value = type == SquareType.Letter ? " " : "";
@@ -594,15 +506,12 @@ export class PuzzleService {
     let num = 1;
     let acrossCount = 0;
     let downCount = 0;
-    let size = this.activePuzzle.height * this.activePuzzle.width;
+    let size = puzzle.height * puzzle.width;
 
     let across: { num: number; ans: string; pos: number; squares: Array<number> } = { num: 1, ans: "", pos: 0, squares: [] };
-    let down: Array<{ num: number; ans: string; pos: number; squares: Array<number> }> = Array.from(
-      { length: this.activePuzzle.width },
-      () => {
-        return { num: 1, ans: "", pos: 0, squares: [] };
-      }
-    );
+    let down: Array<{ num: number; ans: string; pos: number; squares: Array<number> }> = Array.from({ length: puzzle.width }, () => {
+      return { num: 1, ans: "", pos: 0, squares: [] };
+    });
 
     for (let i = start; i < size; ++i) {
       let square = puzzle.grid[i];
@@ -661,18 +570,6 @@ export class PuzzleService {
     puzzle.downClues.sort((a: Clue, b: Clue) => a.index - b.index);
   }
 
-  // TODO: this should be private but making it public makes testing not a complete nightmare
-  public loadPuzzle(id: string): Observable<DocumentData | undefined> {
-    const db = getFirestore();
-    const puzzles = collection(db, "puzzle");
-
-    return from(getDoc(doc(puzzles, id))).pipe(
-      map((doc: DocumentSnapshot<DocumentData>) => {
-        return doc.data();
-      })
-    );
-  }
-
   private addOrUpdateClue(clues: Array<Clue>, pos: number, clueNum: number, answer: string, squares: Array<number>): void {
     let clue = clues[pos];
 
@@ -686,77 +583,77 @@ export class PuzzleService {
     }
   }
 
-  private updateClueLists(updatedIndex: number, newType: SquareType) {
-    let updatedSquare = this.activePuzzle.grid[updatedIndex];
-    let reflectSquare = this.activePuzzle.grid[this.getReflectIndex(updatedIndex)];
+  private updateClueLists(updatedIndex: number, newType: SquareType): void {
+    let updatedSquare = this._puzzle.grid[updatedIndex];
+    let reflectSquare = this._puzzle.grid[this.getReflectIndex(updatedIndex)];
 
     let addClues = (square: Square) => {
       if (newType == SquareType.Spacer) {
-        let acrossPos = this.activePuzzle.acrossClues.findIndex((clue: Clue) => clue.index == square.acrossClueNum);
-        let downPos = this.activePuzzle.downClues.findIndex((clue: Clue) => clue.index == square.downClueNum);
+        let acrossPos = this._puzzle.acrossClues.findIndex((clue: Clue) => clue.index == square.acrossClueNum);
+        let downPos = this._puzzle.downClues.findIndex((clue: Clue) => clue.index == square.downClueNum);
 
         // Reset clue text for existing clues
-        this.activePuzzle.acrossClues[acrossPos].text = "";
-        this.activePuzzle.downClues[downPos].text = "";
+        this._puzzle.acrossClues[acrossPos].text = "";
+        this._puzzle.downClues[downPos].text = "";
 
         if (!this.endsAcross(square.index)) {
           if (this.startsAcross(square.index)) {
             // Remove old across clue
-            this.activePuzzle.acrossClues.splice(acrossPos, 1);
+            this._puzzle.acrossClues.splice(acrossPos, 1);
           }
 
           // Add new across clue
-          this.activePuzzle.acrossClues.splice(acrossPos + 1, 0, new Clue());
+          this._puzzle.acrossClues.splice(acrossPos + 1, 0, new Clue());
         }
 
         if (!this.endsDown(square.index)) {
           if (this.startsDown(square.index)) {
             // Remove old down clue
-            this.activePuzzle.downClues.splice(downPos, 1);
+            this._puzzle.downClues.splice(downPos, 1);
           }
 
           // Add new down clue
-          let prevClueNum = this.getPrevClueNum(square.index + this.activePuzzle.width);
-          downPos = this.activePuzzle.downClues.findIndex((clue: Clue) => clue.index > prevClueNum);
-          this.activePuzzle.downClues.splice(downPos, 0, new Clue());
+          let prevClueNum = this.getPrevClueNum(square.index + this._puzzle.width);
+          downPos = this._puzzle.downClues.findIndex((clue: Clue) => clue.index > prevClueNum);
+          this._puzzle.downClues.splice(downPos, 0, new Clue());
         }
       } else {
         let createdAcross = this.createsAcrossNumber(square.index);
         let createdDown = this.createsDownNumber(square.index);
 
         if (createdAcross != -1) {
-          let acrossPos = this.activePuzzle.acrossClues.findIndex((clue: Clue) => clue.index == createdAcross);
+          let acrossPos = this._puzzle.acrossClues.findIndex((clue: Clue) => clue.index == createdAcross);
           let terminatedAcross = this.terminatesAcrossNumber(square.index);
 
           // Remove old across clue
-          this.activePuzzle.acrossClues.splice(acrossPos, 1);
+          this._puzzle.acrossClues.splice(acrossPos, 1);
 
           if (terminatedAcross == -1) {
             // Add new across clue
-            this.activePuzzle.acrossClues.splice(acrossPos, 0, new Clue());
+            this._puzzle.acrossClues.splice(acrossPos, 0, new Clue());
           } else {
             // Reset clue text for existing across clue
-            acrossPos = this.activePuzzle.acrossClues.findIndex((clue: Clue) => clue.index == terminatedAcross);
-            this.activePuzzle.acrossClues[acrossPos].text = "";
+            acrossPos = this._puzzle.acrossClues.findIndex((clue: Clue) => clue.index == terminatedAcross);
+            this._puzzle.acrossClues[acrossPos].text = "";
           }
         }
 
         if (createdDown != -1) {
-          let downPos = this.activePuzzle.downClues.findIndex((clue: Clue) => clue.index == createdDown);
+          let downPos = this._puzzle.downClues.findIndex((clue: Clue) => clue.index == createdDown);
           let terminatedDown = this.terminatesDownNumber(square.index);
 
           // Remove old down clue
-          this.activePuzzle.downClues.splice(downPos, 1);
+          this._puzzle.downClues.splice(downPos, 1);
 
           if (terminatedDown == -1) {
             // Add new down clue
             let prevClueNum = this.getPrevClueNum(square.index);
-            downPos = this.activePuzzle.downClues.findIndex((clue: Clue) => clue.index > prevClueNum);
-            this.activePuzzle.downClues.splice(downPos, 0, new Clue());
+            downPos = this._puzzle.downClues.findIndex((clue: Clue) => clue.index > prevClueNum);
+            this._puzzle.downClues.splice(downPos, 0, new Clue());
           } else {
             // Reset clue text for existing down clue
-            downPos = this.activePuzzle.downClues.findIndex((clue: Clue) => clue.index == terminatedDown);
-            this.activePuzzle.downClues[downPos].text = "";
+            downPos = this._puzzle.downClues.findIndex((clue: Clue) => clue.index == terminatedDown);
+            this._puzzle.downClues[downPos].text = "";
           }
         }
       }

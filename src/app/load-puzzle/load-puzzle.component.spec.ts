@@ -1,24 +1,27 @@
 import { ComponentFixture, TestBed } from "@angular/core/testing";
 
 import { LoadPuzzleComponent } from "./load-puzzle.component";
-import { PuzzleService } from "../services/puzzle.service";
 import { of } from "rxjs";
+import { TestPuzzle } from "src/environments/environment";
+import { LoadService } from "../services/load.service";
+import { ReactiveFormsModule } from "@angular/forms";
 
 describe("LoadPuzzleComponent", () => {
   let component: LoadPuzzleComponent;
   let fixture: ComponentFixture<LoadPuzzleComponent>;
 
-  const puzzleServiceSpy = jasmine.createSpyObj("PuzzleService", ["getPuzzleList", "activatePuzzle", "createPuzzle"]);
+  const loadServiceSpy = jasmine.createSpyObj("LoadService", ["setActiveId", "createPuzzle", "getPuzzleList"]);
 
   beforeEach(async () => {
-    puzzleServiceSpy.getPuzzleList.and.returnValue(of([]));
-    puzzleServiceSpy.createPuzzle.and.returnValue(of(true));
-    puzzleServiceSpy.activatePuzzle.and.returnValue(of(true));
+    loadServiceSpy.getPuzzleList.and.returnValue(of([TestPuzzle]));
+    loadServiceSpy.createPuzzle.and.returnValue(of(true));
+    loadServiceSpy.setActiveId.calls.reset();
     spyOn(window, "alert");
 
     await TestBed.configureTestingModule({
+      imports: [ReactiveFormsModule],
       declarations: [LoadPuzzleComponent],
-      providers: [{ provide: PuzzleService, useValue: puzzleServiceSpy }],
+      providers: [{ provide: LoadService, useValue: loadServiceSpy }],
     }).compileComponents();
   });
 
@@ -33,51 +36,44 @@ describe("LoadPuzzleComponent", () => {
   });
 
   describe("loadPuzzle", () => {
-    it("should successfully activate puzzle", () => {
-      component.loadPuzzleForm.value.id = "test-id";
+    it("should call loadPuzzle with id", () => {
+      component.loadPuzzleForm.setValue({ id: "test-id" });
 
       fixture.detectChanges();
       component.loadPuzzle();
 
-      expect(puzzleServiceSpy.activatePuzzle).toHaveBeenCalledWith("test-id");
-      expect(window.alert).toHaveBeenCalledWith("Puzzle loaded successfully!");
+      expect(loadServiceSpy.setActiveId).toHaveBeenCalledWith("test-id");
     });
 
-    it("should not successfully activate puzzle", () => {
-      puzzleServiceSpy.activatePuzzle.and.returnValue(of(false));
-      component.loadPuzzleForm.value.id = "test-id";
+    it("should not call loadPuzzle if id null", () => {
+      component.loadPuzzleForm.setValue({ id: null });
 
       fixture.detectChanges();
       component.loadPuzzle();
 
-      expect(puzzleServiceSpy.activatePuzzle).toHaveBeenCalledWith("test-id");
-      expect(window.alert).toHaveBeenCalledWith("Puzzle load failed");
+      expect(loadServiceSpy.setActiveId).not.toHaveBeenCalled();
     });
   });
 
   describe("createPuzzle", () => {
-    it("should successfully create and activate puzzle", () => {
-      component.newPuzzleForm.value.title = "New Puzzle";
-      component.newPuzzleForm.value.width = 10;
-      component.newPuzzleForm.value.height = 12;
+    it("should alert success when puzzle successfully created and activated", () => {
+      component.newPuzzleForm.setValue({ title: "New Puzzle", width: 10, height: 12 });
 
       fixture.detectChanges();
       component.createPuzzle();
 
-      expect(puzzleServiceSpy.createPuzzle).toHaveBeenCalledWith("New Puzzle", 10, 12);
+      expect(loadServiceSpy.createPuzzle).toHaveBeenCalledWith("New Puzzle", 10, 12);
       expect(window.alert).toHaveBeenCalledWith("Puzzle created successfully!");
     });
 
-    it("should not successfully create and activate puzzle", () => {
-      puzzleServiceSpy.createPuzzle.and.returnValue(of(false));
-      component.newPuzzleForm.value.title = "New Puzzle";
-      component.newPuzzleForm.value.width = 10;
-      component.newPuzzleForm.value.height = 12;
+    it("should alert failure when puzzle not successfully created and activated", () => {
+      loadServiceSpy.createPuzzle.and.returnValue(of(false));
+      component.newPuzzleForm.setValue({ title: "New Puzzle", width: 10, height: 12 });
 
       fixture.detectChanges();
       component.createPuzzle();
 
-      expect(puzzleServiceSpy.createPuzzle).toHaveBeenCalledWith("New Puzzle", 10, 12);
+      expect(loadServiceSpy.createPuzzle).toHaveBeenCalledWith("New Puzzle", 10, 12);
       expect(window.alert).toHaveBeenCalledWith("Puzzle creation failed");
     });
   });

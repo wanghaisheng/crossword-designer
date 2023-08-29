@@ -1,7 +1,8 @@
 import { Component, OnInit } from "@angular/core";
-import { PuzzleService, PuzzleDoc } from "../services/puzzle.service";
+import { PuzzleDoc } from "../services/puzzle.service";
 
 import { FormControl, FormGroup } from "@angular/forms";
+import { LoadService } from "../services/load.service";
 
 @Component({
   selector: "app-load-puzzle",
@@ -21,27 +22,22 @@ export class LoadPuzzleComponent implements OnInit {
     height: new FormControl(""),
   });
 
-  constructor(private puzzleService: PuzzleService) {}
+  constructor(private loadService: LoadService) {}
 
   ngOnInit(): void {
-    this.puzzleService.getPuzzleList().subscribe((puzzles: Array<PuzzleDoc>) => {
+    this.loadService.getPuzzleList().subscribe((puzzles: Array<PuzzleDoc>) => {
       this.puzzleList = puzzles;
     });
   }
 
   public loadPuzzle(): void {
-    this.puzzleService.activatePuzzle(this.loadPuzzleForm.value.id).subscribe((success: boolean) => {
-      if (success) {
-        alert("Puzzle loaded successfully!");
-        // TODO: re-route
-      } else {
-        alert("Puzzle load failed");
-      }
-    });
+    if (this.loadPuzzleForm.value.id) {
+      this.loadService.setActiveId(this.loadPuzzleForm.value.id);
+    }
   }
 
   public createPuzzle(): void {
-    this.puzzleService
+    this.loadService
       .createPuzzle(this.newPuzzleForm.value.title, this.newPuzzleForm.value.width, this.newPuzzleForm.value.height)
       .subscribe((success: boolean) => {
         if (success) {
