@@ -44,13 +44,16 @@ describe("PuzzleEditingComponent", () => {
   };
 
   beforeEach(async () => {
+    loadServiceSpy.activePuzzleId$ = new BehaviorSubject<string>(testId);
+
     puzzleServiceSpy.puzzle = testPuzzle;
     puzzleServiceSpy.messenger = new EventEmitter<string>();
     puzzleServiceSpy.isPuzzleStart.and.returnValue(false);
     puzzleServiceSpy.isPuzzleEnd.and.returnValue(false);
     puzzleServiceSpy.loadPuzzle.and.returnValue(of(false));
+    puzzleServiceSpy.savePuzzle.and.returnValue(of(undefined));
     puzzleServiceSpy.selectSquare.calls.reset();
-    loadServiceSpy.activePuzzleId$ = new BehaviorSubject<string>(testId);
+
     spyOn(window, "alert");
 
     puzzleServiceSpy.getNextIndex.and.callFake((index: number, vertical: boolean, skipSpacers: boolean = false) => {
@@ -284,10 +287,11 @@ describe("PuzzleEditingComponent", () => {
   });
 
   describe("onSave", () => {
-    it("should call savePuzzle", () => {
+    it("should call savePuzzle and alert success", () => {
       component.onSave();
 
       expect(puzzleServiceSpy.savePuzzle).toHaveBeenCalled();
+      expect(window.alert).toHaveBeenCalledWith("Puzzle saved!");
     });
   });
 

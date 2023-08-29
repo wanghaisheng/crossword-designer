@@ -5,7 +5,6 @@ import { AnswerBank, AnswerService } from "../services/answer.service";
 import { BehaviorSubject, of, throwError } from "rxjs";
 import { LoadService } from "../services/load.service";
 import { ReactiveFormsModule } from "@angular/forms";
-import { By } from "@angular/platform-browser";
 
 describe("AnswerDraftingComponent", () => {
   let component: AnswerDraftingComponent;
@@ -32,10 +31,12 @@ describe("AnswerDraftingComponent", () => {
   };
 
   beforeEach(async () => {
+    loadServiceSpy.activePuzzleId$ = new BehaviorSubject<string>(testId);
+
     answerServiceSpy.answerBank = testAnswerBank;
     answerServiceSpy.loadAnswers.and.returnValue(of(false));
     answerServiceSpy.saveAnswers.and.returnValue(of(undefined));
-    loadServiceSpy.activePuzzleId$ = new BehaviorSubject<string>(testId);
+
     spyOn(window, "alert");
 
     await TestBed.configureTestingModule({
@@ -138,10 +139,11 @@ describe("AnswerDraftingComponent", () => {
   });
 
   describe("onSave", () => {
-    it("should call saveAnswers", () => {
+    it("should call saveAnswers and alert on success", () => {
       component.onSave();
 
       expect(answerServiceSpy.saveAnswers).toHaveBeenCalled();
+      expect(window.alert).toHaveBeenCalledWith("Answers saved!");
     });
   });
 

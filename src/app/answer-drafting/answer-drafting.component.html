@@ -1,5 +1,11 @@
 <div class="container">
   <div class="row">
+    <div class="hstack gap-3">
+      <button class="ms-auto btn btn-success" type="submit" (click)="onSave()">Save</button>
+      <button class="btn btn-danger" type="submit" (click)="onClear()">Clear</button>
+    </div>
+  </div>
+  <div class="row">
     <div class="col-8">
       <div class="section">
         <h3>Theme Answers</h3>
@@ -52,10 +58,6 @@
     </div>
     <div class="col">
       <!-- <h3>Filter</h3> -->
-      <div class="hstack gap-3">
-        <button class="btn btn-success" type="submit" (click)="onSave()">Save</button>
-        <button class="btn btn-danger" type="submit" (click)="onClear()">Clear</button>
-      </div>
     </div>
   </div>
 </div>

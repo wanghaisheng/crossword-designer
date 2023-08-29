@@ -1,7 +1,6 @@
 import { NgModule } from "@angular/core";
 import { BrowserModule } from "@angular/platform-browser";
-import { FormsModule } from "@angular/forms";
-import { ReactiveFormsModule } from "@angular/forms";
+import { FormsModule, ReactiveFormsModule } from "@angular/forms";
 
 import { AppRoutingModule } from "./app-routing.module";
 import { AppComponent } from "./app.component";
@@ -18,7 +17,7 @@ import { ClueEditingComponent } from "./clue-editing/clue-editing.component";
 import { SidebarNavComponent } from "./sidebar-nav/sidebar-nav.component";
 import { PuzzleReviewComponent } from "./puzzle-review/puzzle-review.component";
 import { LoadPuzzleComponent } from "./load-puzzle/load-puzzle.component";
-import { AnswerDraftingComponent } from './answer-drafting/answer-drafting.component';
+import { AnswerDraftingComponent } from "./answer-drafting/answer-drafting.component";
 
 @NgModule({
   declarations: [
