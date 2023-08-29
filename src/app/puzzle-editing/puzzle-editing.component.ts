@@ -1,5 +1,7 @@
 import { Component, OnInit } from "@angular/core";
-import { OverlayType, Puzzle, PuzzleService, Square, SquareType } from "../services/puzzle.service";
+import { OverlayType, PuzzleService, Square, SquareType } from "../services/puzzle.service";
+import { LoadService } from "../services/load.service";
+import { mergeMap, takeWhile } from "rxjs/operators";
 
 export enum EditMode {
   Value,
@@ -15,13 +17,11 @@ export enum HighlightMode {
 }
 
 @Component({
-  selector: "app-puzzle-grid",
+  selector: "app-puzzle-editing",
   templateUrl: "./puzzle-editing.component.html",
   styleUrls: ["./puzzle-editing.component.scss"],
 })
 export class PuzzleEditingComponent implements OnInit {
-  public numRows: number = 21;
-  public numCols: number = 21;
   public squareHeight: number = 30;
 
   public editMode: EditMode = EditMode.Value;
@@ -29,28 +29,48 @@ export class PuzzleEditingComponent implements OnInit {
   public answersHidden: boolean = false;
   public selectedIndex: number = 0;
 
-  public puzzleGrid: Array<Square> = [];
+  public get numRows(): number {
+    return this.puzzleService.puzzle.height;
+  }
+
+  public get numCols(): number {
+    return this.puzzleService.puzzle.width;
+  }
+
+  public get puzzleGrid(): Array<Square> {
+    return this.puzzleService.puzzle.grid;
+  }
 
   public puzzleLoaded: boolean = false;
 
-  constructor(private puzzleService: PuzzleService) {}
+  private active: boolean = true;
+
+  constructor(private puzzleService: PuzzleService, private loadService: LoadService) {}
 
   ngOnInit(): void {
-    this.puzzleService.activePuzzle$.subscribe((puzzle: Puzzle) => {
-      this.puzzleGrid = puzzle.grid;
-      this.numRows = puzzle.height;
-      this.numCols = puzzle.width;
+    this.loadService.activePuzzleId$
+      .pipe(
+        takeWhile(() => this.active),
+        mergeMap((id: string) => this.puzzleService.loadPuzzle(id))
+      )
+      .subscribe(
+        (result: boolean) => {
+          if (result) {
+            alert("Puzzle loaded successfully!");
+          }
 
-      if (puzzle.grid.length > 0) {
-        this.puzzleLoaded = true;
-      }
-    });
+          if (this.puzzleService.puzzle) {
+            this.puzzleLoaded = true;
+          }
+        },
+        (err: ErrorEvent) => {
+          alert("Puzzle load failed: " + err.message);
+        }
+      );
+  }
 
-    this.puzzleService.messenger.subscribe((msg: string) => {
-      if (msg == "clear") {
-        this.onClickSquare(0, EditMode.Value);
-      }
-    });
+  ngOnDestroy(): void {
+    this.active = false;
   }
 
   public onClickSquare(index: number, overrideMode?: EditMode) {
@@ -94,11 +114,12 @@ export class PuzzleEditingComponent implements OnInit {
     return this.puzzleGrid.slice(rowStart, rowStart + this.numCols);
   }
 
-  public saveGrid(): void {
+  public onSave(): void {
     this.puzzleService.savePuzzle();
   }
 
-  public clearGrid(): void {
+  public onClear(): void {
+    this.selectedIndex = 0;
     this.puzzleService.clearPuzzle();
   }
 

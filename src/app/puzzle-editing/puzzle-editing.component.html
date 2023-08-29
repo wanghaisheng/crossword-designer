@@ -31,8 +31,8 @@
         </button>
       </div>
       <button class="btn btn-secondary" type="submit" (click)="answersHidden = !answersHidden">Hide Answers</button>
-      <button class="btn btn-success" type="submit" (click)="saveGrid()">Save</button>
-      <button class="btn btn-danger" type="submit" (click)="clearGrid()">Clear</button>
+      <button class="btn btn-success" type="submit" (click)="onSave()">Save</button>
+      <button class="btn btn-danger" type="submit" (click)="onClear()">Clear</button>
     </div>
   </div>
   <div class="row mt-4" *ngIf="puzzleLoaded">
