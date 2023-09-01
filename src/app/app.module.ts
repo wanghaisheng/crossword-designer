@@ -18,6 +18,7 @@ import { SidebarNavComponent } from "./sidebar-nav/sidebar-nav.component";
 import { PuzzleReviewComponent } from "./puzzle-review/puzzle-review.component";
 import { LoadPuzzleComponent } from "./load-puzzle/load-puzzle.component";
 import { AnswerDraftingComponent } from "./answer-drafting/answer-drafting.component";
+import { GridComponent } from "./components/grid/grid.component";
 
 @NgModule({
   declarations: [
@@ -29,6 +30,7 @@ import { AnswerDraftingComponent } from "./answer-drafting/answer-drafting.compo
     PuzzleReviewComponent,
     LoadPuzzleComponent,
     AnswerDraftingComponent,
+    GridComponent,
   ],
   imports: [
     BrowserModule,

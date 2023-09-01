@@ -113,7 +113,6 @@ export class PuzzleService {
 
   public activeAcrossClue$: BehaviorSubject<number> = new BehaviorSubject(0);
   public activeDownClue$: BehaviorSubject<number> = new BehaviorSubject(0);
-  public messenger: EventEmitter<string> = new EventEmitter();
 
   private _puzzle: Puzzle = new Puzzle();
   constructor(private firebaseService: FirebaseService) {}
