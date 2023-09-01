@@ -30,7 +30,9 @@
           Intersect
         </button>
       </div>
-      <button class="btn btn-secondary" type="submit" (click)="answersHidden = !answersHidden">Hide Answers</button>
+      <button class="btn btn-secondary" type="submit" (click)="answersHidden = !answersHidden">
+        <span *ngIf="answersHidden">Show</span><span *ngIf="!answersHidden">Hide</span> Answers
+      </button>
       <button class="ms-auto btn btn-success" type="submit" (click)="onSave()">Save</button>
       <button class="btn btn-danger" type="submit" (click)="onClear()">Clear</button>
     </div>

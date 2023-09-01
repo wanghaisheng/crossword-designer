@@ -37,7 +37,7 @@ export class ClueEditingComponent implements OnInit {
       let clue = this.puzzleService.puzzle.acrossClues[index];
       let text = this.cluesForm.value.across[index];
 
-      this.puzzleService.setClueText(ClueType.Across, clue.index, text);
+      this.puzzleService.setClueText(ClueType.Across, clue.num, text);
       control.markAsPristine();
     }
   }
@@ -49,7 +49,7 @@ export class ClueEditingComponent implements OnInit {
       let clue = this.puzzleService.puzzle.downClues[index];
       let text = this.cluesForm.value.down[index];
 
-      this.puzzleService.setClueText(ClueType.Down, clue.index, text);
+      this.puzzleService.setClueText(ClueType.Down, clue.num, text);
       control.markAsPristine();
     }
   }
