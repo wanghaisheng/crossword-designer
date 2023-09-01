@@ -1,3 +1,17 @@
 .container {
   padding: 20px 40px;
+
+  .card.new {
+    width: 200px;
+    margin-bottom: 20px;
+
+    .card-body {
+      padding: 8px 16px;
+    }
+  }
+
+  .card.existing {
+    width: 200px;
+    height: 200px;
+  }
 }

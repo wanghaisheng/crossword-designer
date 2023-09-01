@@ -1,28 +1,33 @@
 <div class="container">
-  <button class="btn btn-light ms-auto" type="button" data-bs-toggle="modal" data-bs-target="#loadModal">Load</button>
-  <div class="modal fade" id="loadModal" tabindex="-1" aria-labelledby="loadModal" aria-hidden="true">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h1 class="modal-title fs-5" id="exampleModalLabel">Load Puzzle</h1>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body">
-          <form [formGroup]="loadPuzzleForm" (ngSubmit)="loadPuzzle()">
-            <div class="mb-3">
-              <select class="form-select" aria-label="Puzzle select" formControlName="id">
-                <option>Select puzzle...</option>
-                <option *ngFor="let opt of puzzleList" [value]="opt.id">{{ opt.name }}</option>
-              </select>
-            </div>
-            <button type="submit" class="btn btn-primary" data-bs-dismiss="modal">Load</button>
-          </form>
+  <div class="row"><h3>Puzzles</h3></div>
+  <div class="row">
+    <div class="col">
+      <div class="card new" role="button" type="button" data-bs-toggle="modal" data-bs-target="#createModal">
+        <div class="card-body">
+          <div class="hstack gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-plus-lg" viewBox="0 0 16 16">
+              <path
+                fill-rule="evenodd"
+                d="M8 2a.5.5 0 0 1 .5.5v5h5a.5.5 0 0 1 0 1h-5v5a.5.5 0 0 1-1 0v-5h-5a.5.5 0 0 1 0-1h5v-5A.5.5 0 0 1 8 2Z" />
+            </svg>
+            <div class="p-1">New Puzzle</div>
+          </div>
         </div>
       </div>
     </div>
   </div>
-
-  <button class="btn btn-light" type="button" data-bs-toggle="modal" data-bs-target="#createModal">New</button>
+  <div class="row gx-3 gy-3" *ngIf="listLoaded">
+    <div class="col" *ngFor="let puzzle of puzzleList">
+      <div class="card existing" role="button" (click)="loadPuzzle(puzzle.id)">
+        <div class="card-body">
+          <div class="p-1">
+            <strong> {{ puzzle.name }} </strong>
+          </div>
+          <div class="p-1">{{ puzzle.width }}x{{ puzzle.height }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
   <div class="modal fade" id="createModal" tabindex="-1" aria-labelledby="createModal" aria-hidden="true">
     <div class="modal-dialog">
       <div class="modal-content">

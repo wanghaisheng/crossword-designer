@@ -1,10 +1,10 @@
 import { Injectable } from "@angular/core";
 import { FirebaseService } from "./firebase.service";
 import { BehaviorSubject, Observable, from, of } from "rxjs";
-import { PuzzleDoc, PuzzleService } from "./puzzle.service";
-import { catchError, map, mergeMap } from "rxjs/operators";
+import { PuzzleDoc } from "./puzzle.service";
+import { catchError, map } from "rxjs/operators";
 import { DocumentReference, QuerySnapshot } from "@angular/fire/firestore";
-import { AnswerDoc, AnswerService } from "./answer.service";
+import { AnswerDoc } from "./answer.service";
 
 @Injectable({
   providedIn: "root",
@@ -12,6 +12,7 @@ import { AnswerDoc, AnswerService } from "./answer.service";
 export class LoadService {
   public activePuzzleId$: BehaviorSubject<string> = new BehaviorSubject("");
   private activePuzzleId: string = "";
+  private _puzzleList: Array<PuzzleDoc> = [];
 
   constructor(private firebaseService: FirebaseService) {}
 
@@ -20,6 +21,11 @@ export class LoadService {
    * @returns an Observable containing an Array of PuzzleDocs
    */
   public getPuzzleList(): Observable<Array<PuzzleDoc>> {
+    // TODO: periodically check for updates
+    if (this._puzzleList.length > 0) {
+      return of(this._puzzleList);
+    }
+
     return from(this.firebaseService.getDocs("puzzle")).pipe(
       map((snap: QuerySnapshot) => {
         return snap.docs.map((d) => {
@@ -28,6 +34,7 @@ export class LoadService {
           return doc;
         });
       }),
+      map((puzzles: Array<PuzzleDoc>) => (this._puzzleList = puzzles)),
       catchError((error: ErrorEvent) => {
         throw error;
       })

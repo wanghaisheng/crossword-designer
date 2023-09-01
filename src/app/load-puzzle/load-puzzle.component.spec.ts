@@ -5,12 +5,14 @@ import { of } from "rxjs";
 import { TestPuzzle } from "src/environments/environment";
 import { LoadService } from "../services/load.service";
 import { ReactiveFormsModule } from "@angular/forms";
+import { Router } from "@angular/router";
 
 describe("LoadPuzzleComponent", () => {
   let component: LoadPuzzleComponent;
   let fixture: ComponentFixture<LoadPuzzleComponent>;
 
   const loadServiceSpy = jasmine.createSpyObj("LoadService", ["setActiveId", "createPuzzle", "getPuzzleList"]);
+  const routerSpy = jasmine.createSpyObj("RouterService", ["navigateByUrl"]);
 
   beforeEach(async () => {
     loadServiceSpy.getPuzzleList.and.returnValue(of([TestPuzzle]));
@@ -21,7 +23,10 @@ describe("LoadPuzzleComponent", () => {
     await TestBed.configureTestingModule({
       imports: [ReactiveFormsModule],
       declarations: [LoadPuzzleComponent],
-      providers: [{ provide: LoadService, useValue: loadServiceSpy }],
+      providers: [
+        { provide: LoadService, useValue: loadServiceSpy },
+        { provide: Router, useValue: routerSpy },
+      ],
     }).compileComponents();
   });
 
@@ -37,19 +42,13 @@ describe("LoadPuzzleComponent", () => {
 
   describe("loadPuzzle", () => {
     it("should call loadPuzzle with id", () => {
-      component.loadPuzzleForm.setValue({ id: "test-id" });
-
-      fixture.detectChanges();
-      component.loadPuzzle();
+      component.loadPuzzle("test-id");
 
       expect(loadServiceSpy.setActiveId).toHaveBeenCalledWith("test-id");
     });
 
-    it("should not call loadPuzzle if id null", () => {
-      component.loadPuzzleForm.setValue({ id: null });
-
-      fixture.detectChanges();
-      component.loadPuzzle();
+    it("should not call loadPuzzle if id empty", () => {
+      component.loadPuzzle("");
 
       expect(loadServiceSpy.setActiveId).not.toHaveBeenCalled();
     });

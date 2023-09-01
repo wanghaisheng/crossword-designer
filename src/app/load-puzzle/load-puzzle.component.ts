@@ -3,6 +3,7 @@ import { PuzzleDoc } from "../services/puzzle.service";
 
 import { FormControl, FormGroup } from "@angular/forms";
 import { LoadService } from "../services/load.service";
+import { Router } from "@angular/router";
 
 @Component({
   selector: "app-load-puzzle",
@@ -11,6 +12,7 @@ import { LoadService } from "../services/load.service";
 })
 export class LoadPuzzleComponent implements OnInit {
   public puzzleList: Array<PuzzleDoc> = [];
+  public listLoaded: boolean = false;
 
   public loadPuzzleForm = new FormGroup({
     id: new FormControl(""),
@@ -22,17 +24,19 @@ export class LoadPuzzleComponent implements OnInit {
     height: new FormControl(""),
   });
 
-  constructor(private loadService: LoadService) {}
+  constructor(private router: Router, private loadService: LoadService) {}
 
   ngOnInit(): void {
     this.loadService.getPuzzleList().subscribe((puzzles: Array<PuzzleDoc>) => {
       this.puzzleList = puzzles;
+      this.listLoaded = true;
     });
   }
 
-  public loadPuzzle(): void {
-    if (this.loadPuzzleForm.value.id) {
-      this.loadService.setActiveId(this.loadPuzzleForm.value.id);
+  public loadPuzzle(id: string): void {
+    if (id) {
+      this.loadService.setActiveId(id);
+      this.router.navigateByUrl("/answers");
     }
   }
 
