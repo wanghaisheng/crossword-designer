@@ -3,7 +3,9 @@
     <div class="p-3">
       <div class="hstack gap-2 p-3">
         <div class="p-1">
-          <strong>{{ acrossClue.index }} Across</strong>
+          <strong
+            ><span *ngIf="acrossClue.num != -1">{{ acrossClue.num }} </span>Across</strong
+          >
         </div>
         <div class="vr"></div>
         <div class="p-1">{{ acrossClue.answer }}</div>
@@ -19,7 +21,9 @@
     <div class="p-3">
       <div class="hstack gap-2 p-3">
         <div class="p-1">
-          <strong>{{ downClue.index }} Down</strong>
+          <strong
+            ><span *ngIf="downClue.num != -1">{{ downClue.num }} </span>Down</strong
+          >
         </div>
         <div class="vr"></div>
         <div class="p-1">{{ downClue.answer }}</div>

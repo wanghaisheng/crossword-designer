@@ -46,14 +46,14 @@ export class Puzzle {
 }
 
 export class Clue {
-  index: number;
+  num: number;
   text: string;
   answer: string;
   squares: Array<number>;
 
-  constructor(index: number = -1, clue: string = "", answer: string = "", squares: Array<number> = []) {
-    this.index = index;
-    this.text = clue;
+  constructor(num: number = -1, text: string = "", answer: string = "", squares: Array<number> = []) {
+    this.num = num;
+    this.text = text;
     this.answer = answer;
     this.squares = squares;
   }
@@ -111,8 +111,8 @@ export class PuzzleService {
     return this._puzzle;
   }
 
-  public activeAcrossClue$: BehaviorSubject<Clue> = new BehaviorSubject(new Clue());
-  public activeDownClue$: BehaviorSubject<Clue> = new BehaviorSubject(new Clue());
+  public activeAcrossClue$: BehaviorSubject<number> = new BehaviorSubject(0);
+  public activeDownClue$: BehaviorSubject<number> = new BehaviorSubject(0);
   public messenger: EventEmitter<string> = new EventEmitter();
 
   private _puzzle: Puzzle = new Puzzle();
@@ -187,8 +187,8 @@ export class PuzzleService {
     this._puzzle.downClues = [];
     this.numberPuzzle(this._puzzle);
 
-    this.activeAcrossClue$.next(this._puzzle.acrossClues[0]);
-    this.activeDownClue$.next(this._puzzle.downClues[0]);
+    this.activeAcrossClue$.next(0);
+    this.activeDownClue$.next(0);
   }
 
   /**
@@ -196,8 +196,8 @@ export class PuzzleService {
    * @param index square index
    */
   public selectSquare(index: number) {
-    this.activeAcrossClue$.next(this.getAcrossClue(index));
-    this.activeDownClue$.next(this.getDownClue(index));
+    this.activeAcrossClue$.next(this.getAcrossClueIndex(index));
+    this.activeDownClue$.next(this.getDownClueIndex(index));
   }
 
   /**
@@ -212,10 +212,8 @@ export class PuzzleService {
     this.setSquareType(index, newType);
     this.numberPuzzle(this._puzzle);
 
-    if (square.type == SquareType.Letter) {
-      this.activeAcrossClue$.next(this.getAcrossClue(index));
-      this.activeDownClue$.next(this.getDownClue(index));
-    }
+    this.activeAcrossClue$.next(this.getAcrossClueIndex(index));
+    this.activeDownClue$.next(this.getDownClueIndex(index));
   }
 
   /**
@@ -237,9 +235,12 @@ export class PuzzleService {
    * @param value new square value
    */
   public setSquareValue(index: number, value: string): void {
+    const acrossIndex = this.getAcrossClueIndex(index);
+    const downIndex = this.getDownClueIndex(index);
+
     let square = this._puzzle.grid[index];
-    let acrossClue = this.getAcrossClue(index);
-    let downClue = this.getDownClue(index);
+    let acrossClue = this._puzzle.acrossClues[acrossIndex];
+    let downClue = this._puzzle.downClues[downIndex];
 
     // Update puzzle grid
     square.value = value.toUpperCase();
@@ -247,12 +248,12 @@ export class PuzzleService {
     // Update across clue answer
     const acrossPos = acrossClue.squares.findIndex((i: number) => i == square.index);
     acrossClue.answer = acrossClue.answer.substring(0, acrossPos) + square.value + acrossClue.answer.substring(acrossPos + 1);
-    this.activeAcrossClue$.next(acrossClue);
+    this.activeAcrossClue$.next(acrossIndex);
 
     // Update down clue answer
     const downPos = downClue.squares.findIndex((i: number) => i == square.index);
     downClue.answer = downClue.answer.substring(0, downPos) + square.value + downClue.answer.substring(downPos + 1);
-    this.activeDownClue$.next(downClue);
+    this.activeDownClue$.next(downIndex);
   }
 
   /**
@@ -263,7 +264,7 @@ export class PuzzleService {
    */
   public setClueText(type: ClueType, index: number, text: string) {
     let clues = type == ClueType.Across ? this._puzzle.acrossClues : this._puzzle.downClues;
-    let clue = clues.find((clue) => clue.index == index);
+    let clue = clues.find((clue) => clue.num == index);
 
     if (clue) {
       clue.text = text;
@@ -278,18 +279,18 @@ export class PuzzleService {
     return index % this._puzzle.width;
   }
 
-  public getAcrossClue(index: number): Clue {
+  public getAcrossClueIndex(index: number): number {
     let square = this._puzzle.grid[index];
-    let across = this._puzzle.acrossClues.find((a) => square.acrossClueNum == a.index);
+    let clueIndex = this._puzzle.acrossClues.findIndex((a) => square.acrossClueNum == a.num);
 
-    return across ? across : this._puzzle.acrossClues[0];
+    return clueIndex;
   }
 
-  public getDownClue(index: number): Clue {
+  public getDownClueIndex(index: number): number {
     let square = this._puzzle.grid[index];
-    let down = this._puzzle.downClues.find((d) => square.downClueNum == d.index);
+    let clueIndex = this._puzzle.downClues.findIndex((d) => square.downClueNum == d.num);
 
-    return down ? down : this._puzzle.downClues[0];
+    return clueIndex;
   }
 
   public getReflectIndex(index: number): number {
@@ -567,14 +568,14 @@ export class PuzzleService {
     }
 
     // Ensure down clues are in order
-    puzzle.downClues.sort((a: Clue, b: Clue) => a.index - b.index);
+    puzzle.downClues.sort((a: Clue, b: Clue) => a.num - b.num);
   }
 
   private addOrUpdateClue(clues: Array<Clue>, pos: number, clueNum: number, answer: string, squares: Array<number>): void {
     let clue = clues[pos];
 
     if (clue) {
-      clue.index = clueNum;
+      clue.num = clueNum;
       clue.answer = answer;
       clue.squares = squares;
     } else {
@@ -589,8 +590,8 @@ export class PuzzleService {
 
     let addClues = (square: Square) => {
       if (newType == SquareType.Spacer) {
-        let acrossPos = this._puzzle.acrossClues.findIndex((clue: Clue) => clue.index == square.acrossClueNum);
-        let downPos = this._puzzle.downClues.findIndex((clue: Clue) => clue.index == square.downClueNum);
+        let acrossPos = this._puzzle.acrossClues.findIndex((clue: Clue) => clue.num == square.acrossClueNum);
+        let downPos = this._puzzle.downClues.findIndex((clue: Clue) => clue.num == square.downClueNum);
 
         // Reset clue text for existing clues
         this._puzzle.acrossClues[acrossPos].text = "";
@@ -614,7 +615,7 @@ export class PuzzleService {
 
           // Add new down clue
           let prevClueNum = this.getPrevClueNum(square.index + this._puzzle.width);
-          downPos = this._puzzle.downClues.findIndex((clue: Clue) => clue.index > prevClueNum);
+          downPos = this._puzzle.downClues.findIndex((clue: Clue) => clue.num > prevClueNum);
           this._puzzle.downClues.splice(downPos, 0, new Clue());
         }
       } else {
@@ -622,7 +623,7 @@ export class PuzzleService {
         let createdDown = this.createsDownNumber(square.index);
 
         if (createdAcross != -1) {
-          let acrossPos = this._puzzle.acrossClues.findIndex((clue: Clue) => clue.index == createdAcross);
+          let acrossPos = this._puzzle.acrossClues.findIndex((clue: Clue) => clue.num == createdAcross);
           let terminatedAcross = this.terminatesAcrossNumber(square.index);
 
           // Remove old across clue
@@ -633,13 +634,13 @@ export class PuzzleService {
             this._puzzle.acrossClues.splice(acrossPos, 0, new Clue());
           } else {
             // Reset clue text for existing across clue
-            acrossPos = this._puzzle.acrossClues.findIndex((clue: Clue) => clue.index == terminatedAcross);
+            acrossPos = this._puzzle.acrossClues.findIndex((clue: Clue) => clue.num == terminatedAcross);
             this._puzzle.acrossClues[acrossPos].text = "";
           }
         }
 
         if (createdDown != -1) {
-          let downPos = this._puzzle.downClues.findIndex((clue: Clue) => clue.index == createdDown);
+          let downPos = this._puzzle.downClues.findIndex((clue: Clue) => clue.num == createdDown);
           let terminatedDown = this.terminatesDownNumber(square.index);
 
           // Remove old down clue
@@ -648,11 +649,11 @@ export class PuzzleService {
           if (terminatedDown == -1) {
             // Add new down clue
             let prevClueNum = this.getPrevClueNum(square.index);
-            downPos = this._puzzle.downClues.findIndex((clue: Clue) => clue.index > prevClueNum);
+            downPos = this._puzzle.downClues.findIndex((clue: Clue) => clue.num > prevClueNum);
             this._puzzle.downClues.splice(downPos, 0, new Clue());
           } else {
             // Reset clue text for existing down clue
-            downPos = this._puzzle.downClues.findIndex((clue: Clue) => clue.index == terminatedDown);
+            downPos = this._puzzle.downClues.findIndex((clue: Clue) => clue.num == terminatedDown);
             this._puzzle.downClues[downPos].text = "";
           }
         }

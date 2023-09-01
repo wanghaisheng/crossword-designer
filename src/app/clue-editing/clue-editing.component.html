@@ -12,7 +12,7 @@
         <div *ngFor="let clue of acrossClues; let i = index" class="form-group">
           <div class="hstack gap-2 p-3">
             <div class="p-1">
-              <strong>{{ acrossClues[i].index }}</strong>
+              <strong>{{ acrossClues[i].num }}</strong>
             </div>
             <div class="vr"></div>
             <div class="p-1">{{ acrossClues[i].answer }}</div>
@@ -35,7 +35,7 @@
         <div *ngFor="let clue of downClues; let i = index" class="form-group">
           <div class="hstack gap-2 p-3">
             <div class="p-1">
-              <strong>{{ downClues[i].index }}</strong>
+              <strong>{{ downClues[i].num }}</strong>
             </div>
             <div class="vr"></div>
             <div class="p-1">{{ downClues[i].answer }}</div>

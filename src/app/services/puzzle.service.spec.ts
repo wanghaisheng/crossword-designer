@@ -125,13 +125,17 @@ describe("PuzzleService", () => {
         expect(service.puzzle.grid[0]).toEqual(new Square(0, " ", 1, 1, 1));
         expect(service.puzzle.grid[8]).toEqual(new Square(8, " ", 9, 1, 9));
 
-        service.activeAcrossClue$.subscribe((clue) => {
-          expect(clue.index).toEqual(1);
+        service.activeAcrossClue$.subscribe((clueIndex) => {
+          const clue = service.puzzle.acrossClues[clueIndex];
+
+          expect(clue.num).toEqual(1);
           expect(clue.answer).toEqual(Array(21).fill(" ").join(""));
         });
 
-        service.activeDownClue$.subscribe((clue) => {
-          expect(clue.index).toEqual(1);
+        service.activeDownClue$.subscribe((clueIndex) => {
+          const clue = service.puzzle.downClues[clueIndex];
+
+          expect(clue.num).toEqual(1);
           expect(clue.answer).toEqual(Array(21).fill(" ").join(""));
         });
       });
@@ -143,12 +147,12 @@ describe("PuzzleService", () => {
       service.loadPuzzle(testPuzzleId).subscribe(() => {
         service.selectSquare(3);
 
-        service.activeAcrossClue$.subscribe((clue) => {
-          expect(clue).toEqual(new Clue(1, "It's not that simple", "YESANDNO", [0, 1, 2, 3, 4, 5, 6, 7]));
+        service.activeAcrossClue$.subscribe((clueIndex) => {
+          expect(service.puzzle.acrossClues[clueIndex]).toEqual(new Clue(1, "It's not that simple", "YESANDNO", [0, 1, 2, 3, 4, 5, 6, 7]));
         });
 
-        service.activeDownClue$.subscribe((clue) => {
-          expect(clue).toEqual(new Clue(4, "Draw", "ATTRACT", [3, 24, 45, 66, 87, 108, 129]));
+        service.activeDownClue$.subscribe((clueIndex) => {
+          expect(service.puzzle.downClues[clueIndex]).toEqual(new Clue(4, "Draw", "ATTRACT", [3, 24, 45, 66, 87, 108, 129]));
         });
       });
     });
@@ -157,12 +161,12 @@ describe("PuzzleService", () => {
       service.loadPuzzle(testPuzzleId).subscribe(() => {
         service.selectSquare(432);
 
-        service.activeAcrossClue$.subscribe((clue) => {
-          // TODO: not really sure what behavior I want here (do with bug #13)
+        service.activeAcrossClue$.subscribe((clueIndex) => {
+          expect(clueIndex).toEqual(-1);
         });
 
-        service.activeDownClue$.subscribe((clue) => {
-          // TODO: not really sure what behavior I want here
+        service.activeDownClue$.subscribe((clueIndex) => {
+          expect(clueIndex).toEqual(-1);
         });
       });
     });
@@ -283,12 +287,12 @@ describe("PuzzleService", () => {
 
         expect(service.puzzle.grid[23].value).toEqual("X");
 
-        service.activeAcrossClue$.subscribe((clue) => {
-          expect(clue.answer).toEqual("IDXTAROD");
+        service.activeAcrossClue$.subscribe((clueIndex) => {
+          expect(service.puzzle.acrossClues[clueIndex].answer).toEqual("IDXTAROD");
         });
 
-        service.activeDownClue$.subscribe((clue) => {
-          expect(clue.answer).toEqual("SXRE");
+        service.activeDownClue$.subscribe((clueIndex) => {
+          expect(service.puzzle.downClues[clueIndex].answer).toEqual("SXRE");
         });
       });
     });
@@ -299,12 +303,12 @@ describe("PuzzleService", () => {
 
         expect(service.puzzle.grid[440].value).toEqual(" ");
 
-        service.activeAcrossClue$.subscribe((clue) => {
-          expect(clue.answer).toEqual("TOTHEMA ");
+        service.activeAcrossClue$.subscribe((clueIndex) => {
+          expect(service.puzzle.acrossClues[clueIndex].answer).toEqual("TOTHEMA ");
         });
 
-        service.activeDownClue$.subscribe((clue) => {
-          expect(clue.answer).toEqual("SE ");
+        service.activeDownClue$.subscribe((clueIndex) => {
+          expect(service.puzzle.downClues[clueIndex].answer).toEqual("SE ");
         });
       });
     });

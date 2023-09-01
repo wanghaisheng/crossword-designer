@@ -131,7 +131,7 @@ export class PuzzleEditingComponent implements OnInit {
    * @returns true if square should be highlighted, false otherwise
    */
   public isHighlighted(square: Square): boolean {
-    if (this.editMode == EditMode.Value) {
+    if (this.editMode == EditMode.Value && square.type == SquareType.Letter) {
       if (this.highlightMode == HighlightMode.Across) {
         return square.acrossClueNum == this.puzzleGrid[this.selectedIndex].acrossClueNum;
       } else if (this.highlightMode == HighlightMode.Down) {
