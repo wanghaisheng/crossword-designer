@@ -1,4 +1,6 @@
 import { Component, OnInit } from "@angular/core";
+import { LoadService } from "../services/load.service";
+import { Router } from "@angular/router";
 
 @Component({
   selector: "app-sidebar-nav",
@@ -6,9 +8,15 @@ import { Component, OnInit } from "@angular/core";
   styleUrls: ["./sidebar-nav.component.scss"],
 })
 export class SidebarNavComponent implements OnInit {
-  public selectedIndex: number = 0;
+  public puzzleLoaded: boolean = false;
 
-  constructor() {}
+  constructor(private router: Router, private loadService: LoadService) {}
 
-  ngOnInit(): void {}
+  ngOnInit(): void {
+    this.router.navigateByUrl("/load");
+
+    this.loadService.activePuzzleId$.subscribe((id: string) => {
+      this.puzzleLoaded = id ? true : false;
+    });
+  }
 }

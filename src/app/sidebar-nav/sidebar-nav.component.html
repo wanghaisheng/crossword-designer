@@ -3,14 +3,14 @@
     <li class="nav-item">
       <a
         routerLink="/load"
-        class="nav-link active py-3 border-bottom"
+        class="nav-link py-3 border-bottom"
         aria-current="page"
         title=""
         data-bs-toggle="tooltip"
         data-bs-placement="right"
         data-bs-original-title="Load or Create Puzzle"
-        [ngClass]="{ 'active': selectedIndex == 0 }"
-        (click)="selectedIndex = 0">
+        [routerLinkActive]="'active'"
+        [ngClass]="{ 'disabled': !puzzleLoaded }">
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-files" viewBox="0 0 16 16">
           <path
             d="M13 0H6a2 2 0 0 0-2 2 2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h7a2 2 0 0 0 2-2 2 2 0 0 0 2-2V2a2 2 0 0 0-2-2zm0 13V4a2 2 0 0 0-2-2H5a1 1 0 0 1 1-1h7a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1zM3 4a1 1 0 0 1 1-1h7a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V4z" />
@@ -25,8 +25,8 @@
         data-bs-toggle="tooltip"
         data-bs-placement="right"
         data-bs-original-title="Brainstorm Answers"
-        [ngClass]="{ 'active': selectedIndex == 1 }"
-        (click)="selectedIndex = 1">
+        [routerLinkActive]="'active'"
+        [ngClass]="{ 'disabled': !puzzleLoaded }">
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-journal-text" viewBox="0 0 16 16">
           <path
             d="M5 10.5a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 0 1h-2a.5.5 0 0 1-.5-.5zm0-2a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5zm0-2a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5zm0-2a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5z" />
@@ -45,8 +45,8 @@
         data-bs-toggle="tooltip"
         data-bs-placement="right"
         data-bs-original-title="Edit Puzzle"
-        [ngClass]="{ 'active': selectedIndex == 2 }"
-        (click)="selectedIndex = 2">
+        [routerLinkActive]="'active'"
+        [ngClass]="{ 'disabled': !puzzleLoaded }">
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-grid-3x3" viewBox="0 0 16 16">
           <path
             d="M0 1.5A1.5 1.5 0 0 1 1.5 0h13A1.5 1.5 0 0 1 16 1.5v13a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 0 14.5v-13zM1.5 1a.5.5 0 0 0-.5.5V5h4V1H1.5zM5 6H1v4h4V6zm1 4h4V6H6v4zm-1 1H1v3.5a.5.5 0 0 0 .5.5H5v-4zm1 0v4h4v-4H6zm5 0v4h3.5a.5.5 0 0 0 .5-.5V11h-4zm0-1h4V6h-4v4zm0-5h4V1.5a.5.5 0 0 0-.5-.5H11v4zm-1 0V1H6v4h4z" />
@@ -61,8 +61,8 @@
         data-bs-toggle="tooltip"
         data-bs-placement="right"
         data-bs-original-title="Edit Clues"
-        [ngClass]="{ 'active': selectedIndex == 3 }"
-        (click)="selectedIndex = 3">
+        [routerLinkActive]="'active'"
+        [ngClass]="{ 'disabled': !puzzleLoaded }">
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-list-ol" viewBox="0 0 16 16">
           <path
             fill-rule="evenodd"
@@ -80,8 +80,8 @@
         data-bs-toggle="tooltip"
         data-bs-placement="right"
         data-bs-original-title="Review Puzzle"
-        [ngClass]="{ 'active': selectedIndex == 4 }"
-        (click)="selectedIndex = 4">
+        [routerLinkActive]="'active'"
+        [ngClass]="{ 'disabled': !puzzleLoaded }">
         <svg
           xmlns="http://www.w3.org/2000/svg"
           width="16"
