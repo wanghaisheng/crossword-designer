@@ -17,7 +17,7 @@ export class PuzzleEditingComponent implements OnInit, OnDestroy {
   public editMode: EditMode = EditMode.Value;
   public highlightMode: HighlightMode = HighlightMode.Across;
 
-  public puzzleConfig$: BehaviorSubject<GridConfig> = new BehaviorSubject({
+  public gridConfig$: BehaviorSubject<GridConfig> = new BehaviorSubject({
     readonly: false,
     answersHidden: this.answersHidden,
     editMode: this.editMode,
@@ -53,7 +53,7 @@ export class PuzzleEditingComponent implements OnInit, OnDestroy {
   }
 
   public onUpdateConfig(): void {
-    this.puzzleConfig$.next({
+    this.gridConfig$.next({
       readonly: false,
       answersHidden: this.answersHidden,
       editMode: this.editMode,

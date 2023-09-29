@@ -1,0 +1,23 @@
+.container {
+  h1 {
+    font-size: large;
+    padding: 10px 25px;
+  }
+
+  .clues {
+    column-count: 2;
+    font-size: medium;
+    overflow-x: scroll;
+    height: 675px;
+
+    li {
+      margin-bottom: 6px;
+      text-indent: -32px;
+      padding-left: 32px;
+    }
+
+    li#down {
+      margin-top: 24px;
+    }
+  }
+}

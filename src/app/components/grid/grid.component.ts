@@ -29,7 +29,7 @@ export enum HighlightMode {
 })
 export class GridComponent implements OnInit {
   public squareHeight: number = 30;
-  public selectedIndex: number = 0;
+  public selectedIndex: number = -1;
 
   public get numRows(): number {
     return this.puzzleService.puzzle.height;
@@ -57,6 +57,7 @@ export class GridComponent implements OnInit {
   ngOnInit(): void {
     this.config$.subscribe((config: GridConfig) => {
       this.config = config;
+      this.selectedIndex = config.readonly ? -1 : 0;
     });
   }
 

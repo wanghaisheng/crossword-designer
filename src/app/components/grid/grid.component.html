@@ -1,5 +1,10 @@
 <div class="container">
-  <table #table class="table table-bordered" [ngStyle]="{ 'width.px': numCols * squareHeight }" (keydown)="onKeyDown($event)" tabindex="0">
+  <table
+    #table
+    class="table table-bordered"
+    [ngStyle]="{ 'width.px': numCols * squareHeight }"
+    (keydown)="!config.readonly && onKeyDown($event)"
+    tabindex="0">
     <tbody>
       <tr *ngFor="let row of [].constructor(numRows); index as i">
         <td
@@ -11,7 +16,7 @@
             'selected': square.index == selectedIndex,
             'highlighted': isHighlighted(square)
           }"
-          (click)="onClickSquare(square.index)">
+          (click)="!config.readonly && onClickSquare(square.index)">
           <div class="square-contents" [ngStyle]="{ 'height.px': squareHeight, 'width.px': squareHeight }">
             <div class="number" *ngIf="square.boxNum != -1">{{ square.boxNum }}</div>
             <div class="circle" [ngStyle]="{ 'border': square.overlay == 1 ? 'solid' : 'none' }">

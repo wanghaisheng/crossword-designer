@@ -87,14 +87,14 @@ describe("PuzzleEditingComponent", () => {
 
   describe("onUpdateConfig", () => {
     it("should emit new puzzle configuration", () => {
-      spyOn(component.puzzleConfig$, "next");
+      spyOn(component.gridConfig$, "next");
 
       component.answersHidden = true;
       component.editMode = EditMode.Circle;
       component.highlightMode = HighlightMode.Down;
       component.onUpdateConfig();
 
-      expect(component.puzzleConfig$.next).toHaveBeenCalledWith({
+      expect(component.gridConfig$.next).toHaveBeenCalledWith({
         readonly: false,
         answersHidden: true,
         editMode: EditMode.Circle,
