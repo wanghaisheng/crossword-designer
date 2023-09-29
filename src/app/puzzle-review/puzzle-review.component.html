@@ -1,1 +1,24 @@
-<p>puzzle-review works!</p>
+<div class="container">
+  <div class="row">
+    <h1 class="text-uppercase">
+      <strong>{{ title }}</strong>
+    </h1>
+  </div>
+  <div class="row flex-nowrap">
+    <div class="col">
+      <app-grid [config$]="gridConfig$"></app-grid>
+    </div>
+    <div class="col">
+      <div class="clues list-unstyled">
+        <li id="across"><strong>ACROSS</strong></li>
+        <li *ngFor="let clue of acrossClues">
+          <strong>{{ clue.num }} </strong>{{ clue.text }}
+        </li>
+        <li id="down"><strong>DOWN</strong></li>
+        <li *ngFor="let clue of downClues">
+          <strong>{{ clue.num }} </strong>{{ clue.text }}
+        </li>
+      </div>
+    </div>
+  </div>
+</div>
