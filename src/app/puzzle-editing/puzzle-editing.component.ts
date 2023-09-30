@@ -41,10 +41,10 @@ export class PuzzleEditingComponent implements OnInit, OnDestroy {
       )
       .subscribe(
         (result: boolean) => {
-          this.puzzleLoaded = true;
-
-          if (result) {
-            alert("Puzzle loaded successfully!");
+          if (result && this.puzzleService.puzzle) {
+            this.puzzleLoaded = true;
+          } else {
+            console.error("Something went wrong during puzzle load...");
           }
         },
         (err: ErrorEvent) => {
@@ -67,9 +67,12 @@ export class PuzzleEditingComponent implements OnInit, OnDestroy {
   }
 
   public onSave(): void {
-    this.puzzleService.savePuzzle().subscribe(() => {
-      alert("Puzzle saved!");
-    });
+    this.puzzleService.savePuzzle().subscribe(
+      () => {},
+      (err: ErrorEvent) => {
+        alert("Puzzle failed to save: " + err.message);
+      }
+    );
   }
 
   public onClear(): void {

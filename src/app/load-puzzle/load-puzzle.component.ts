@@ -43,13 +43,15 @@ export class LoadPuzzleComponent implements OnInit {
   public createPuzzle(): void {
     this.loadService
       .createPuzzle(this.newPuzzleForm.value.title, this.newPuzzleForm.value.width, this.newPuzzleForm.value.height)
-      .subscribe((success: boolean) => {
-        if (success) {
-          alert("Puzzle created successfully!");
-          // TODO: re-route
-        } else {
-          alert("Puzzle creation failed");
+      .subscribe(
+        (result: boolean) => {
+          if (!result) {
+            console.error("Something went wrong during puzzle creation...");
+          }
+        },
+        (err: ErrorEvent) => {
+          alert("Failed to create puzzle: " + err.message);
         }
-      });
+      );
   }
 }

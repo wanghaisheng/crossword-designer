@@ -33,6 +33,7 @@ describe("PuzzleEditingComponent", () => {
     puzzleServiceSpy.savePuzzle.and.returnValue(of(undefined));
 
     spyOn(window, "alert");
+    spyOn(console, "error");
 
     await TestBed.configureTestingModule({
       declarations: [PuzzleEditingComponent],
@@ -53,23 +54,24 @@ describe("PuzzleEditingComponent", () => {
   });
 
   describe("ngOnInit", () => {
-    it("should alert success when loadPuzzle returns true", () => {
+    it("should do nothing when loadPuzzle returns true", () => {
       puzzleServiceSpy.loadPuzzle.and.returnValue(of(true));
 
       fixture.detectChanges();
 
       expect(puzzleServiceSpy.loadPuzzle).toHaveBeenCalledWith(testId);
-      expect(window.alert).toHaveBeenCalledWith("Puzzle loaded successfully!");
+      expect(window.alert).not.toHaveBeenCalled();
+      expect(console.error).not.toHaveBeenCalledWith("Something went wrong during puzzle load...");
       expect(component.puzzleLoaded).toEqual(true);
     });
 
-    it("should do nothing when loadPuzzle returns false", () => {
+    it("should log error when loadPuzzle returns false", () => {
       puzzleServiceSpy.loadPuzzle.and.returnValue(of(false));
 
       fixture.detectChanges();
 
       expect(puzzleServiceSpy.loadPuzzle).toHaveBeenCalledWith(testId);
-      expect(window.alert).not.toHaveBeenCalled();
+      expect(console.error).toHaveBeenCalledWith("Something went wrong during puzzle load...");
     });
 
     it("should alert failure when loadPuzzle throws error", () => {
@@ -104,11 +106,23 @@ describe("PuzzleEditingComponent", () => {
   });
 
   describe("onSave", () => {
-    it("should call savePuzzle and alert success", () => {
+    it("should do nothing when savePuzzle success", () => {
       component.onSave();
 
       expect(puzzleServiceSpy.savePuzzle).toHaveBeenCalled();
-      expect(window.alert).toHaveBeenCalledWith("Puzzle saved!");
+      expect(window.alert).not.toHaveBeenCalled();
+    });
+
+    it("should alert failure when savePuzzle throws error", () => {
+      const errorMsg = "Failed to set doc";
+      puzzleServiceSpy.savePuzzle.and.callFake(() => {
+        return throwError(new Error(errorMsg));
+      });
+
+      component.onSave();
+
+      expect(puzzleServiceSpy.savePuzzle).toHaveBeenCalled();
+      expect(window.alert).toHaveBeenCalledWith("Puzzle failed to save: Failed to set doc");
     });
   });
 

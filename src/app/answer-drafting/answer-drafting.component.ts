@@ -38,8 +38,8 @@ export class AnswerDraftingComponent implements OnInit, OnDestroy {
       )
       .subscribe(
         (result: boolean) => {
-          if (result) {
-            alert("Answers loaded successfully!");
+          if (!result) {
+            console.error("Something went wrong loading answers...");
           }
         },
         (err: ErrorEvent) => {
@@ -77,8 +77,11 @@ export class AnswerDraftingComponent implements OnInit, OnDestroy {
   }
 
   public onSave(): void {
-    this.answerService.saveAnswers().subscribe(() => {
-      alert("Answers saved!");
-    });
+    this.answerService.saveAnswers().subscribe(
+      () => {},
+      (err: ErrorEvent) => {
+        alert("Answers failed to save: " + err.message);
+      }
+    );
   }
 }

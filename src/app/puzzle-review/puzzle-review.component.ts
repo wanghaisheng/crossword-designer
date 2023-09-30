@@ -42,12 +42,10 @@ export class PuzzleReviewComponent implements OnInit, OnDestroy {
       )
       .subscribe(
         (result: boolean) => {
-          if (result) {
-            alert("Puzzle loaded successfully!");
-          }
-
-          if (this.puzzleService.puzzle) {
+          if (result && this.puzzleService.puzzle) {
             this.puzzleLoaded = true;
+          } else {
+            console.error("Something went wrong during puzzle load...");
           }
         },
         (err: ErrorEvent) => {

@@ -38,6 +38,7 @@ describe("AnswerDraftingComponent", () => {
     answerServiceSpy.saveAnswers.and.returnValue(of(undefined));
 
     spyOn(window, "alert");
+    spyOn(console, "error");
 
     await TestBed.configureTestingModule({
       imports: [ReactiveFormsModule],
@@ -59,22 +60,22 @@ describe("AnswerDraftingComponent", () => {
   });
 
   describe("ngOnInit", () => {
-    it("should alert success when loadAnswers returns true", () => {
+    it("should do nothing when loadAnswers returns true", () => {
       answerServiceSpy.loadAnswers.and.returnValue(of(true));
 
       fixture.detectChanges();
 
       expect(answerServiceSpy.loadAnswers).toHaveBeenCalledWith(testId);
-      expect(window.alert).toHaveBeenCalledWith("Answers loaded successfully!");
+      expect(window.alert).not.toHaveBeenCalled();
     });
 
-    it("should do nothing when loadAnswers returns false", () => {
+    it("should log error when loadAnswers returns false", () => {
       answerServiceSpy.loadAnswers.and.returnValue(of(false));
 
       fixture.detectChanges();
 
       expect(answerServiceSpy.loadAnswers).toHaveBeenCalledWith(testId);
-      expect(window.alert).not.toHaveBeenCalled();
+      expect(console.error).toHaveBeenCalledWith("Something went wrong loading answers...");
     });
 
     it("should alert failure when loadAnswers throws error", () => {
@@ -143,7 +144,19 @@ describe("AnswerDraftingComponent", () => {
       component.onSave();
 
       expect(answerServiceSpy.saveAnswers).toHaveBeenCalled();
-      expect(window.alert).toHaveBeenCalledWith("Answers saved!");
+      expect(window.alert).not.toHaveBeenCalled();
+    });
+
+    it("should alert failure when saveAnswers throws error", () => {
+      const errorMsg = "Failed to set doc";
+      answerServiceSpy.saveAnswers.and.callFake(() => {
+        return throwError(new Error(errorMsg));
+      });
+
+      component.onSave();
+
+      expect(answerServiceSpy.saveAnswers).toHaveBeenCalled();
+      expect(window.alert).toHaveBeenCalledWith("Answers failed to save: Failed to set doc");
     });
   });
 

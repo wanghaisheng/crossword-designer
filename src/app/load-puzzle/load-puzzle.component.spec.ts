@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from "@angular/core/testing";
 
 import { LoadPuzzleComponent } from "./load-puzzle.component";
-import { of } from "rxjs";
+import { of, throwError } from "rxjs";
 import { TestPuzzle } from "src/environments/environment";
 import { LoadService } from "../services/load.service";
 import { ReactiveFormsModule } from "@angular/forms";
@@ -19,6 +19,7 @@ describe("LoadPuzzleComponent", () => {
     loadServiceSpy.createPuzzle.and.returnValue(of(true));
     loadServiceSpy.setActiveId.calls.reset();
     spyOn(window, "alert");
+    spyOn(console, "error");
 
     await TestBed.configureTestingModule({
       imports: [ReactiveFormsModule],
@@ -55,17 +56,17 @@ describe("LoadPuzzleComponent", () => {
   });
 
   describe("createPuzzle", () => {
-    it("should alert success when puzzle successfully created and activated", () => {
+    it("should do nothing when puzzle successfully created and activated", () => {
       component.newPuzzleForm.setValue({ title: "New Puzzle", width: 10, height: 12 });
 
       fixture.detectChanges();
       component.createPuzzle();
 
       expect(loadServiceSpy.createPuzzle).toHaveBeenCalledWith("New Puzzle", 10, 12);
-      expect(window.alert).toHaveBeenCalledWith("Puzzle created successfully!");
+      expect(window.alert).not.toHaveBeenCalled();
     });
 
-    it("should alert failure when puzzle not successfully created and activated", () => {
+    it("should log error when puzzle not successfully created and activated", () => {
       loadServiceSpy.createPuzzle.and.returnValue(of(false));
       component.newPuzzleForm.setValue({ title: "New Puzzle", width: 10, height: 12 });
 
@@ -73,7 +74,21 @@ describe("LoadPuzzleComponent", () => {
       component.createPuzzle();
 
       expect(loadServiceSpy.createPuzzle).toHaveBeenCalledWith("New Puzzle", 10, 12);
-      expect(window.alert).toHaveBeenCalledWith("Puzzle creation failed");
+      expect(console.error).toHaveBeenCalledWith("Something went wrong during puzzle creation...");
+    });
+
+    it("should alert failure when puzzle creation fails", () => {
+      const errorMsg = "Failed to add doc";
+      loadServiceSpy.createPuzzle.and.callFake(() => {
+        return throwError(new Error(errorMsg));
+      });
+      component.newPuzzleForm.setValue({ title: "New Puzzle", width: 10, height: 12 });
+
+      fixture.detectChanges();
+      component.createPuzzle();
+
+      expect(loadServiceSpy.createPuzzle).toHaveBeenCalledWith("New Puzzle", 10, 12);
+      expect(window.alert).toHaveBeenCalledWith("Failed to create puzzle: Failed to add doc");
     });
   });
 });

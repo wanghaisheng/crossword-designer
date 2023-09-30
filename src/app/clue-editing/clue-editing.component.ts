@@ -55,9 +55,12 @@ export class ClueEditingComponent implements OnInit {
   }
 
   public onSave(): void {
-    this.puzzleService.savePuzzle().subscribe(() => {
-      alert("Clues saved!");
-    });
+    this.puzzleService.savePuzzle().subscribe(
+      () => {},
+      (err: ErrorEvent) => {
+        alert("Clues failed to save: " + err.message);
+      }
+    );
   }
 
   public onClear(): void {

@@ -3,7 +3,7 @@ import { ComponentFixture, TestBed } from "@angular/core/testing";
 import { ClueEditingComponent } from "./clue-editing.component";
 import { Clue, ClueType, Puzzle, PuzzleService, Square } from "../services/puzzle.service";
 import { FormArray, ReactiveFormsModule } from "@angular/forms";
-import { of } from "rxjs";
+import { of, throwError } from "rxjs";
 
 describe("ClueEditingComponent", () => {
   let component: ClueEditingComponent;
@@ -93,7 +93,19 @@ describe("ClueEditingComponent", () => {
       component.onSave();
 
       expect(puzzleServiceSpy.savePuzzle).toHaveBeenCalled();
-      expect(window.alert).toHaveBeenCalledWith("Clues saved!");
+      expect(window.alert).not.toHaveBeenCalled();
+    });
+
+    it("should alert failure when savePuzzle throws error", () => {
+      const errorMsg = "Failed to set doc";
+      puzzleServiceSpy.savePuzzle.and.callFake(() => {
+        return throwError(new Error(errorMsg));
+      });
+
+      component.onSave();
+
+      expect(puzzleServiceSpy.savePuzzle).toHaveBeenCalled();
+      expect(window.alert).toHaveBeenCalledWith("Clues failed to save: Failed to set doc");
     });
   });
 
