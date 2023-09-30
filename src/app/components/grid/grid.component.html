@@ -4,7 +4,7 @@
   [ngStyle]="{ 'width.px': numCols * squareHeight }"
   (keydown)="!config.readonly && onKeyDown($event)"
   tabindex="0">
-  <tbody>
+  <tbody [ngStyle]="{ 'border-color': config.readonly ? '#212529' : '#dee2e6' }">
     <tr *ngFor="let row of [].constructor(numRows); index as i">
       <td
         class="square"
