@@ -18,21 +18,21 @@
       <div class="btn-group" role="group" aria-label="Highlight Mode">
         <button
           type="button"
-          class="btn btn-info"
+          class="btn btn-warning"
           [ngClass]="{ 'active': highlightMode == 0, 'disabled': editMode != 0 }"
           (click)="highlightMode = 0; onUpdateConfig()">
           Across
         </button>
         <button
           type="button"
-          class="btn btn-info"
+          class="btn btn-warning"
           [ngClass]="{ 'active': highlightMode == 1, 'disabled': editMode != 0 }"
           (click)="highlightMode = 1; onUpdateConfig()">
           Down
         </button>
         <button
           type="button"
-          class="btn btn-info"
+          class="btn btn-warning"
           [ngClass]="{ 'active': highlightMode == 2, 'disabled': editMode != 0 }"
           (click)="highlightMode = 2; onUpdateConfig()">
           Intersect
