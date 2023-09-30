@@ -1,4 +1,4 @@
-<div class="container">
+<div class="container-fluid">
   <div class="row">
     <div class="hstack gap-3">
       <button class="ms-auto btn btn-success" type="submit" (click)="onSave()">Save</button>
@@ -7,7 +7,7 @@
   </div>
   <form class="row" [formGroup]="cluesForm">
     <div class="col">
-      <h3>Across</h3>
+      <h2>Across</h2>
       <div [formArrayName]="'across'">
         <div *ngFor="let clue of acrossClues; let i = index" class="form-group">
           <div class="hstack gap-2 p-3">
@@ -30,7 +30,7 @@
       </div>
     </div>
     <div class="col">
-      <h3>Down</h3>
+      <h2>Down</h2>
       <div [formArrayName]="'down'">
         <div *ngFor="let clue of downClues; let i = index" class="form-group">
           <div class="hstack gap-2 p-3">
