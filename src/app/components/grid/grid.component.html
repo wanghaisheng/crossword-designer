@@ -1,32 +1,30 @@
-<div class="container">
-  <table
-    #table
-    class="table table-bordered"
-    [ngStyle]="{ 'width.px': numCols * squareHeight }"
-    (keydown)="!config.readonly && onKeyDown($event)"
-    tabindex="0">
-    <tbody>
-      <tr *ngFor="let row of [].constructor(numRows); index as i">
-        <td
-          class="square"
-          *ngFor="let square of getPuzzleRow(i * numCols); index as j"
-          [ngClass]="{
-            'spacer': square.type == 1,
-            'shaded': square.overlay == 2,
-            'selected': square.index == selectedIndex,
-            'highlighted': isHighlighted(square)
-          }"
-          (click)="!config.readonly && onClickSquare(square.index)">
-          <div class="square-contents" [ngStyle]="{ 'height.px': squareHeight, 'width.px': squareHeight }">
-            <div class="number" *ngIf="square.boxNum != -1">{{ square.boxNum }}</div>
-            <div class="circle" [ngStyle]="{ 'border': square.overlay == 1 ? 'solid' : 'none' }">
-              <div class="value text-center" [ngStyle]="{ 'display': config.answersHidden ? 'none' : 'block' }">
-                <span>{{ square.value }}</span>
-              </div>
+<table
+  #table
+  class="table table-bordered"
+  [ngStyle]="{ 'width.px': numCols * squareHeight }"
+  (keydown)="!config.readonly && onKeyDown($event)"
+  tabindex="0">
+  <tbody>
+    <tr *ngFor="let row of [].constructor(numRows); index as i">
+      <td
+        class="square"
+        *ngFor="let square of getPuzzleRow(i * numCols); index as j"
+        [ngClass]="{
+          'spacer': square.type == 1,
+          'shaded': square.overlay == 2,
+          'selected': square.index == selectedIndex,
+          'highlighted': isHighlighted(square)
+        }"
+        (click)="!config.readonly && onClickSquare(square.index)">
+        <div class="square-contents" [ngStyle]="{ 'height.px': squareHeight, 'width.px': squareHeight }">
+          <div class="number" *ngIf="square.boxNum != -1">{{ square.boxNum }}</div>
+          <div class="circle" [ngStyle]="{ 'border': square.overlay == 1 ? 'solid' : 'none' }">
+            <div class="value text-center" [ngStyle]="{ 'display': config.answersHidden ? 'none' : 'block' }">
+              <span>{{ square.value }}</span>
             </div>
           </div>
-        </td>
-      </tr>
-    </tbody>
-  </table>
-</div>
+        </div>
+      </td>
+    </tr>
+  </tbody>
+</table>

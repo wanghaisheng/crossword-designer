@@ -4,6 +4,7 @@ import { LoadService } from "../services/load.service";
 import { mergeMap, takeWhile } from "rxjs/operators";
 import { EditMode, HighlightMode, GridConfig } from "../components/grid/grid.component";
 import { BehaviorSubject } from "rxjs";
+import { AnswerBank, AnswerService } from "../services/answer.service";
 
 @Component({
   selector: "app-puzzle-editing",
@@ -17,6 +18,10 @@ export class PuzzleEditingComponent implements OnInit, OnDestroy {
   public editMode: EditMode = EditMode.Value;
   public highlightMode: HighlightMode = HighlightMode.Across;
 
+  public get answerBank(): AnswerBank {
+    return this.answerService.answerBank;
+  }
+
   public gridConfig$: BehaviorSubject<GridConfig> = new BehaviorSubject({
     readonly: false,
     answersHidden: this.answersHidden,
@@ -26,7 +31,7 @@ export class PuzzleEditingComponent implements OnInit, OnDestroy {
 
   private active: boolean = true;
 
-  constructor(private puzzleService: PuzzleService, private loadService: LoadService) {}
+  constructor(private puzzleService: PuzzleService, private loadService: LoadService, private answerService: AnswerService) {}
 
   ngOnInit(): void {
     this.loadService.activePuzzleId$
