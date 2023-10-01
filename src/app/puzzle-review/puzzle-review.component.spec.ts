@@ -45,43 +45,10 @@ describe("PuzzleReviewComponent", () => {
   beforeEach(() => {
     fixture = TestBed.createComponent(PuzzleReviewComponent);
     component = fixture.componentInstance;
+    fixture.detectChanges();
   });
 
   it("should create", () => {
     expect(component).toBeTruthy();
-  });
-
-  describe("ngOnInit", () => {
-    it("should do nothing when loadPuzzle returns true", () => {
-      puzzleServiceSpy.loadPuzzle.and.returnValue(of(true));
-
-      fixture.detectChanges();
-
-      expect(puzzleServiceSpy.loadPuzzle).toHaveBeenCalledWith(testId);
-      expect(window.alert).not.toHaveBeenCalled();
-      expect(console.error).not.toHaveBeenCalledWith("Something went wrong during puzzle load...");
-      expect(component.puzzleLoaded).toEqual(true);
-    });
-
-    it("should log error when loadPuzzle returns false", () => {
-      puzzleServiceSpy.loadPuzzle.and.returnValue(of(false));
-
-      fixture.detectChanges();
-
-      expect(puzzleServiceSpy.loadPuzzle).toHaveBeenCalledWith(testId);
-      expect(console.error).toHaveBeenCalledWith("Something went wrong during puzzle load...");
-    });
-
-    it("should alert failure when loadPuzzle throws error", () => {
-      const errorMsg = "Failed to get doc";
-      puzzleServiceSpy.loadPuzzle.and.callFake(() => {
-        return throwError(new Error(errorMsg));
-      });
-
-      fixture.detectChanges();
-
-      expect(puzzleServiceSpy.loadPuzzle).toHaveBeenCalledWith(testId);
-      expect(window.alert).toHaveBeenCalledWith("Puzzle load failed: Failed to get doc");
-    });
   });
 });

@@ -1,9 +1,11 @@
 import { Component, OnInit } from "@angular/core";
-import { PuzzleDoc } from "../services/puzzle.service";
+import { PuzzleDoc, PuzzleService } from "../services/puzzle.service";
 
 import { FormControl, FormGroup } from "@angular/forms";
 import { LoadService } from "../services/load.service";
 import { Router } from "@angular/router";
+import { switchMap } from "rxjs/operators";
+import { AnswerService } from "../services/answer.service";
 
 @Component({
   selector: "app-load-puzzle",
@@ -24,7 +26,12 @@ export class LoadPuzzleComponent implements OnInit {
     height: new FormControl(""),
   });
 
-  constructor(private router: Router, private loadService: LoadService) {}
+  constructor(
+    private router: Router,
+    private loadService: LoadService,
+    private answerService: AnswerService,
+    private puzzleService: PuzzleService
+  ) {}
 
   ngOnInit(): void {
     this.loadService.getPuzzleList().subscribe((puzzles: Array<PuzzleDoc>) => {
@@ -35,8 +42,18 @@ export class LoadPuzzleComponent implements OnInit {
 
   public loadPuzzle(id: string): void {
     if (id) {
-      this.loadService.setActiveId(id);
-      this.router.navigateByUrl("/answers");
+      this.answerService
+        .loadAnswers(id)
+        .pipe(switchMap(() => this.puzzleService.loadPuzzle(id)))
+        .subscribe(
+          () => {
+            this.loadService.setActiveId(id);
+            this.router.navigateByUrl("/answers");
+          },
+          (err: ErrorEvent) => {
+            alert("Failed to load puzzle: " + err.message);
+          }
+        );
     }
   }
 

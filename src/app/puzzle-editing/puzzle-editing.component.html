@@ -56,10 +56,10 @@
           <div class="card-body">
             <p><strong>Answer Bank</strong></p>
             <div class="theme-answers list-unstyled">
-              <li *ngFor="let answer of answerBank.themeAnswers.keys()">{{ answer }}</li>
+              <li *ngFor="let answer of themeAnswers">{{ answer }}</li>
             </div>
             <div class="answer-bank list-unstyled">
-              <li *ngFor="let answer of answerBank.answers">{{ answer }}</li>
+              <li *ngFor="let answer of answers">{{ answer }}</li>
             </div>
           </div>
         </div>

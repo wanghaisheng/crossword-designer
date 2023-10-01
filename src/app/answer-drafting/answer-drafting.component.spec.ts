@@ -2,8 +2,7 @@ import { ComponentFixture, TestBed } from "@angular/core/testing";
 
 import { AnswerDraftingComponent } from "./answer-drafting.component";
 import { AnswerBank, AnswerService } from "../services/answer.service";
-import { BehaviorSubject, of, throwError } from "rxjs";
-import { LoadService } from "../services/load.service";
+import { of, throwError } from "rxjs";
 import { ReactiveFormsModule } from "@angular/forms";
 
 describe("AnswerDraftingComponent", () => {
@@ -20,8 +19,6 @@ describe("AnswerDraftingComponent", () => {
     "clearAnswers",
   ]);
 
-  const loadServiceSpy = jasmine.createSpyObj("LoadService", ["activePuzzleId$"]);
-
   const testId = "testId";
 
   const testAnswerBank: AnswerBank = {
@@ -31,10 +28,7 @@ describe("AnswerDraftingComponent", () => {
   };
 
   beforeEach(async () => {
-    loadServiceSpy.activePuzzleId$ = new BehaviorSubject<string>(testId);
-
     answerServiceSpy.answerBank = testAnswerBank;
-    answerServiceSpy.loadAnswers.and.returnValue(of(false));
     answerServiceSpy.saveAnswers.and.returnValue(of(undefined));
 
     spyOn(window, "alert");
@@ -43,10 +37,7 @@ describe("AnswerDraftingComponent", () => {
     await TestBed.configureTestingModule({
       imports: [ReactiveFormsModule],
       declarations: [AnswerDraftingComponent],
-      providers: [
-        { provide: AnswerService, useValue: answerServiceSpy },
-        { provide: LoadService, useValue: loadServiceSpy },
-      ],
+      providers: [{ provide: AnswerService, useValue: answerServiceSpy }],
     }).compileComponents();
   });
 
@@ -57,38 +48,6 @@ describe("AnswerDraftingComponent", () => {
 
   it("should create", () => {
     expect(component).toBeTruthy();
-  });
-
-  describe("ngOnInit", () => {
-    it("should do nothing when loadAnswers returns true", () => {
-      answerServiceSpy.loadAnswers.and.returnValue(of(true));
-
-      fixture.detectChanges();
-
-      expect(answerServiceSpy.loadAnswers).toHaveBeenCalledWith(testId);
-      expect(window.alert).not.toHaveBeenCalled();
-    });
-
-    it("should log error when loadAnswers returns false", () => {
-      answerServiceSpy.loadAnswers.and.returnValue(of(false));
-
-      fixture.detectChanges();
-
-      expect(answerServiceSpy.loadAnswers).toHaveBeenCalledWith(testId);
-      expect(console.error).toHaveBeenCalledWith("Something went wrong loading answers...");
-    });
-
-    it("should alert failure when loadAnswers throws error", () => {
-      const errorMsg = "Failed to get doc";
-      answerServiceSpy.loadAnswers.and.callFake(() => {
-        return throwError(new Error(errorMsg));
-      });
-
-      fixture.detectChanges();
-
-      expect(answerServiceSpy.loadAnswers).toHaveBeenCalledWith(testId);
-      expect(window.alert).toHaveBeenCalledWith("Answers load failed: Failed to get doc");
-    });
   });
 
   describe("addAnswer", () => {

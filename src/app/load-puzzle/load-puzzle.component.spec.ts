@@ -6,15 +6,21 @@ import { TestPuzzle } from "src/environments/environment";
 import { LoadService } from "../services/load.service";
 import { ReactiveFormsModule } from "@angular/forms";
 import { Router } from "@angular/router";
+import { AnswerService } from "../services/answer.service";
+import { PuzzleService } from "../services/puzzle.service";
 
 describe("LoadPuzzleComponent", () => {
   let component: LoadPuzzleComponent;
   let fixture: ComponentFixture<LoadPuzzleComponent>;
 
   const loadServiceSpy = jasmine.createSpyObj("LoadService", ["setActiveId", "createPuzzle", "getPuzzleList"]);
+  const answerServiceSpy = jasmine.createSpyObj("AnswerService", ["loadAnswers"]);
+  const puzzleServiceSpy = jasmine.createSpyObj("PuzzleService", ["loadPuzzle"]);
   const routerSpy = jasmine.createSpyObj("RouterService", ["navigateByUrl"]);
 
   beforeEach(async () => {
+    answerServiceSpy.loadAnswers.and.returnValue(of(true));
+    puzzleServiceSpy.loadPuzzle.and.returnValue(of(true));
     loadServiceSpy.getPuzzleList.and.returnValue(of([TestPuzzle]));
     loadServiceSpy.createPuzzle.and.returnValue(of(true));
     loadServiceSpy.setActiveId.calls.reset();
@@ -26,6 +32,8 @@ describe("LoadPuzzleComponent", () => {
       declarations: [LoadPuzzleComponent],
       providers: [
         { provide: LoadService, useValue: loadServiceSpy },
+        { provide: AnswerService, useValue: answerServiceSpy },
+        { provide: PuzzleService, useValue: puzzleServiceSpy },
         { provide: Router, useValue: routerSpy },
       ],
     }).compileComponents();
@@ -42,9 +50,11 @@ describe("LoadPuzzleComponent", () => {
   });
 
   describe("loadPuzzle", () => {
-    it("should call loadPuzzle with id", () => {
+    it("should call loadPuzzle, loadAnswers and setActiveId with id", () => {
       component.loadPuzzle("test-id");
 
+      expect(answerServiceSpy.loadAnswers).toHaveBeenCalledWith("test-id");
+      expect(puzzleServiceSpy.loadPuzzle).toHaveBeenCalledWith("test-id");
       expect(loadServiceSpy.setActiveId).toHaveBeenCalledWith("test-id");
     });
 
@@ -52,6 +62,19 @@ describe("LoadPuzzleComponent", () => {
       component.loadPuzzle("");
 
       expect(loadServiceSpy.setActiveId).not.toHaveBeenCalled();
+    });
+
+    it("should alert failure when puzzle load fails", () => {
+      const errorMsg = "Failed to get doc";
+      puzzleServiceSpy.loadPuzzle.and.callFake(() => {
+        return throwError(new Error(errorMsg));
+      });
+
+      fixture.detectChanges();
+      component.loadPuzzle("testId");
+
+      expect(puzzleServiceSpy.loadPuzzle).toHaveBeenCalledWith("testId");
+      expect(window.alert).toHaveBeenCalledWith("Failed to load puzzle: Failed to get doc");
     });
   });
 

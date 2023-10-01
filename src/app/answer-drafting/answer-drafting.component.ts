@@ -1,15 +1,14 @@
-import { Component, OnDestroy, OnInit } from "@angular/core";
+import { Component, OnInit } from "@angular/core";
 import { FormControl, FormGroup } from "@angular/forms";
 import { AnswerService } from "../services/answer.service";
 import { LoadService } from "../services/load.service";
-import { mergeMap, takeWhile } from "rxjs/operators";
 
 @Component({
   selector: "app-answer-drafting",
   templateUrl: "./answer-drafting.component.html",
   styleUrls: ["./answer-drafting.component.scss"],
 })
-export class AnswerDraftingComponent implements OnInit, OnDestroy {
+export class AnswerDraftingComponent implements OnInit {
   public get themeAnswers(): Map<string, Array<number>> {
     return this.answerService.answerBank.themeAnswers;
   }
@@ -26,31 +25,9 @@ export class AnswerDraftingComponent implements OnInit, OnDestroy {
     answer: new FormControl(""),
   });
 
-  private active: boolean = true;
-
   constructor(private answerService: AnswerService, private loadService: LoadService) {}
 
-  ngOnInit(): void {
-    this.loadService.activePuzzleId$
-      .pipe(
-        takeWhile(() => this.active),
-        mergeMap((id: string) => this.answerService.loadAnswers(id))
-      )
-      .subscribe(
-        (result: boolean) => {
-          if (!result) {
-            console.error("Something went wrong loading answers...");
-          }
-        },
-        (err: ErrorEvent) => {
-          alert("Answers load failed: " + err.message);
-        }
-      );
-  }
-
-  ngOnDestroy(): void {
-    this.active = false;
-  }
+  ngOnInit(): void {}
 
   public addAnswer(isTheme: boolean) {
     if (isTheme) {
