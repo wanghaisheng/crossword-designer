@@ -140,7 +140,7 @@ export class PuzzleService {
         );
 
         this.numberPuzzle(this._puzzle);
-        this.selectSquare(0);
+        this.selectSquare(this.getFirstLetterIndex());
       }),
       map(() => true),
       catchError((error: ErrorEvent) => {
@@ -294,6 +294,21 @@ export class PuzzleService {
 
   public getReflectIndex(index: number): number {
     return this._puzzle.width * this._puzzle.height - 1 - index;
+  }
+
+  /**
+   * Gets the index of the first letter square in the puzzle
+   * @returns the index of the first letter square
+   */
+  public getFirstLetterIndex(): number {
+    const puzzle = this._puzzle;
+    let index = 0;
+
+    while (index < puzzle.width * puzzle.height && puzzle.grid[index].type != SquareType.Letter) {
+      ++index;
+    }
+
+    return index;
   }
 
   /**

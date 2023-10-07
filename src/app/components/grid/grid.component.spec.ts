@@ -20,6 +20,7 @@ describe("PuzzleComponent", () => {
     "savePuzzle",
     "clearPuzzle",
     "setSquareValue",
+    "getFirstLetterIndex",
     "getNextIndex",
     "getPrevIndex",
     "isPuzzleEnd",
@@ -52,6 +53,7 @@ describe("PuzzleComponent", () => {
       if (vertical) return index - testPuzzle.width;
       else return index - 1;
     });
+    puzzleServiceSpy.getFirstLetterIndex.and.returnValue(0);
 
     await TestBed.configureTestingModule({
       declarations: [GridComponent],

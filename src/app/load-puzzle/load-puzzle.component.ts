@@ -6,6 +6,7 @@ import { LoadService } from "../services/load.service";
 import { Router } from "@angular/router";
 import { switchMap } from "rxjs/operators";
 import { AnswerService } from "../services/answer.service";
+import { Card, MetricStatus, MetricType } from "../components/card-group/card-group.component";
 
 @Component({
   selector: "app-load-puzzle",
@@ -14,6 +15,7 @@ import { AnswerService } from "../services/answer.service";
 })
 export class LoadPuzzleComponent implements OnInit {
   public puzzleList: Array<PuzzleDoc> = [];
+  public puzzleCards: Array<Card> = [];
   public listLoaded: boolean = false;
 
   public loadPuzzleForm = new FormGroup({
@@ -36,6 +38,8 @@ export class LoadPuzzleComponent implements OnInit {
   ngOnInit(): void {
     this.loadService.getPuzzleList().subscribe((puzzles: Array<PuzzleDoc>) => {
       this.puzzleList = puzzles;
+      this.buildPuzzleCards();
+
       this.listLoaded = true;
     });
   }
@@ -70,5 +74,18 @@ export class LoadPuzzleComponent implements OnInit {
           alert("Failed to create puzzle: " + err.message);
         }
       );
+  }
+
+  private buildPuzzleCards(): void {
+    this.puzzleCards = this.puzzleList.map((puzzle: PuzzleDoc) => {
+      return {
+        id: puzzle.id,
+        title: puzzle.name,
+        metricType: MetricType.Text,
+        value: `${puzzle.width}x${puzzle.height}`,
+        readonly: false,
+        status: MetricStatus.None,
+      };
+    });
   }
 }

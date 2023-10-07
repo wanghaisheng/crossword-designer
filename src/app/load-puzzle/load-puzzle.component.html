@@ -16,18 +16,6 @@
       </div>
     </div>
   </div>
-  <div class="row gx-3 gy-3" *ngIf="listLoaded">
-    <div class="col" *ngFor="let puzzle of puzzleList">
-      <div class="card existing" role="button" (click)="loadPuzzle(puzzle.id)">
-        <div class="card-body">
-          <div class="p-1">
-            <strong> {{ puzzle.name }} </strong>
-          </div>
-          <div class="p-1">{{ puzzle.width }}x{{ puzzle.height }}</div>
-        </div>
-      </div>
-    </div>
-  </div>
   <div class="modal fade" id="createModal" tabindex="-1" aria-labelledby="createModal" aria-hidden="true">
     <div class="modal-dialog">
       <div class="modal-content">
@@ -52,4 +40,5 @@
       </div>
     </div>
   </div>
+  <app-card-group *ngIf="listLoaded" [cards]="puzzleCards" (clickEvent)="loadPuzzle($event)"></app-card-group>
 </div>

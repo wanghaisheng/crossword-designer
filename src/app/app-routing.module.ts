@@ -5,6 +5,7 @@ import { ClueEditingComponent } from "./clue-editing/clue-editing.component";
 import { PuzzleReviewComponent } from "./puzzle-review/puzzle-review.component";
 import { LoadPuzzleComponent } from "./load-puzzle/load-puzzle.component";
 import { AnswerDraftingComponent } from "./answer-drafting/answer-drafting.component";
+import { PuzzleStatsComponent } from "./puzzle-stats/puzzle-stats.component";
 
 const routes: Routes = [
   { path: "load", component: LoadPuzzleComponent },
@@ -12,6 +13,7 @@ const routes: Routes = [
   { path: "puzzle", component: PuzzleEditingComponent },
   { path: "clues", component: ClueEditingComponent },
   { path: "review", component: PuzzleReviewComponent },
+  { path: "stats", component: PuzzleStatsComponent },
 ];
 
 @NgModule({

@@ -19,7 +19,8 @@ import { PuzzleReviewComponent } from "./puzzle-review/puzzle-review.component";
 import { LoadPuzzleComponent } from "./load-puzzle/load-puzzle.component";
 import { AnswerDraftingComponent } from "./answer-drafting/answer-drafting.component";
 import { GridComponent } from "./components/grid/grid.component";
-import { PuzzleStatsComponent } from './puzzle-stats/puzzle-stats.component';
+import { PuzzleStatsComponent } from "./puzzle-stats/puzzle-stats.component";
+import { CardGroupComponent } from "./components/card-group/card-group.component";
 
 @NgModule({
   declarations: [
@@ -33,6 +34,7 @@ import { PuzzleStatsComponent } from './puzzle-stats/puzzle-stats.component';
     AnswerDraftingComponent,
     GridComponent,
     PuzzleStatsComponent,
+    CardGroupComponent,
   ],
   imports: [
     BrowserModule,

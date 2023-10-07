@@ -1,16 +1,13 @@
 import { ComponentFixture, TestBed } from "@angular/core/testing";
 
 import { PuzzleReviewComponent } from "./puzzle-review.component";
-import { BehaviorSubject, of, throwError } from "rxjs";
 import { Puzzle, PuzzleService, Square } from "../services/puzzle.service";
-import { LoadService } from "../services/load.service";
 
 describe("PuzzleReviewComponent", () => {
   let component: PuzzleReviewComponent;
   let fixture: ComponentFixture<PuzzleReviewComponent>;
 
-  const puzzleServiceSpy = jasmine.createSpyObj("PuzzleService", ["puzzle", "loadPuzzle"]);
-  const loadServiceSpy = jasmine.createSpyObj("LoadService", ["activePuzzleId$"]);
+  const puzzleServiceSpy = jasmine.createSpyObj("PuzzleService", ["puzzle"]);
 
   const testId = "testId";
 
@@ -25,20 +22,14 @@ describe("PuzzleReviewComponent", () => {
   };
 
   beforeEach(async () => {
-    loadServiceSpy.activePuzzleId$ = new BehaviorSubject<string>(testId);
-
     puzzleServiceSpy.puzzle = testPuzzle;
-    puzzleServiceSpy.loadPuzzle.and.returnValue(of(false));
 
     spyOn(window, "alert");
     spyOn(console, "error");
 
     await TestBed.configureTestingModule({
       declarations: [PuzzleReviewComponent],
-      providers: [
-        { provide: PuzzleService, useValue: puzzleServiceSpy },
-        { provide: LoadService, useValue: loadServiceSpy },
-      ],
+      providers: [{ provide: PuzzleService, useValue: puzzleServiceSpy }],
     }).compileComponents();
   });
 

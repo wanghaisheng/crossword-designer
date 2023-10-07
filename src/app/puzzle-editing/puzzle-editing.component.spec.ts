@@ -9,7 +9,7 @@ describe("PuzzleEditingComponent", () => {
   let component: PuzzleEditingComponent;
   let fixture: ComponentFixture<PuzzleEditingComponent>;
 
-  const puzzleServiceSpy = jasmine.createSpyObj("PuzzleService", ["puzzle", "loadPuzzle", "savePuzzle", "clearPuzzle"]);
+  const puzzleServiceSpy = jasmine.createSpyObj("PuzzleService", ["puzzle", "savePuzzle", "clearPuzzle"]);
 
   const testId = "testId";
 
