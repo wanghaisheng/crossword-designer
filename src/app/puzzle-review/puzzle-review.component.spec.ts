@@ -1,16 +1,36 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from "@angular/core/testing";
 
-import { PuzzleReviewComponent } from './puzzle-review.component';
+import { PuzzleReviewComponent } from "./puzzle-review.component";
+import { Puzzle, PuzzleService, Square } from "../services/puzzle.service";
 
-describe('PuzzleReviewComponent', () => {
+describe("PuzzleReviewComponent", () => {
   let component: PuzzleReviewComponent;
   let fixture: ComponentFixture<PuzzleReviewComponent>;
 
+  const puzzleServiceSpy = jasmine.createSpyObj("PuzzleService", ["puzzle"]);
+
+  const testId = "testId";
+
+  const testPuzzle: Puzzle = {
+    id: testId,
+    name: "Test",
+    width: 4,
+    height: 5,
+    grid: Array.from(Array(20).keys()).map((i) => new Square(i, "", -1, Math.floor(i / 4), i % 4)),
+    acrossClues: [],
+    downClues: [],
+  };
+
   beforeEach(async () => {
+    puzzleServiceSpy.puzzle = testPuzzle;
+
+    spyOn(window, "alert");
+    spyOn(console, "error");
+
     await TestBed.configureTestingModule({
-      declarations: [ PuzzleReviewComponent ]
-    })
-    .compileComponents();
+      declarations: [PuzzleReviewComponent],
+      providers: [{ provide: PuzzleService, useValue: puzzleServiceSpy }],
+    }).compileComponents();
   });
 
   beforeEach(() => {
@@ -19,7 +39,7 @@ describe('PuzzleReviewComponent', () => {
     fixture.detectChanges();
   });
 
-  it('should create', () => {
+  it("should create", () => {
     expect(component).toBeTruthy();
   });
 });

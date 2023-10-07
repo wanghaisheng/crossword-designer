@@ -57,7 +57,7 @@ export class GridComponent implements OnInit {
   ngOnInit(): void {
     this.config$.subscribe((config: GridConfig) => {
       this.config = config;
-      this.selectedIndex = config.readonly ? -1 : 0;
+      this.selectedIndex = config.readonly ? -1 : this.puzzleService.getFirstLetterIndex();
     });
   }
 

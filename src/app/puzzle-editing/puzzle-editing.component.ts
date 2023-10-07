@@ -1,25 +1,27 @@
-import { Component, OnDestroy, OnInit } from "@angular/core";
+import { Component, OnInit } from "@angular/core";
 import { PuzzleService } from "../services/puzzle.service";
-import { LoadService } from "../services/load.service";
-import { mergeMap, takeWhile } from "rxjs/operators";
 import { EditMode, HighlightMode, GridConfig } from "../components/grid/grid.component";
 import { BehaviorSubject } from "rxjs";
-import { AnswerBank, AnswerService } from "../services/answer.service";
+import { AnswerService } from "../services/answer.service";
 
 @Component({
   selector: "app-puzzle-editing",
   templateUrl: "./puzzle-editing.component.html",
   styleUrls: ["./puzzle-editing.component.scss"],
 })
-export class PuzzleEditingComponent implements OnInit, OnDestroy {
+export class PuzzleEditingComponent implements OnInit {
   public puzzleLoaded: boolean = false;
 
   public answersHidden: boolean = false;
   public editMode: EditMode = EditMode.Value;
   public highlightMode: HighlightMode = HighlightMode.Across;
 
-  public get answerBank(): AnswerBank {
-    return this.answerService.answerBank;
+  public get answers(): Array<string> {
+    return this.answerService.answerBank.answers;
+  }
+
+  public get themeAnswers(): Array<string> {
+    return Array.from(this.answerService.answerBank.themeAnswers.keys());
   }
 
   public gridConfig$: BehaviorSubject<GridConfig> = new BehaviorSubject({
@@ -29,32 +31,12 @@ export class PuzzleEditingComponent implements OnInit, OnDestroy {
     highlightMode: this.highlightMode,
   } as GridConfig);
 
-  private active: boolean = true;
-
-  constructor(private puzzleService: PuzzleService, private loadService: LoadService, private answerService: AnswerService) {}
+  constructor(private puzzleService: PuzzleService, private answerService: AnswerService) {}
 
   ngOnInit(): void {
-    this.loadService.activePuzzleId$
-      .pipe(
-        takeWhile(() => this.active),
-        mergeMap((id: string) => this.puzzleService.loadPuzzle(id))
-      )
-      .subscribe(
-        (result: boolean) => {
-          this.puzzleLoaded = true;
-
-          if (result) {
-            alert("Puzzle loaded successfully!");
-          }
-        },
-        (err: ErrorEvent) => {
-          alert("Puzzle load failed: " + err.message);
-        }
-      );
-  }
-
-  ngOnDestroy(): void {
-    this.active = false;
+    if (this.puzzleService.puzzle) {
+      this.puzzleLoaded = true;
+    }
   }
 
   public onUpdateConfig(): void {
@@ -67,9 +49,12 @@ export class PuzzleEditingComponent implements OnInit, OnDestroy {
   }
 
   public onSave(): void {
-    this.puzzleService.savePuzzle().subscribe(() => {
-      alert("Puzzle saved!");
-    });
+    this.puzzleService.savePuzzle().subscribe(
+      () => {},
+      (err: ErrorEvent) => {
+        alert("Puzzle failed to save: " + err.message);
+      }
+    );
   }
 
   public onClear(): void {

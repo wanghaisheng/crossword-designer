@@ -1,7 +1,5 @@
-import { Component, OnDestroy, OnInit } from "@angular/core";
+import { Component, OnInit } from "@angular/core";
 import { Clue, PuzzleService } from "../services/puzzle.service";
-import { LoadService } from "../services/load.service";
-import { mergeMap, takeWhile } from "rxjs/operators";
 import { BehaviorSubject } from "rxjs";
 import { GridConfig } from "../components/grid/grid.component";
 
@@ -10,7 +8,7 @@ import { GridConfig } from "../components/grid/grid.component";
   templateUrl: "./puzzle-review.component.html",
   styleUrls: ["./puzzle-review.component.scss"],
 })
-export class PuzzleReviewComponent implements OnInit, OnDestroy {
+export class PuzzleReviewComponent implements OnInit {
   public puzzleLoaded: boolean = false;
 
   get acrossClues(): Array<Clue> {
@@ -30,33 +28,11 @@ export class PuzzleReviewComponent implements OnInit, OnDestroy {
     answersHidden: true,
   } as GridConfig);
 
-  private active: boolean = true;
-
-  constructor(private puzzleService: PuzzleService, private loadService: LoadService) {}
+  constructor(private puzzleService: PuzzleService) {}
 
   ngOnInit(): void {
-    this.loadService.activePuzzleId$
-      .pipe(
-        takeWhile(() => this.active),
-        mergeMap((id: string) => this.puzzleService.loadPuzzle(id))
-      )
-      .subscribe(
-        (result: boolean) => {
-          if (result) {
-            alert("Puzzle loaded successfully!");
-          }
-
-          if (this.puzzleService.puzzle) {
-            this.puzzleLoaded = true;
-          }
-        },
-        (err: ErrorEvent) => {
-          alert("Puzzle load failed: " + err.message);
-        }
-      );
-  }
-
-  ngOnDestroy(): void {
-    this.active = false;
+    if (this.puzzleService.puzzle) {
+      this.puzzleLoaded = true;
+    }
   }
 }
