@@ -40,5 +40,18 @@
       </div>
     </div>
   </div>
-  <app-card-group *ngIf="listLoaded" [cards]="puzzleCards" (clickEvent)="loadPuzzle($event)"></app-card-group>
+  <div *ngIf="listLoaded" class="row gy-4">
+    <div *ngFor="let puzzle of puzzleList" class="col-3">
+      <div class="card existing h-100">
+        <div class="card-body">
+          <div class="p-1">
+            <strong class="card-title d-inline-block text-truncate text-center" (click)="loadPuzzle(puzzle.id)">{{ puzzle.name }}</strong>
+          </div>
+          <div class="p-1">
+            <div>{{ puzzle.width }}x{{ puzzle.height }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>

@@ -30,15 +30,10 @@ export enum Status {
 })
 export class MetricGroupComponent implements OnInit {
   @Input() cards: Array<Card> = [];
-  @Output() clickEvent = new EventEmitter<string>();
 
   constructor() {}
 
   ngOnInit(): void {
     this.cards.sort((a, b) => a.metricType - b.metricType);
-  }
-
-  public onClick(id: string): void {
-    this.clickEvent.emit(id);
   }
 }

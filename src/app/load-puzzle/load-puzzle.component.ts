@@ -6,7 +6,7 @@ import { LoadService } from "../services/load.service";
 import { Router } from "@angular/router";
 import { switchMap } from "rxjs/operators";
 import { AnswerService } from "../services/answer.service";
-import { Card, MetricStatus, MetricType } from "../components/card-group/card-group.component";
+import { Card, Status, Type } from "../components/metric-group/metric-group.component";
 
 @Component({
   selector: "app-load-puzzle",
@@ -81,10 +81,10 @@ export class LoadPuzzleComponent implements OnInit {
       return {
         id: puzzle.id,
         title: puzzle.name,
-        metricType: MetricType.Text,
+        metricType: Type.Text,
         value: `${puzzle.width}x${puzzle.height}`,
         readonly: false,
-        status: MetricStatus.None,
+        status: Status.None,
       };
     });
   }
