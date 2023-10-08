@@ -1,33 +1,33 @@
 import { ComponentFixture, TestBed } from "@angular/core/testing";
 
-import { Card, CardGroupComponent, MetricType } from "./card-group.component";
+import { Card, MetricGroupComponent, Type } from "./metric-group.component";
 import { DebugElement } from "@angular/core";
 import { By } from "@angular/platform-browser";
 
-describe("CardGroupComponent", () => {
-  let component: CardGroupComponent;
-  let fixture: ComponentFixture<CardGroupComponent>;
+describe("MetricGroupComponent", () => {
+  let component: MetricGroupComponent;
+  let fixture: ComponentFixture<MetricGroupComponent>;
   let cardEls: Array<DebugElement>;
 
   const testCards: Array<Card> = [
     {
       id: "card-1",
       title: "Card 1",
-      metricType: MetricType.Check,
+      metricType: Type.Check,
       value: true,
       readonly: true,
     },
     {
       id: "card-2",
       title: "Card 3",
-      metricType: MetricType.Number,
+      metricType: Type.Number,
       value: 0,
       readonly: true,
     },
     {
       id: "card-3",
       title: "Card 3",
-      metricType: MetricType.Check,
+      metricType: Type.Check,
       value: false,
       readonly: true,
     },
@@ -35,12 +35,12 @@ describe("CardGroupComponent", () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [CardGroupComponent],
+      declarations: [MetricGroupComponent],
     }).compileComponents();
   });
 
   beforeEach(() => {
-    fixture = TestBed.createComponent(CardGroupComponent);
+    fixture = TestBed.createComponent(MetricGroupComponent);
     component = fixture.componentInstance;
   });
 
