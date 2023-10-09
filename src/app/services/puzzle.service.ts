@@ -1,8 +1,7 @@
-import { EventEmitter, Injectable } from "@angular/core";
-import { BehaviorSubject, from, Observable, of } from "rxjs";
-import { catchError, map } from "rxjs/operators";
-import { FirebaseService } from "./firebase.service";
-import { DocumentData } from "firebase/firestore";
+import { Injectable } from "@angular/core";
+import { BehaviorSubject, from, Observable } from "rxjs";
+import { catchError } from "rxjs/operators";
+import { SaveService } from "./save.service";
 
 export interface PuzzleDoc {
   id: string;
@@ -115,38 +114,25 @@ export class PuzzleService {
   public activeDownClue$: BehaviorSubject<number> = new BehaviorSubject(0);
 
   private _puzzle: Puzzle = new Puzzle();
-  constructor(private firebaseService: FirebaseService) {}
+  constructor(private saveService: SaveService) {}
 
   /**
-   * Loads puzzle with the provided id from the database
-   * @param id puzzle id
-   * @returns an Observable boolean (true if puzzled loaded from the database, false if already loaded)
+   * Activates puzzle with the provided puzzle data
+   * @param docData puzzle data from the database
    */
-  public loadPuzzle(id: string): Observable<boolean> {
-    if (id == this._puzzle.id) {
-      return of(false);
-    }
-
-    return this.firebaseService.getDoc("puzzle", id).pipe(
-      map((docData: DocumentData | undefined) => {
-        this._puzzle = new Puzzle(
-          id,
-          docData?.name,
-          this.buildGrid(docData as PuzzleDoc),
-          docData?.width,
-          docData?.height,
-          this.buildAcrossClues(docData as PuzzleDoc),
-          this.buildDownClues(docData as PuzzleDoc)
-        );
-
-        this.numberPuzzle(this._puzzle);
-        this.selectSquare(this.getFirstLetterIndex());
-      }),
-      map(() => true),
-      catchError((error: ErrorEvent) => {
-        throw error;
-      })
+  public activatePuzzle(docData: PuzzleDoc) {
+    this._puzzle = new Puzzle(
+      docData.id,
+      docData.name,
+      this.buildGrid(docData as PuzzleDoc),
+      docData.width,
+      docData.height,
+      this.buildAcrossClues(docData as PuzzleDoc),
+      this.buildDownClues(docData as PuzzleDoc)
     );
+
+    this.numberPuzzle(this._puzzle);
+    this.selectSquare(this.getFirstLetterIndex());
   }
 
   /**
@@ -167,7 +153,7 @@ export class PuzzleService {
       "down-clues": this._puzzle.downClues.map((clue: Clue) => clue.text),
     };
 
-    return from(this.firebaseService.setDoc("puzzle", this._puzzle.id, puzzle)).pipe(
+    return this.saveService.savePuzzle(puzzle).pipe(
       catchError((error: ErrorEvent) => {
         throw error;
       })
