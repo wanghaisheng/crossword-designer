@@ -6,6 +6,13 @@ import { catchError, map, switchMap } from "rxjs/operators";
 import { DocumentData, DocumentReference, QuerySnapshot } from "@angular/fire/firestore";
 import { AnswerDoc, AnswerService } from "./answer.service";
 
+export interface Patch {
+  locked?: boolean;
+  name?: string;
+  width?: number;
+  height?: number;
+}
+
 @Injectable({
   providedIn: "root",
 })
@@ -67,6 +74,7 @@ export class LoadService {
       name: title,
       width: width,
       height: height,
+      locked: false,
       answers: Array(width * height).fill(" "),
       spacers: [],
       circles: [],
@@ -82,6 +90,11 @@ export class LoadService {
       }),
       map(() => this.firebaseService.setDoc("answers", newAnswerBank.id, newAnswerBank)),
       switchMap(() => this.loadPuzzle(newAnswerBank.id)),
+      map(() => {
+        // Add new puzzle doc to list
+        newPuzzle.id = newAnswerBank.id;
+        this._puzzleList.push(newPuzzle);
+      }),
       catchError((error: ErrorEvent) => {
         throw error;
       })
@@ -94,10 +107,6 @@ export class LoadService {
    * @returns an Observable
    */
   public loadPuzzle(id: string): Observable<void> {
-    if (id == this._activePuzzleId) {
-      return of(undefined);
-    }
-
     return this.firebaseService.getDoc("puzzle", id).pipe(
       map((docData: DocumentData | undefined) => docData && this.puzzleService.activatePuzzle(docData as PuzzleDoc)),
       switchMap(() => this.firebaseService.getDoc("answers", id)),
@@ -115,8 +124,14 @@ export class LoadService {
    * @param data updated field data
    * @returns an Observable
    */
-  public updatePuzzle(id: string, data: Object): Observable<void> {
+  public updatePuzzle(id: string, data: Patch): Observable<void> {
     return this.firebaseService.updateDoc("puzzle", id, data).pipe(
+      map(() => {
+        // Update active puzzle if needed
+        if (id == this._activePuzzleId && data.locked != undefined) {
+          this.puzzleService.locked = data.locked;
+        }
+      }),
       catchError((error: ErrorEvent) => {
         throw error;
       })

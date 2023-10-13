@@ -58,4 +58,18 @@ export class LoadPuzzleComponent implements OnInit {
       }
     );
   }
+
+  public setPuzzleLock(id: string, value: boolean): void {
+    this.loadService.updatePuzzle(id, { locked: value }).subscribe(
+      () => {
+        let puzzle = this.puzzleList.find((p) => p.id == id);
+        if (puzzle) {
+          puzzle.locked = value;
+        }
+      },
+      (err: ErrorEvent) => {
+        alert("Failed to update puzzle: " + err.message);
+      }
+    );
+  }
 }

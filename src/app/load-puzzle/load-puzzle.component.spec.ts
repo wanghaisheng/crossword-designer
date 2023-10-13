@@ -11,16 +11,23 @@ describe("LoadPuzzleComponent", () => {
   let component: LoadPuzzleComponent;
   let fixture: ComponentFixture<LoadPuzzleComponent>;
 
-  const loadServiceSpy = jasmine.createSpyObj("LoadService", ["createPuzzle", "loadPuzzle", "deletePuzzle", "getPuzzleList"]);
+  const loadServiceSpy = jasmine.createSpyObj("LoadService", [
+    "createPuzzle",
+    "loadPuzzle",
+    "deletePuzzle",
+    "getPuzzleList",
+    "updatePuzzle",
+  ]);
   const routerSpy = jasmine.createSpyObj("Router", ["navigateByUrl"]);
 
-  const testId = "test-id";
+  const testId = "testId";
 
   beforeEach(async () => {
     loadServiceSpy.getPuzzleList.and.returnValue(of([TestPuzzle]));
     loadServiceSpy.createPuzzle.and.returnValue(of(undefined));
     loadServiceSpy.loadPuzzle.and.returnValue(of(undefined));
     loadServiceSpy.deletePuzzle.and.returnValue(of(undefined));
+    loadServiceSpy.updatePuzzle.and.returnValue(of(undefined));
 
     spyOn(window, "alert");
     spyOn(console, "error");
@@ -110,6 +117,28 @@ describe("LoadPuzzleComponent", () => {
 
       expect(loadServiceSpy.deletePuzzle).toHaveBeenCalledWith(testId);
       expect(window.alert).toHaveBeenCalledWith("Failed to delete puzzle: Failed to delete doc");
+    });
+  });
+
+  describe("setPuzzleLock", () => {
+    it("should set puzzle lock when update successful", () => {
+      component.setPuzzleLock(testId, true);
+      const puzzle = component.puzzleList.find((p) => p.id == testId);
+
+      expect(loadServiceSpy.updatePuzzle).toHaveBeenCalledWith(testId, { locked: true });
+      expect(puzzle?.locked).toEqual(true);
+    });
+
+    it("should alert failure when update fails", () => {
+      const errorMsg = "Failed to update doc";
+      loadServiceSpy.updatePuzzle.and.callFake(() => {
+        return throwError(new Error(errorMsg));
+      });
+
+      component.setPuzzleLock(testId, false);
+
+      expect(loadServiceSpy.updatePuzzle).toHaveBeenCalledWith(testId, { locked: false });
+      expect(window.alert).toHaveBeenCalledWith("Failed to update puzzle: Failed to update doc");
     });
   });
 });

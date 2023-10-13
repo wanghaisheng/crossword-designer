@@ -14,6 +14,7 @@ describe("PuzzleStatsComponent", () => {
     name: "Test",
     width: 4,
     height: 4,
+    locked: false,
     grid: Array.from(Array(16).keys()).map((i) => new Square(i, "", -1, Math.floor(i / 4) + 1, (i % 4) + 1)),
     acrossClues: Array.from(Array(4).keys()).map((i) => new Clue(i + 1, "", "    ", [i * 4, i * 4 + 1, i * 4 + 2, i * 4 + 3])),
     downClues: Array.from(Array(4).keys()).map((i) => new Clue(i + 1, "", "    ", [i, i + 4, i + 8, i + 12])),
@@ -24,6 +25,7 @@ describe("PuzzleStatsComponent", () => {
     name: "Test 2",
     width: 2,
     height: 2,
+    locked: false,
     grid: [
       new Square(0, "I", 1, 1, 1, SquareType.Letter),
       new Square(1, "", -1, -1, -1, SquareType.Spacer),

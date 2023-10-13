@@ -134,15 +134,6 @@ describe("LoadService", () => {
   });
 
   describe("loadPuzzle", () => {
-    it("should do nothing when id equals active id", () => {
-      service.setActiveId(testId);
-      service.loadPuzzle(testId).subscribe(() => {
-        expect(firebaseServiceSpy.getDoc).not.toHaveBeenCalled();
-        expect(puzzleServiceSpy.activatePuzzle).not.toHaveBeenCalled();
-        expect(answerServiceSpy.activateAnswers).not.toHaveBeenCalled();
-      });
-    });
-
     it("should call activate functions when successful", () => {
       service.loadPuzzle(testId).subscribe(() => {
         expect(firebaseServiceSpy.getDoc).toHaveBeenCalledWith("puzzle", testId);

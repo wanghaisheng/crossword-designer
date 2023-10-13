@@ -13,6 +13,10 @@ export class ClueEditingComponent implements OnInit {
     down: new FormArray([]),
   });
 
+  public get locked(): boolean {
+    return this.puzzleService.puzzle.locked;
+  }
+
   public get acrossClues(): Array<Clue> {
     return this.puzzleService.puzzle.acrossClues;
   }

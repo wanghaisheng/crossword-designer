@@ -12,12 +12,14 @@ describe("SaveService", () => {
   const firebaseServiceSpy = jasmine.createSpyObj("FirebaseService", ["setDoc"]);
 
   const testId = "testId";
-  const puzzleDoc = { id: testId } as PuzzleDoc;
+  const puzzleDoc = { id: testId, locked: false } as PuzzleDoc;
+  const lockedPuzzleDoc = { id: testId, locked: true } as PuzzleDoc;
   const answerDoc = { id: testId } as AnswerDoc;
 
   beforeEach(() => {
     firebaseServiceSpy.setDoc.withArgs("puzzle", testId, puzzleDoc).and.returnValue(of(undefined));
     firebaseServiceSpy.setDoc.withArgs("answers", testId, answerDoc).and.returnValue(of(undefined));
+    firebaseServiceSpy.setDoc.calls.reset();
 
     TestBed.configureTestingModule({
       providers: [{ provide: FirebaseService, useValue: firebaseServiceSpy }],
@@ -34,6 +36,16 @@ describe("SaveService", () => {
       service.savePuzzle(puzzleDoc).subscribe(() => {
         expect(firebaseServiceSpy.setDoc).toHaveBeenCalledWith("puzzle", testId, puzzleDoc);
       });
+    });
+
+    it("should throw error when puzzle locked", () => {
+      service.savePuzzle(lockedPuzzleDoc).subscribe(
+        () => {},
+        (err) => {
+          expect(firebaseServiceSpy.setDoc).not.toHaveBeenCalled();
+          expect(err.message).toEqual("Puzzle is locked");
+        }
+      );
     });
 
     it("should throw error when unsuccessful", () => {
