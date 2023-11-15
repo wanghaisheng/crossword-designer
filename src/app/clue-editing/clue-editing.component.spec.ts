@@ -17,6 +17,7 @@ describe("ClueEditingComponent", () => {
     name: "Test",
     width: 2,
     height: 2,
+    locked: false,
     grid: Array.from(Array(4).keys()).map((i) => new Square(i, "", -1, Math.floor(i / 2), i % 2)),
     acrossClues: [new Clue(1, "Hello, I'm an across clue!", "HI", [0, 1]), new Clue(2)],
     downClues: [new Clue(1, "Hello, I'm a down clue!", "HI", [0, 2]), new Clue(2)],

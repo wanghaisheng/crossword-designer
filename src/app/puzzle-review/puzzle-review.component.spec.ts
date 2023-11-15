@@ -16,6 +16,7 @@ describe("PuzzleReviewComponent", () => {
     name: "Test",
     width: 4,
     height: 5,
+    locked: false,
     grid: Array.from(Array(20).keys()).map((i) => new Square(i, "", -1, Math.floor(i / 4), i % 4)),
     acrossClues: [],
     downClues: [],

@@ -25,11 +25,12 @@ export const environment = {
 // import 'zone.js/plugins/zone-error';  // Included with Angular CLI.
 
 export const TestPuzzle = {
-  id: "test",
+  id: "testId",
   name: "Stitchin' Time",
   size: 21,
   width: 21,
   height: 21,
+  locked: false,
   answers:
     "yesandnonasalactividitaroditprothamespartnerincrimelalalamernohitblankcdsaidetessartistscheckindeskdryginfosterdadhueencamplotatonassetsgijoeacerwaitinlineramsthreatsouleurocratshoesleepgaulredpandanyetsiestaoreoendintearsskisamensafroeduclaoakrapduaeatstrikeoneinniesmotherinlawspendernopewanttonkatsuaccraereelninobackinbusinesspounceegretinastatesidedreedstothemax".split(
       ""

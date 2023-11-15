@@ -1,8 +1,8 @@
 import { Injectable } from "@angular/core";
-import { Observable, of } from "rxjs";
-import { FirebaseService } from "./firebase.service";
+import { Observable } from "rxjs";
 import { DocumentData } from "@angular/fire/firestore";
-import { catchError, map } from "rxjs/operators";
+import { catchError } from "rxjs/operators";
+import { SaveService } from "./save.service";
 
 export class AnswerBank {
   id: string;
@@ -32,27 +32,14 @@ export class AnswerService {
 
   private _answerBank: AnswerBank = new AnswerBank();
 
-  constructor(private firebaseService: FirebaseService) {}
+  constructor(private saveService: SaveService) {}
 
   /**
-   * Loads answer bank with the provided id from the database
-   * @param id puzzle id
-   * @returns an Observable boolean (true if answer bank loaded from the database, false if already loaded)
+   * Activates answer bank with the provided answer data
+   * @param docData answer data from the database
    */
-  public loadAnswers(id: string): Observable<boolean> {
-    if (id == this._answerBank.id) {
-      return of(false);
-    }
-
-    return this.firebaseService.getDoc("answers", id).pipe(
-      map((docData: DocumentData | undefined) => {
-        this._answerBank = new AnswerBank(id, docData?.themeAnswers, docData?.answers);
-      }),
-      map(() => true),
-      catchError((error: ErrorEvent) => {
-        throw error;
-      })
-    );
+  public activateAnswers(docData: DocumentData): void {
+    this._answerBank = new AnswerBank(docData.id, docData.themeAnswers, docData.answers);
   }
 
   /**
@@ -125,7 +112,7 @@ export class AnswerService {
       answers: this._answerBank.answers,
     };
 
-    return this.firebaseService.setDoc("answers", this._answerBank.id, answers).pipe(
+    return this.saveService.saveAnswers(answers).pipe(
       catchError((error: ErrorEvent) => {
         throw error;
       })

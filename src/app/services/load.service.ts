@@ -1,20 +1,27 @@
 import { Injectable } from "@angular/core";
 import { FirebaseService } from "./firebase.service";
 import { BehaviorSubject, Observable, from, of } from "rxjs";
-import { PuzzleDoc } from "./puzzle.service";
-import { catchError, map } from "rxjs/operators";
-import { DocumentReference, QuerySnapshot } from "@angular/fire/firestore";
-import { AnswerDoc } from "./answer.service";
+import { PuzzleDoc, PuzzleService } from "./puzzle.service";
+import { catchError, map, switchMap } from "rxjs/operators";
+import { DocumentData, DocumentReference, QuerySnapshot } from "@angular/fire/firestore";
+import { AnswerDoc, AnswerService } from "./answer.service";
+
+export interface Patch {
+  locked?: boolean;
+  name?: string;
+  width?: number;
+  height?: number;
+}
 
 @Injectable({
   providedIn: "root",
 })
 export class LoadService {
   public activePuzzleId$: BehaviorSubject<string> = new BehaviorSubject("");
-  private activePuzzleId: string = "";
+  private _activePuzzleId: string = "";
   private _puzzleList: Array<PuzzleDoc> = [];
 
-  constructor(private firebaseService: FirebaseService) {}
+  constructor(private firebaseService: FirebaseService, private answerService: AnswerService, private puzzleService: PuzzleService) {}
 
   /**
    * Retrieves a list of puzzles from the database
@@ -42,18 +49,20 @@ export class LoadService {
   }
 
   public setActiveId(id: string): void {
-    this.activePuzzleId = id;
-    this.activePuzzleId$.next(id);
+    if (id) {
+      this._activePuzzleId = id;
+      this.activePuzzleId$.next(id);
+    }
   }
 
   /**
-   * Creates new puzzle in the database
+   * Creates and loads new puzzle from the database
    * @param title puzzle title
    * @param width number of columns in puzzle
    * @param height number of rows in puzzle
-   * @returns an Observable boolean (true if puzzle created successfully, false otherwise)
+   * @returns an Observable
    */
-  public createPuzzle(title: string, width: number, height: number): Observable<boolean> {
+  public createPuzzle(title: string, width: number, height: number): Observable<void> {
     let newAnswerBank: AnswerDoc = {
       id: "",
       themeAnswers: {},
@@ -65,6 +74,7 @@ export class LoadService {
       name: title,
       width: width,
       height: height,
+      locked: false,
       answers: Array(width * height).fill(" "),
       spacers: [],
       circles: [],
@@ -74,11 +84,71 @@ export class LoadService {
     };
 
     return this.firebaseService.addDoc("puzzle", newPuzzle).pipe(
-      map((ref: DocumentReference) => (this.activePuzzleId = ref.id)),
-      map(() => this.firebaseService.setDoc("answers", this.activePuzzleId, newAnswerBank)),
-      map(() => this.activePuzzleId$.next(this.activePuzzleId)),
-      map(() => true),
-      catchError(() => of(false))
+      map((ref: DocumentReference) => {
+        newAnswerBank.id = ref.id;
+        this.firebaseService.updateDoc("puzzle", ref.id, { id: ref.id });
+      }),
+      map(() => this.firebaseService.setDoc("answers", newAnswerBank.id, newAnswerBank)),
+      switchMap(() => this.loadPuzzle(newAnswerBank.id)),
+      map(() => {
+        // Add new puzzle doc to list
+        newPuzzle.id = newAnswerBank.id;
+        this._puzzleList.push(newPuzzle);
+      }),
+      catchError((error: ErrorEvent) => {
+        throw error;
+      })
+    );
+  }
+
+  /**
+   * Loads puzzle with the provided id from the database
+   * @param id puzzle id
+   * @returns an Observable
+   */
+  public loadPuzzle(id: string): Observable<void> {
+    return this.firebaseService.getDoc("puzzle", id).pipe(
+      map((docData: DocumentData | undefined) => docData && this.puzzleService.activatePuzzle(docData as PuzzleDoc)),
+      switchMap(() => this.firebaseService.getDoc("answers", id)),
+      map((docData: DocumentData | undefined) => docData && this.answerService.activateAnswers(docData as AnswerDoc)),
+      map(() => this.setActiveId(id)),
+      catchError((error: ErrorEvent) => {
+        throw error;
+      })
+    );
+  }
+
+  /**
+   * Update puzzle with the provided id in the database
+   * @param id puzzle id
+   * @param data updated field data
+   * @returns an Observable
+   */
+  public updatePuzzle(id: string, data: Patch): Observable<void> {
+    return this.firebaseService.updateDoc("puzzle", id, data).pipe(
+      map(() => {
+        // Update active puzzle if needed
+        if (id == this._activePuzzleId && data.locked != undefined) {
+          this.puzzleService.locked = data.locked;
+        }
+      }),
+      catchError((error: ErrorEvent) => {
+        throw error;
+      })
+    );
+  }
+
+  /**
+   * Delete puzzle with the provided id in the database
+   * @param id puzzle id
+   * @returns an Observable
+   */
+  public deletePuzzle(id: string): Observable<void> {
+    return this.firebaseService.deleteDoc("puzzle", id).pipe(
+      switchMap(() => this.firebaseService.deleteDoc("answers", id)),
+      catchError((error: ErrorEvent) => {
+        throw error;
+      })
     );
   }
 }

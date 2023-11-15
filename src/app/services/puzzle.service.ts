@@ -1,14 +1,14 @@
-import { EventEmitter, Injectable } from "@angular/core";
-import { BehaviorSubject, from, Observable, of } from "rxjs";
-import { catchError, map } from "rxjs/operators";
-import { FirebaseService } from "./firebase.service";
-import { DocumentData } from "firebase/firestore";
+import { Injectable } from "@angular/core";
+import { BehaviorSubject, Observable } from "rxjs";
+import { catchError } from "rxjs/operators";
+import { SaveService } from "./save.service";
 
 export interface PuzzleDoc {
   id: string;
   name: string;
   width: number;
   height: number;
+  locked: boolean;
   answers: Array<string>;
   spacers: Array<number>;
   circles: Array<number>;
@@ -20,26 +20,29 @@ export interface PuzzleDoc {
 export class Puzzle {
   id: string;
   name: string;
-  grid: Array<Square>;
   width: number;
   height: number;
+  locked: boolean;
+  grid: Array<Square>;
   acrossClues: Array<Clue>;
   downClues: Array<Clue>;
 
   constructor(
     id: string = "",
     name: string = "",
-    grid: Array<Square> = [],
     width: number = 0,
     height: number = 0,
+    locked: boolean = false,
+    grid: Array<Square> = [],
     acrossClues: Array<Clue> = [],
     downClues: Array<Clue> = []
   ) {
     this.id = id;
     this.name = name;
-    this.grid = grid;
+    this.locked = locked;
     this.width = width;
     this.height = height;
+    this.grid = grid;
     this.acrossClues = acrossClues;
     this.downClues = downClues;
   }
@@ -111,42 +114,34 @@ export class PuzzleService {
     return this._puzzle;
   }
 
+  public set locked(value: boolean) {
+    this._puzzle.locked = value;
+  }
+
   public activeAcrossClue$: BehaviorSubject<number> = new BehaviorSubject(0);
   public activeDownClue$: BehaviorSubject<number> = new BehaviorSubject(0);
 
   private _puzzle: Puzzle = new Puzzle();
-  constructor(private firebaseService: FirebaseService) {}
+  constructor(private saveService: SaveService) {}
 
   /**
-   * Loads puzzle with the provided id from the database
-   * @param id puzzle id
-   * @returns an Observable boolean (true if puzzled loaded from the database, false if already loaded)
+   * Activates puzzle with the provided puzzle data
+   * @param docData puzzle data from the database
    */
-  public loadPuzzle(id: string): Observable<boolean> {
-    if (id == this._puzzle.id) {
-      return of(false);
-    }
-
-    return this.firebaseService.getDoc("puzzle", id).pipe(
-      map((docData: DocumentData | undefined) => {
-        this._puzzle = new Puzzle(
-          id,
-          docData?.name,
-          this.buildGrid(docData as PuzzleDoc),
-          docData?.width,
-          docData?.height,
-          this.buildAcrossClues(docData as PuzzleDoc),
-          this.buildDownClues(docData as PuzzleDoc)
-        );
-
-        this.numberPuzzle(this._puzzle);
-        this.selectSquare(this.getFirstLetterIndex());
-      }),
-      map(() => true),
-      catchError((error: ErrorEvent) => {
-        throw error;
-      })
+  public activatePuzzle(docData: PuzzleDoc) {
+    this._puzzle = new Puzzle(
+      docData.id,
+      docData.name,
+      docData.width,
+      docData.height,
+      docData.locked,
+      this.buildGrid(docData as PuzzleDoc),
+      this.buildAcrossClues(docData as PuzzleDoc),
+      this.buildDownClues(docData as PuzzleDoc)
     );
+
+    this.numberPuzzle(this._puzzle);
+    this.selectSquare(this.getFirstLetterIndex());
   }
 
   /**
@@ -159,6 +154,7 @@ export class PuzzleService {
       name: this._puzzle.name,
       width: this._puzzle.width,
       height: this._puzzle.height,
+      locked: this._puzzle.locked,
       answers: this._puzzle.grid.filter((square: Square) => square.type == SquareType.Letter).map((square: Square) => square.value),
       spacers: this._puzzle.grid.filter((square: Square) => square.type == SquareType.Spacer).map((square: Square) => square.index),
       circles: this._puzzle.grid.filter((square: Square) => square.overlay == OverlayType.Circle).map((square: Square) => square.index),
@@ -167,7 +163,7 @@ export class PuzzleService {
       "down-clues": this._puzzle.downClues.map((clue: Clue) => clue.text),
     };
 
-    return from(this.firebaseService.setDoc("puzzle", this._puzzle.id, puzzle)).pipe(
+    return this.saveService.savePuzzle(puzzle).pipe(
       catchError((error: ErrorEvent) => {
         throw error;
       })

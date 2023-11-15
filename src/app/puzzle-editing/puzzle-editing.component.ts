@@ -16,6 +16,10 @@ export class PuzzleEditingComponent implements OnInit {
   public editMode: EditMode = EditMode.Value;
   public highlightMode: HighlightMode = HighlightMode.Across;
 
+  public get locked(): boolean {
+    return this.puzzleService.puzzle.locked;
+  }
+
   public get answers(): Array<string> {
     return this.answerService.answerBank.answers;
   }

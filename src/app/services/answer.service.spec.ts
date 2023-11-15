@@ -1,79 +1,53 @@
 import { TestBed } from "@angular/core/testing";
 
-import { AnswerBank, AnswerDoc, AnswerService } from "./answer.service";
-import { FirebaseService } from "./firebase.service";
+import { AnswerDoc, AnswerService } from "./answer.service";
 import { of, throwError } from "rxjs";
-import { map, switchMap } from "rxjs/operators";
+import { SaveService } from "./save.service";
 
 describe("AnswerService", () => {
   let service: AnswerService;
 
-  const firebaseServiceSpy = jasmine.createSpyObj("FirebaseService", ["setDoc", "getDoc"]);
+  const saveServiceSpy = jasmine.createSpyObj("SaveService", ["saveAnswers"]);
 
   const testId = "testId";
 
-  const testAnswerDoc: AnswerDoc = {
+  const testAnswerDoc1: AnswerDoc = {
+    id: testId,
+    answers: ["TEST"],
+    themeAnswers: { THEMETEST: [1] },
+  };
+
+  const testAnswerDoc2: AnswerDoc = {
     id: testId,
     answers: ["HELLO", "GOODBYE", "TEST"],
     themeAnswers: { THEME: [0, 2], ANSWER: [] },
   };
 
-  const testAnswerBank: AnswerBank = {
-    id: testId,
-    answers: ["HELLO", "GOODBYE", "TEST"],
-    themeAnswers: new Map<string, Array<number>>(Object.entries({ THEME: [0, 2], ANSWER: [] })),
-  };
-
   beforeEach(() => {
-    firebaseServiceSpy.getDoc.and.returnValue(of(testAnswerDoc));
-    firebaseServiceSpy.setDoc.and.returnValue(of(undefined));
+    saveServiceSpy.saveAnswers.and.returnValue(of(undefined));
 
     TestBed.configureTestingModule({
-      providers: [{ provide: FirebaseService, useValue: firebaseServiceSpy }],
-      teardown: { destroyAfterEach: false },
+      providers: [{ provide: SaveService, useValue: saveServiceSpy }],
     });
     service = TestBed.inject(AnswerService);
 
-    service.answerBank.id = "someId";
-    service.answerBank.answers = ["ANSWER1", "ANSWER2"];
-    service.answerBank.themeAnswers = new Map<string, Array<number>>(Object.entries({ "THEMEANSWER": [1, 4] }));
+    service.answerBank.id = testId;
+    service.answerBank.answers = ["HELLO", "GOODBYE", "TEST"];
+    service.answerBank.themeAnswers = new Map<string, Array<number>>(Object.entries({ "THEME": [0, 2], "ANSWER": [] }));
   });
 
   it("should be created", () => {
     expect(service).toBeTruthy();
   });
 
-  describe("loadAnswers", () => {
-    it("should load answer bank with docData when successful", () => {
-      service.loadAnswers(testId).subscribe((result: boolean) => {
-        expect(result).toEqual(true);
-        expect(service.answerBank.id).toEqual(testId);
-        expect(service.answerBank.themeAnswers).toEqual(testAnswerBank.themeAnswers);
-        expect(service.answerBank.answers).toEqual(testAnswerBank.answers);
-      });
-    });
+  describe("activateAnswers", () => {
+    it("add should populate answers with answer doc data", () => {
+      service.activateAnswers(testAnswerDoc1);
 
-    it("should return false when id equals current puzzle id", () => {
-      service
-        .loadAnswers(testId)
-        .pipe(switchMap(() => service.loadAnswers(testId)))
-        .subscribe((result) => {
-          expect(result).toEqual(false);
-        });
-    });
-
-    it("should return throw error when unsuccessful", () => {
-      const errorMsg = "Failed to get doc";
-      firebaseServiceSpy.getDoc.and.callFake(() => {
-        return throwError(new Error(errorMsg));
-      });
-
-      service.loadAnswers(testId).subscribe(
-        () => {},
-        (err) => {
-          expect(err.message).toEqual(errorMsg);
-        }
-      );
+      expect(service.answerBank.answers.length).toEqual(1);
+      expect(service.answerBank.answers[0]).toEqual("TEST");
+      expect(service.answerBank.themeAnswers.size).toEqual(1);
+      expect(service.answerBank.themeAnswers.has("THEMETEST")).toEqual(true);
     });
   });
 
@@ -81,45 +55,45 @@ describe("AnswerService", () => {
     it("add answer to themeAnswers when true", () => {
       service.addAnswer("some theme answer", true);
 
-      expect(service.answerBank.themeAnswers.size).toEqual(2);
+      expect(service.answerBank.themeAnswers.size).toEqual(3);
       expect(service.answerBank.themeAnswers.has("SOMETHEMEANSWER")).toEqual(true);
     });
 
     it("add answer to answers when false", () => {
       service.addAnswer("some answer", false);
 
-      expect(service.answerBank.answers.length).toEqual(3);
+      expect(service.answerBank.answers.length).toEqual(4);
       expect(service.answerBank.answers.includes("SOMEANSWER")).toEqual(true);
     });
   });
 
   describe("removeAnswer", () => {
     it("should remove answer from themeAnswers when true", () => {
-      service.removeAnswer("themeanswer", true);
+      service.removeAnswer("theme", true);
 
-      expect(service.answerBank.themeAnswers.size).toEqual(0);
-      expect(service.answerBank.themeAnswers.has("THEMEANSWER")).toEqual(false);
+      expect(service.answerBank.themeAnswers.size).toEqual(1);
+      expect(service.answerBank.themeAnswers.has("THEME")).toEqual(false);
     });
 
     it("should remove answer from themeAnswers when false", () => {
-      service.removeAnswer("answer", false);
+      service.removeAnswer("HELLO", false);
 
-      expect(service.answerBank.answers.length).toEqual(1);
-      expect(service.answerBank.answers.includes("ANSWER")).toEqual(false);
+      expect(service.answerBank.answers.length).toEqual(2);
+      expect(service.answerBank.answers.includes("HELLO")).toEqual(false);
     });
   });
 
   describe("toggleCircle", () => {
     it("should remove circle if exists", () => {
-      service.toggleCircle("themeanswer", 1);
+      service.toggleCircle("theme", 2);
 
-      expect(service.answerBank.themeAnswers.get("THEMEANSWER")).toEqual([4]);
+      expect(service.answerBank.themeAnswers.get("THEME")).toEqual([0]);
     });
 
     it("should add circle if doesn't exist", () => {
-      service.toggleCircle("themeanswer", 2);
+      service.toggleCircle("answer", 1);
 
-      expect(service.answerBank.themeAnswers.get("THEMEANSWER")).toEqual([1, 4, 2]);
+      expect(service.answerBank.themeAnswers.get("ANSWER")).toEqual([1]);
     });
   });
 
@@ -127,25 +101,22 @@ describe("AnswerService", () => {
     it("should clear answer bank", () => {
       service.clearAnswers();
 
-      expect(service.answerBank.id).toEqual("someId");
+      expect(service.answerBank.id).toEqual(testId);
       expect(service.answerBank.themeAnswers.size).toEqual(0);
       expect(service.answerBank.answers.length).toEqual(0);
     });
   });
 
   describe("saveAnswers", () => {
-    it("should save answers successful", () => {
-      service
-        .loadAnswers(testId)
-        .pipe(map(() => service.saveAnswers()))
-        .subscribe(() => {
-          expect(firebaseServiceSpy.setDoc).toHaveBeenCalledWith("answers", testId, testAnswerDoc);
-        });
+    it("should save answers successfully", () => {
+      service.saveAnswers().subscribe(() => {
+        expect(saveServiceSpy.saveAnswers).toHaveBeenCalledWith(testAnswerDoc2);
+      });
     });
 
-    it("should throw error when setDoc unsuccessful", () => {
+    it("should throw error when unsuccessful", () => {
       const errorMsg = "Failed to set doc";
-      firebaseServiceSpy.setDoc.and.callFake(() => {
+      saveServiceSpy.saveAnswers.and.callFake(() => {
         return throwError(new Error(errorMsg));
       });
 

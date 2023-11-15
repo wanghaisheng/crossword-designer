@@ -1,13 +1,13 @@
 import { Component, OnInit } from "@angular/core";
 import { Clue, PuzzleService, SquareType } from "../services/puzzle.service";
-import { Card, MetricStatus, MetricType } from "../components/card-group/card-group.component";
+import { Card, Status, Type } from "../components/metric-group/metric-group.component";
 
 interface Metric {
   name: string;
   value: any;
-  type: MetricType;
+  type: Type;
   progress?: number;
-  status?: MetricStatus;
+  status?: Status;
 }
 
 @Component({
@@ -49,13 +49,13 @@ export class PuzzleStatsComponent implements OnInit {
 
     const spacerFreq = spacerCount / puzzle.grid.length;
 
-    this.metrics.push({ name: "Symmetrical", value: symmetrical, type: MetricType.Check });
+    this.metrics.push({ name: "Symmetrical", value: symmetrical, type: Type.Check });
     this.metrics.push({
       name: "White Square Frequency",
       value: 1 - spacerFreq,
-      type: MetricType.Percent,
+      type: Type.Percent,
       progress: 1 - spacerFreq,
-      status: spacerFreq > 0.5 ? MetricStatus.Danger : spacerFreq > 0.2 ? MetricStatus.Warning : MetricStatus.Success,
+      status: spacerFreq > 0.5 ? Status.Danger : spacerFreq > 0.2 ? Status.Warning : Status.Success,
     });
   }
 
@@ -90,26 +90,21 @@ export class PuzzleStatsComponent implements OnInit {
     this.metrics.push({
       name: "No Duplicate Words",
       value: duplicateCount == 0,
-      type: MetricType.Check,
+      type: Type.Check,
     });
     this.metrics.push({
       name: "Minimum Word Length",
       value: minWordLength,
-      type: MetricType.Number,
+      type: Type.Number,
       progress: minWordLength / puzzleMinDim,
-      status: minWordLength < 2 ? MetricStatus.Danger : minWordLength < 3 ? MetricStatus.Warning : MetricStatus.Success,
+      status: minWordLength < 2 ? Status.Danger : minWordLength < 3 ? Status.Warning : Status.Success,
     });
     this.metrics.push({
       name: "Average Word Length",
       value: avgWordLength,
-      type: MetricType.Number,
+      type: Type.Number,
       progress: avgWordLength / puzzleMaxDim,
-      status:
-        avgWordLength < 0.1 * puzzleMaxDim
-          ? MetricStatus.Danger
-          : avgWordLength < 0.2 * puzzleMaxDim
-          ? MetricStatus.Warning
-          : MetricStatus.Success,
+      status: avgWordLength < 0.1 * puzzleMaxDim ? Status.Danger : avgWordLength < 0.2 * puzzleMaxDim ? Status.Warning : Status.Success,
     });
   }
 
@@ -118,7 +113,7 @@ export class PuzzleStatsComponent implements OnInit {
     const connected = this.connected([this.puzzleService.getFirstLetterIndex()], []);
     const letters = puzzle.grid.filter((s) => s.type == SquareType.Letter);
 
-    this.metrics.push({ name: "Connected", value: connected.length == letters.length, type: MetricType.Check });
+    this.metrics.push({ name: "Connected", value: connected.length == letters.length, type: Type.Check });
   }
 
   /**
@@ -153,9 +148,8 @@ export class PuzzleStatsComponent implements OnInit {
         title: metric.name,
         metricType: metric.type,
         value: metric.value,
-        readonly: true,
         progress: metric.progress,
-        status: metric.status ? metric.status : MetricStatus.None,
+        status: metric.status ? metric.status : Status.None,
       };
     });
   }

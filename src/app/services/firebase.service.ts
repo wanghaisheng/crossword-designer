@@ -5,14 +5,16 @@ import {
   DocumentData,
   DocumentReference,
   addDoc,
+  deleteDoc,
   getDoc,
   getDocs,
   setDoc,
+  updateDoc,
   getFirestore,
   QuerySnapshot,
 } from "firebase/firestore";
-import { Observable, from, of } from "rxjs";
-import { map, mergeMap } from "rxjs/operators";
+import { Observable, from } from "rxjs";
+import { map } from "rxjs/operators";
 
 @Injectable({
   providedIn: "root",
@@ -25,6 +27,13 @@ export class FirebaseService {
     const coll = collection(db, path);
 
     return from(addDoc(coll, data));
+  }
+
+  public updateDoc(path: string, docId: string, data: any): Observable<void> {
+    const db = getFirestore();
+    const coll = collection(db, path);
+
+    return from(updateDoc(doc(coll, docId), data));
   }
 
   public setDoc(path: string, docId: string, data: any): Observable<void> {
@@ -46,5 +55,12 @@ export class FirebaseService {
     const coll = collection(db, path);
 
     return from(getDocs(coll));
+  }
+
+  public deleteDoc(path: string, docId: string): Observable<void> {
+    const db = getFirestore();
+    const coll = collection(db, path);
+
+    return from(deleteDoc(doc(coll, docId)));
   }
 }

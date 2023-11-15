@@ -20,7 +20,7 @@ import { LoadPuzzleComponent } from "./load-puzzle/load-puzzle.component";
 import { AnswerDraftingComponent } from "./answer-drafting/answer-drafting.component";
 import { GridComponent } from "./components/grid/grid.component";
 import { PuzzleStatsComponent } from "./puzzle-stats/puzzle-stats.component";
-import { CardGroupComponent } from "./components/card-group/card-group.component";
+import { MetricGroupComponent } from "./components/metric-group/metric-group.component";
 
 @NgModule({
   declarations: [
@@ -34,7 +34,7 @@ import { CardGroupComponent } from "./components/card-group/card-group.component
     AnswerDraftingComponent,
     GridComponent,
     PuzzleStatsComponent,
-    CardGroupComponent,
+    MetricGroupComponent,
   ],
   imports: [
     BrowserModule,

@@ -10,8 +10,11 @@
     }
   }
 
-  .card.existing {
-    width: 200px;
-    height: 200px;
+  .card-body {
+    padding: 5px 15px 15px;
+  }
+
+  .text-truncate {
+    max-width: 100%;
   }
 }
