@@ -15,4 +15,18 @@
       </a>
     </li>
   </ul>
+  <ul class="nav mt-auto">
+    <li *ngFor="let button of buttons" class="nav-item">
+      <a
+        #userButton
+        class="nav-link"
+        aria-current="button"
+        [title]="button.title"
+        data-bs-toggle="tooltip"
+        data-bs-placement="right"
+        (click)="button.action()">
+        <div class="icon"></div>
+      </a>
+    </li>
+  </ul>
 </div>

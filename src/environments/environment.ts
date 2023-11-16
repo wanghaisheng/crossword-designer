@@ -27,6 +27,7 @@ export const environment = {
 export const TestPuzzle = {
   id: "testId",
   name: "Stitchin' Time",
+  createdBy: "test-user-id",
   size: 21,
   width: 21,
   height: 21,

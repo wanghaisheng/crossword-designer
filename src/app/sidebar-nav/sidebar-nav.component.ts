@@ -1,6 +1,7 @@
 import { Component, ElementRef, OnInit, QueryList, ViewChildren } from "@angular/core";
 import { LoadService } from "../services/load.service";
 import { Router } from "@angular/router";
+import { AuthService } from "../services/auth.service";
 
 @Component({
   selector: "app-sidebar-nav",
@@ -9,14 +10,16 @@ import { Router } from "@angular/router";
 })
 export class SidebarNavComponent implements OnInit {
   @ViewChildren("pageLink") pageLinks!: QueryList<ElementRef>;
+  @ViewChildren("userButton") userButtons!: QueryList<ElementRef>;
 
   public puzzleLoaded: boolean = false;
   public pages: Array<any> = [];
+  public buttons: Array<any> = [];
 
   private routes: Array<string> = ["/load", "/answers", "/puzzle", "/clues", "/review", "/stats"];
   private iconSize: string = "20";
 
-  constructor(private router: Router, private loadService: LoadService) {
+  constructor(private router: Router, private authService: AuthService, private loadService: LoadService) {
     this.pages = [
       {
         index: 0,
@@ -72,6 +75,18 @@ export class SidebarNavComponent implements OnInit {
           </svg>`,
       },
     ];
+
+    this.buttons = [
+      {
+        index: 0,
+        action: this.onSignOut,
+        title: "Sign Out",
+        icon: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-box-arrow-left" viewBox="0 0 16 16">
+          <path fill-rule="evenodd" d="M6 12.5a.5.5 0 0 0 .5.5h8a.5.5 0 0 0 .5-.5v-9a.5.5 0 0 0-.5-.5h-8a.5.5 0 0 0-.5.5v2a.5.5 0 0 1-1 0v-2A1.5 1.5 0 0 1 6.5 2h8A1.5 1.5 0 0 1 16 3.5v9a1.5 1.5 0 0 1-1.5 1.5h-8A1.5 1.5 0 0 1 5 12.5v-2a.5.5 0 0 1 1 0v2z" />
+          <path fill-rule="evenodd" d="M.146 8.354a.5.5 0 0 1 0-.708l3-3a.5.5 0 1 1 .708.708L1.707 7.5H10.5a.5.5 0 0 1 0 1H1.707l2.147 2.146a.5.5 0 0 1-.708.708l-3-3z" />
+          </svg>`,
+      },
+    ];
   }
 
   ngOnInit(): void {
@@ -84,11 +99,26 @@ export class SidebarNavComponent implements OnInit {
 
   ngAfterViewInit() {
     let links = this.pageLinks.toArray();
+    let buttons = this.userButtons.toArray();
 
-    // Set icon
+    // Set icons
     links.forEach((link, index) => {
       let elt = link.nativeElement.firstChild;
       elt.innerHTML = this.pages[index].icon;
     });
+
+    buttons.forEach((button, index) => {
+      let elt = button.nativeElement.firstChild;
+      elt.innerHTML = this.buttons[index].icon;
+    });
   }
+
+  public onSignOut = () => {
+    this.authService.signOut().subscribe(
+      () => {},
+      (error: ErrorEvent) => {
+        alert("Failed to sign out: " + error.message);
+      }
+    );
+  };
 }

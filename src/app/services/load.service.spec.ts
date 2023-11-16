@@ -10,7 +10,15 @@ import { AnswerDoc, AnswerService } from "./answer.service";
 describe("LoadService", () => {
   let service: LoadService;
 
-  const firebaseServiceSpy = jasmine.createSpyObj("FirebaseService", ["addDoc", "setDoc", "getDoc", "getDocs", "deleteDoc", "updateDoc"]);
+  const firebaseServiceSpy = jasmine.createSpyObj("FirebaseService", [
+    "addDoc",
+    "setDoc",
+    "getDoc",
+    "getDocs",
+    "deleteDoc",
+    "updateDoc",
+    "getCurrentUser",
+  ]);
   const answerServiceSpy = jasmine.createSpyObj("AnswerService", ["activateAnswers"]);
   const puzzleServiceSpy = jasmine.createSpyObj("PuzzleService", ["activatePuzzle"]);
 
@@ -25,6 +33,7 @@ describe("LoadService", () => {
   };
 
   beforeEach(() => {
+    firebaseServiceSpy.getCurrentUser.and.returnValue({ uid: "test-user-id" });
     firebaseServiceSpy.addDoc.and.returnValue(of({ id: testId } as DocumentReference));
     firebaseServiceSpy.setDoc.and.returnValue(of(undefined));
     firebaseServiceSpy.deleteDoc.and.returnValue(of(undefined));

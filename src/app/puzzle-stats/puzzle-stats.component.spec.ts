@@ -12,6 +12,7 @@ describe("PuzzleStatsComponent", () => {
   const testPuzzle: Puzzle = {
     id: "test-id",
     name: "Test",
+    createdBy: "test-user-id",
     width: 4,
     height: 4,
     locked: false,
@@ -23,6 +24,7 @@ describe("PuzzleStatsComponent", () => {
   const testPuzzle2: Puzzle = {
     id: "test-id-2",
     name: "Test 2",
+    createdBy: "test-user-id",
     width: 2,
     height: 2,
     locked: false,

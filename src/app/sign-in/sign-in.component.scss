@@ -1,0 +1,21 @@
+.container-fluid {
+  height: 100vh;
+
+  .card {
+    .card-title {
+      margin-bottom: 10px;
+    }
+
+    padding: 30px 20px;
+    width: 32rem;
+
+    input {
+      padding: 10px 15px;
+    }
+
+    button {
+      margin-top: 20px;
+      padding: 10px 15px;
+    }
+  }
+}

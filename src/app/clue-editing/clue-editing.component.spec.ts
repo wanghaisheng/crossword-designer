@@ -15,6 +15,7 @@ describe("ClueEditingComponent", () => {
   const testPuzzle: Puzzle = {
     id: testId,
     name: "Test",
+    createdBy: "test-user-id",
     width: 2,
     height: 2,
     locked: false,
