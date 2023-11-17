@@ -14,6 +14,7 @@ describe("PuzzleReviewComponent", () => {
   const testPuzzle: Puzzle = {
     id: testId,
     name: "Test",
+    createdBy: "test-user-id",
     width: 4,
     height: 5,
     locked: false,

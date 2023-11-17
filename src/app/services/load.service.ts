@@ -72,6 +72,7 @@ export class LoadService {
     let newPuzzle: PuzzleDoc = {
       id: "",
       name: title,
+      createdBy: this.firebaseService.getCurrentUser()?.uid || "",
       width: width,
       height: height,
       locked: false,

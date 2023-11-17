@@ -6,6 +6,7 @@ import { SaveService } from "./save.service";
 export interface PuzzleDoc {
   id: string;
   name: string;
+  createdBy: string;
   width: number;
   height: number;
   locked: boolean;
@@ -20,6 +21,7 @@ export interface PuzzleDoc {
 export class Puzzle {
   id: string;
   name: string;
+  createdBy: string;
   width: number;
   height: number;
   locked: boolean;
@@ -30,6 +32,7 @@ export class Puzzle {
   constructor(
     id: string = "",
     name: string = "",
+    createdBy: string = "",
     width: number = 0,
     height: number = 0,
     locked: boolean = false,
@@ -39,6 +42,7 @@ export class Puzzle {
   ) {
     this.id = id;
     this.name = name;
+    this.createdBy = createdBy;
     this.locked = locked;
     this.width = width;
     this.height = height;
@@ -132,6 +136,7 @@ export class PuzzleService {
     this._puzzle = new Puzzle(
       docData.id,
       docData.name,
+      docData.createdBy,
       docData.width,
       docData.height,
       docData.locked,
@@ -152,6 +157,7 @@ export class PuzzleService {
     let puzzle: PuzzleDoc = {
       id: this._puzzle.id,
       name: this._puzzle.name,
+      createdBy: this._puzzle.createdBy,
       width: this._puzzle.width,
       height: this._puzzle.height,
       locked: this._puzzle.locked,

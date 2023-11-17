@@ -1,4 +1,5 @@
 import { Injectable } from "@angular/core";
+import { User, UserCredential, createUserWithEmailAndPassword, getAuth, signInWithEmailAndPassword, signOut } from "@angular/fire/auth";
 import {
   collection,
   doc,
@@ -62,5 +63,27 @@ export class FirebaseService {
     const coll = collection(db, path);
 
     return from(deleteDoc(doc(coll, docId)));
+  }
+
+  public createUser(email: string, password: string): Observable<UserCredential> {
+    const auth = getAuth();
+
+    return from(createUserWithEmailAndPassword(auth, email, password));
+  }
+
+  public signInUser(email: string, password: string): Observable<UserCredential> {
+    const auth = getAuth();
+
+    return from(signInWithEmailAndPassword(auth, email, password));
+  }
+
+  public signOutUser(): Observable<void> {
+    const auth = getAuth();
+
+    return from(signOut(auth));
+  }
+
+  public getCurrentUser(): User | null {
+    return getAuth().currentUser;
   }
 }

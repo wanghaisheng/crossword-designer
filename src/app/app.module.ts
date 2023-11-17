@@ -21,6 +21,7 @@ import { AnswerDraftingComponent } from "./answer-drafting/answer-drafting.compo
 import { GridComponent } from "./components/grid/grid.component";
 import { PuzzleStatsComponent } from "./puzzle-stats/puzzle-stats.component";
 import { MetricGroupComponent } from "./components/metric-group/metric-group.component";
+import { SignInComponent } from "./sign-in/sign-in.component";
 
 @NgModule({
   declarations: [
@@ -35,6 +36,7 @@ import { MetricGroupComponent } from "./components/metric-group/metric-group.com
     GridComponent,
     PuzzleStatsComponent,
     MetricGroupComponent,
+    SignInComponent,
   ],
   imports: [
     BrowserModule,
