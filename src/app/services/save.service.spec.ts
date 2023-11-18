@@ -1,10 +1,11 @@
 import { TestBed } from "@angular/core/testing";
 
+import { of, throwError } from "rxjs";
+
 import { SaveService } from "./save.service";
 import { FirebaseService } from "./firebase.service";
-import { of, throwError } from "rxjs";
-import { PuzzleDoc } from "./puzzle.service";
-import { AnswerDoc } from "./answer.service";
+import { PuzzleDoc } from "src/app/models/puzzle.model";
+import { AnswerDoc } from "src/app/models/answer.model";
 
 describe("SaveService", () => {
   let service: SaveService;

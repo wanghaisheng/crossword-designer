@@ -1,11 +1,12 @@
 import { ComponentFixture, TestBed } from "@angular/core/testing";
-
-import { LoadPuzzleComponent } from "./load-puzzle.component";
-import { of, throwError } from "rxjs";
-import { TestPuzzle } from "src/environments/environment";
-import { LoadService } from "../services/load.service";
 import { ReactiveFormsModule } from "@angular/forms";
 import { Router } from "@angular/router";
+
+import { of, throwError } from "rxjs";
+
+import { TestPuzzle } from "src/environments/environment";
+import { LoadPuzzleComponent } from "./load-puzzle.component";
+import { LoadService } from "src/app/services/load.service";
 
 describe("LoadPuzzleComponent", () => {
   let component: LoadPuzzleComponent;

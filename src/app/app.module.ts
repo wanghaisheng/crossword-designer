@@ -1,27 +1,30 @@
 import { NgModule } from "@angular/core";
-import { BrowserModule } from "@angular/platform-browser";
-import { FormsModule, ReactiveFormsModule } from "@angular/forms";
-
-import { AppRoutingModule } from "./app-routing.module";
-import { AppComponent } from "./app.component";
-import { PuzzleEditingComponent } from "./puzzle-editing/puzzle-editing.component";
-import { SelectedClueComponent } from "./selected-clue/selected-clue.component";
-import { initializeApp, provideFirebaseApp } from "@angular/fire/app";
-import { environment } from "../environments/environment";
 import { provideAnalytics, getAnalytics, ScreenTrackingService, UserTrackingService } from "@angular/fire/analytics";
+import { initializeApp, provideFirebaseApp } from "@angular/fire/app";
 import { provideAuth, getAuth } from "@angular/fire/auth";
 import { provideFirestore, getFirestore } from "@angular/fire/firestore";
 import { provideFunctions, getFunctions } from "@angular/fire/functions";
 import { provideStorage, getStorage } from "@angular/fire/storage";
-import { ClueEditingComponent } from "./clue-editing/clue-editing.component";
-import { SidebarNavComponent } from "./sidebar-nav/sidebar-nav.component";
-import { PuzzleReviewComponent } from "./puzzle-review/puzzle-review.component";
-import { LoadPuzzleComponent } from "./load-puzzle/load-puzzle.component";
-import { AnswerDraftingComponent } from "./answer-drafting/answer-drafting.component";
+import { FormsModule, ReactiveFormsModule } from "@angular/forms";
+import { BrowserModule } from "@angular/platform-browser";
+
+import { AppRoutingModule } from "./app-routing.module";
+import { AppComponent } from "./app.component";
+
+import { AnswerDraftingComponent } from "./pages/answer-drafting/answer-drafting.component";
+import { ClueEditingComponent } from "./pages/clue-editing/clue-editing.component";
+import { LoadPuzzleComponent } from "./pages/load-puzzle/load-puzzle.component";
+import { PuzzleEditingComponent } from "./pages/puzzle-editing/puzzle-editing.component";
+import { PuzzleReviewComponent } from "./pages/puzzle-review/puzzle-review.component";
+import { PuzzleStatsComponent } from "./pages/puzzle-stats/puzzle-stats.component";
+import { SignInComponent } from "./pages/sign-in/sign-in.component";
+
 import { GridComponent } from "./components/grid/grid.component";
-import { PuzzleStatsComponent } from "./puzzle-stats/puzzle-stats.component";
 import { MetricGroupComponent } from "./components/metric-group/metric-group.component";
-import { SignInComponent } from "./sign-in/sign-in.component";
+import { SelectedClueComponent } from "./components/selected-clue/selected-clue.component";
+import { SidebarNavComponent } from "./components/sidebar-nav/sidebar-nav.component";
+
+import { environment } from "../environments/environment";
 
 @NgModule({
   declarations: [

@@ -1,9 +1,12 @@
 import { ComponentFixture, TestBed } from "@angular/core/testing";
 import { FormsModule, ReactiveFormsModule } from "@angular/forms";
 
-import { SelectedClueComponent } from "./selected-clue.component";
 import { BehaviorSubject } from "rxjs";
-import { Clue, ClueType, Puzzle, PuzzleService } from "../services/puzzle.service";
+
+import { SelectedClueComponent } from "./selected-clue.component";
+import { PuzzleService } from "src/app/services/puzzle.service";
+import { Clue, ClueType } from "src/app/models/clue.model";
+import { Puzzle } from "src/app/models/puzzle.model";
 
 describe("SelectedClueComponent", () => {
   let component: SelectedClueComponent;

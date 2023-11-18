@@ -1,6 +1,9 @@
 import { Component, Input, OnInit } from "@angular/core";
+
 import { BehaviorSubject } from "rxjs";
-import { OverlayType, PuzzleService, Square, SquareType } from "src/app/services/puzzle.service";
+
+import { PuzzleService } from "src/app/services/puzzle.service";
+import { OverlayType, Square, SquareType } from "src/app/models/puzzle.model";
 
 export interface GridConfig {
   readonly: boolean;

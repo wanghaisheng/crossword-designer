@@ -1,9 +1,9 @@
 import { Component, OnInit } from "@angular/core";
-import { PuzzleDoc } from "../services/puzzle.service";
-
 import { FormControl, FormGroup } from "@angular/forms";
-import { LoadService } from "../services/load.service";
 import { Router } from "@angular/router";
+
+import { LoadService } from "src/app/services/load.service";
+import { PuzzleDoc } from "src/app/models/puzzle.model";
 
 @Component({
   selector: "app-load-puzzle",

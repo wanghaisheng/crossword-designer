@@ -1,11 +1,12 @@
 import { TestBed } from "@angular/core/testing";
+import { DocumentData, DocumentReference, Query, QueryDocumentSnapshot, QuerySnapshot, SnapshotMetadata } from "@angular/fire/firestore";
+
+import { of, throwError } from "rxjs";
 
 import { LoadService } from "./load.service";
-import { PuzzleDoc } from "./puzzle.service";
-import { of, throwError } from "rxjs";
 import { FirebaseService } from "./firebase.service";
-import { DocumentData, DocumentReference, Query, QueryDocumentSnapshot, QuerySnapshot, SnapshotMetadata } from "@angular/fire/firestore";
-import { AnswerDoc } from "./answer.service";
+import { AnswerDoc } from "src/app/models/answer.model";
+import { PuzzleDoc } from "src/app/models/puzzle.model";
 
 describe("LoadService", () => {
   let service: LoadService;

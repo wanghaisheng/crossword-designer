@@ -1,7 +1,8 @@
 import { Component, OnInit } from "@angular/core";
 import { FormControl, FormGroup } from "@angular/forms";
-import { AnswerService } from "../services/answer.service";
-import { LoadService } from "../services/load.service";
+
+import { AnswerService } from "src/app/services/answer.service";
+import { LoadService } from "src/app/services/load.service";
 
 @Component({
   selector: "app-answer-drafting",

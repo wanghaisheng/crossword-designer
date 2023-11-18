@@ -1,6 +1,8 @@
 import { Component, OnInit } from "@angular/core";
 import { FormControl } from "@angular/forms";
-import { Clue, ClueType, PuzzleService } from "../services/puzzle.service";
+
+import { PuzzleService } from "src/app/services/puzzle.service";
+import { Clue, ClueType } from "src/app/models/clue.model";
 
 @Component({
   selector: "app-selected-clue",

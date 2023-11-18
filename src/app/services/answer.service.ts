@@ -1,27 +1,12 @@
 import { Injectable } from "@angular/core";
 import { Observable } from "rxjs";
 import { DocumentData } from "@angular/fire/firestore";
+
 import { catchError, switchMap } from "rxjs/operators";
+
 import { SaveService } from "./save.service";
 import { LoadService } from "./load.service";
-
-export class AnswerBank {
-  id: string;
-  themeAnswers: Map<string, Array<number>>;
-  answers: Array<string>;
-
-  constructor(id: string = "", themeAnswers: Object = {}, answers: Array<string> = []) {
-    this.id = id;
-    this.themeAnswers = new Map<string, Array<number>>(Object.entries(themeAnswers));
-    this.answers = answers;
-  }
-}
-
-export interface AnswerDoc {
-  id: string;
-  themeAnswers: Object;
-  answers: Array<string>;
-}
+import { AnswerDoc, AnswerBank } from "../models/answer.model";
 
 @Injectable({
   providedIn: "root",

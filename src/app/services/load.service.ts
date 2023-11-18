@@ -1,10 +1,12 @@
 import { Injectable } from "@angular/core";
-import { FirebaseService } from "./firebase.service";
-import { BehaviorSubject, Observable, from } from "rxjs";
-import { PuzzleDoc } from "./puzzle.service";
-import { catchError, map, switchMap } from "rxjs/operators";
 import { DocumentData, DocumentReference, DocumentSnapshot, QuerySnapshot } from "@angular/fire/firestore";
-import { AnswerDoc } from "./answer.service";
+
+import { BehaviorSubject, Observable, from } from "rxjs";
+import { catchError, map, switchMap } from "rxjs/operators";
+
+import { FirebaseService } from "./firebase.service";
+import { AnswerDoc } from "../models/answer.model";
+import { PuzzleDoc } from "../models/puzzle.model";
 
 @Injectable({
   providedIn: "root",

@@ -1,7 +1,10 @@
 import { Component, OnInit } from "@angular/core";
-import { Clue, PuzzleService } from "../services/puzzle.service";
+
 import { BehaviorSubject } from "rxjs";
-import { GridConfig } from "../components/grid/grid.component";
+
+import { GridConfig } from "src/app/components/grid/grid.component";
+import { PuzzleService } from "src/app/services/puzzle.service";
+import { Clue } from "src/app/models/clue.model";
 
 @Component({
   selector: "app-puzzle-review",

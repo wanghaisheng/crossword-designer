@@ -1,10 +1,13 @@
 import { TestPuzzle } from "src/environments/environment";
 import { TestBed } from "@angular/core/testing";
 
-import { Clue, ClueType, OverlayType, PuzzleDoc, PuzzleService, Square, SquareType } from "./puzzle.service";
 import { BehaviorSubject, of, throwError } from "rxjs";
+
 import { SaveService } from "./save.service";
 import { LoadService } from "./load.service";
+import { PuzzleService } from "./puzzle.service";
+import { Clue, ClueType } from "../models/clue.model";
+import { PuzzleDoc, Square, SquareType, OverlayType } from "../models/puzzle.model";
 
 describe("PuzzleService", () => {
   const testId = "test-id";

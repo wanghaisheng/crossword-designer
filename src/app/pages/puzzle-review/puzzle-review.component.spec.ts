@@ -1,7 +1,8 @@
 import { ComponentFixture, TestBed } from "@angular/core/testing";
 
 import { PuzzleReviewComponent } from "./puzzle-review.component";
-import { Puzzle, PuzzleService, Square } from "../services/puzzle.service";
+import { PuzzleService } from "src/app/services/puzzle.service";
+import { Puzzle, Square } from "src/app/models/puzzle.model";
 
 describe("PuzzleReviewComponent", () => {
   let component: PuzzleReviewComponent;

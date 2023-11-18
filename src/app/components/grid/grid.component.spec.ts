@@ -1,9 +1,10 @@
 import { ComponentFixture, TestBed } from "@angular/core/testing";
-
-import { EditMode, HighlightMode, GridComponent } from "./grid.component";
-import { OverlayType, Puzzle, PuzzleService, Square } from "src/app/services/puzzle.service";
 import { DebugElement } from "@angular/core";
 import { By } from "@angular/platform-browser";
+
+import { EditMode, HighlightMode, GridComponent } from "./grid.component";
+import { PuzzleService } from "src/app/services/puzzle.service";
+import { OverlayType, Puzzle, Square } from "src/app/models/puzzle.model";
 
 describe("PuzzleComponent", () => {
   let component: GridComponent;

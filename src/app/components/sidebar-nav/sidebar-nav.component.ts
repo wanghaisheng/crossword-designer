@@ -1,7 +1,9 @@
 import { Component, ElementRef, OnInit, QueryList, ViewChildren } from "@angular/core";
-import { LoadService } from "../services/load.service";
+
 import { Router } from "@angular/router";
-import { AuthService } from "../services/auth.service";
+
+import { LoadService } from "src/app/services/load.service";
+import { AuthService } from "src/app/services/auth.service";
 
 @Component({
   selector: "app-sidebar-nav",

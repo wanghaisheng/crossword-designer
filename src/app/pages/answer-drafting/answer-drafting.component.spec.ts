@@ -1,9 +1,11 @@
 import { ComponentFixture, TestBed } from "@angular/core/testing";
+import { ReactiveFormsModule } from "@angular/forms";
+
+import { of, throwError } from "rxjs";
 
 import { AnswerDraftingComponent } from "./answer-drafting.component";
-import { AnswerBank, AnswerService } from "../services/answer.service";
-import { of, throwError } from "rxjs";
-import { ReactiveFormsModule } from "@angular/forms";
+import { AnswerService } from "src/app/services/answer.service";
+import { AnswerBank } from "src/app/models/answer.model";
 
 describe("AnswerDraftingComponent", () => {
   let component: AnswerDraftingComponent;

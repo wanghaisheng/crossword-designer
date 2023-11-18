@@ -1,9 +1,11 @@
 import { TestBed, fakeAsync } from "@angular/core/testing";
 
-import { AnswerDoc, AnswerService } from "./answer.service";
 import { BehaviorSubject, of, throwError } from "rxjs";
+
 import { SaveService } from "./save.service";
 import { LoadService } from "./load.service";
+import { AnswerService } from "./answer.service";
+import { AnswerDoc } from "../models/answer.model";
 
 describe("AnswerService", () => {
   let service: AnswerService;

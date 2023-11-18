@@ -1,9 +1,11 @@
 import { ComponentFixture, TestBed } from "@angular/core/testing";
 
+import { of, throwError } from "rxjs";
+
+import { EditMode, HighlightMode } from "src/app/components/grid/grid.component";
 import { PuzzleEditingComponent } from "./puzzle-editing.component";
-import { Puzzle, PuzzleService, Square } from "../services/puzzle.service";
-import { BehaviorSubject, of, throwError } from "rxjs";
-import { EditMode, HighlightMode } from "../components/grid/grid.component";
+import { PuzzleService } from "src/app/services/puzzle.service";
+import { Puzzle, Square } from "src/app/models/puzzle.model";
 
 describe("PuzzleEditingComponent", () => {
   let component: PuzzleEditingComponent;

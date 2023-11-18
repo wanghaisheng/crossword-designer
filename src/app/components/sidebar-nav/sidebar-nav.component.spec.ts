@@ -1,10 +1,11 @@
 import { ComponentFixture, TestBed } from "@angular/core/testing";
+import { Router } from "@angular/router";
+
+import { BehaviorSubject, of, throwError } from "rxjs";
 
 import { SidebarNavComponent } from "./sidebar-nav.component";
-import { Router } from "@angular/router";
-import { BehaviorSubject, of, throwError } from "rxjs";
-import { LoadService } from "../services/load.service";
-import { AuthService } from "../services/auth.service";
+import { LoadService } from "src/app/services/load.service";
+import { AuthService } from "src/app/services/auth.service";
 
 describe("SidebarNavComponent", () => {
   let component: SidebarNavComponent;

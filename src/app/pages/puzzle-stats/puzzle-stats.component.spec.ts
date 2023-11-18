@@ -1,7 +1,9 @@
 import { ComponentFixture, TestBed } from "@angular/core/testing";
 
 import { PuzzleStatsComponent } from "./puzzle-stats.component";
-import { Clue, Puzzle, PuzzleService, Square, SquareType } from "../services/puzzle.service";
+import { PuzzleService } from "src/app/services/puzzle.service";
+import { Clue } from "src/app/models/clue.model";
+import { Puzzle, Square, SquareType } from "src/app/models/puzzle.model";
 
 describe("PuzzleStatsComponent", () => {
   let component: PuzzleStatsComponent;
