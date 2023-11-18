@@ -1,9 +1,9 @@
 import { Component, OnInit } from "@angular/core";
-import { PuzzleDoc } from "../services/puzzle.service";
-
 import { FormControl, FormGroup } from "@angular/forms";
-import { LoadService } from "../services/load.service";
 import { Router } from "@angular/router";
+
+import { LoadService } from "src/app/services/load.service";
+import { PuzzleDoc } from "src/app/models/puzzle.model";
 
 @Component({
   selector: "app-load-puzzle",
@@ -30,13 +30,9 @@ export class LoadPuzzleComponent implements OnInit {
     });
   }
 
-  public loadPuzzle(id: string): void {
-    this.loadService.loadPuzzle(id).subscribe(
-      () => this.router.navigateByUrl("/answers"),
-      (err: ErrorEvent) => {
-        alert("Failed to load puzzle: " + err.message);
-      }
-    );
+  public onPuzzleSelect(id: string): void {
+    this.loadService.setActiveId(id);
+    this.router.navigateByUrl("/answers");
   }
 
   public createPuzzle(): void {

@@ -1,26 +1,12 @@
 import { Injectable } from "@angular/core";
 import { Observable } from "rxjs";
 import { DocumentData } from "@angular/fire/firestore";
-import { catchError } from "rxjs/operators";
+
+import { catchError, switchMap } from "rxjs/operators";
+
 import { SaveService } from "./save.service";
-
-export class AnswerBank {
-  id: string;
-  themeAnswers: Map<string, Array<number>>;
-  answers: Array<string>;
-
-  constructor(id: string = "", themeAnswers: Object = {}, answers: Array<string> = []) {
-    this.id = id;
-    this.themeAnswers = new Map<string, Array<number>>(Object.entries(themeAnswers));
-    this.answers = answers;
-  }
-}
-
-export interface AnswerDoc {
-  id: string;
-  themeAnswers: Object;
-  answers: Array<string>;
-}
+import { LoadService } from "./load.service";
+import { AnswerDoc, AnswerBank } from "../models/answer.model";
 
 @Injectable({
   providedIn: "root",
@@ -32,7 +18,13 @@ export class AnswerService {
 
   private _answerBank: AnswerBank = new AnswerBank();
 
-  constructor(private saveService: SaveService) {}
+  constructor(private loadService: LoadService, private saveService: SaveService) {
+    this.loadService.activePuzzleId$.pipe(switchMap((id: string) => this.loadService.getAnswers(id))).subscribe((answersDoc: AnswerDoc) => {
+      if (answersDoc) {
+        this.activateAnswers(answersDoc);
+      }
+    });
+  }
 
   /**
    * Activates answer bank with the provided answer data
@@ -106,13 +98,12 @@ export class AnswerService {
    * @returns an Observable
    */
   public saveAnswers(): Observable<void> {
-    let answers: AnswerDoc = {
-      id: this._answerBank.id,
+    let answers = {
       themeAnswers: Object.fromEntries(this._answerBank.themeAnswers.entries()),
       answers: this._answerBank.answers,
     };
 
-    return this.saveService.saveAnswers(answers).pipe(
+    return this.saveService.saveAnswers(this._answerBank.id, answers).pipe(
       catchError((error: ErrorEvent) => {
         throw error;
       })

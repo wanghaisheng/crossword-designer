@@ -1,114 +1,11 @@
 import { Injectable } from "@angular/core";
 import { BehaviorSubject, Observable } from "rxjs";
-import { catchError } from "rxjs/operators";
+import { catchError, switchMap } from "rxjs/operators";
+
 import { SaveService } from "./save.service";
-
-export interface PuzzleDoc {
-  id: string;
-  name: string;
-  createdBy: string;
-  width: number;
-  height: number;
-  locked: boolean;
-  answers: Array<string>;
-  spacers: Array<number>;
-  circles: Array<number>;
-  shades: Array<number>;
-  "across-clues": Array<string>;
-  "down-clues": Array<string>;
-}
-
-export class Puzzle {
-  id: string;
-  name: string;
-  createdBy: string;
-  width: number;
-  height: number;
-  locked: boolean;
-  grid: Array<Square>;
-  acrossClues: Array<Clue>;
-  downClues: Array<Clue>;
-
-  constructor(
-    id: string = "",
-    name: string = "",
-    createdBy: string = "",
-    width: number = 0,
-    height: number = 0,
-    locked: boolean = false,
-    grid: Array<Square> = [],
-    acrossClues: Array<Clue> = [],
-    downClues: Array<Clue> = []
-  ) {
-    this.id = id;
-    this.name = name;
-    this.createdBy = createdBy;
-    this.locked = locked;
-    this.width = width;
-    this.height = height;
-    this.grid = grid;
-    this.acrossClues = acrossClues;
-    this.downClues = downClues;
-  }
-}
-
-export class Clue {
-  num: number;
-  text: string;
-  answer: string;
-  squares: Array<number>;
-
-  constructor(num: number = -1, text: string = "", answer: string = "", squares: Array<number> = []) {
-    this.num = num;
-    this.text = text;
-    this.answer = answer;
-    this.squares = squares;
-  }
-}
-
-export enum ClueType {
-  Across,
-  Down,
-}
-
-export class Square {
-  index: number;
-  value: string;
-  type: SquareType;
-  overlay: OverlayType;
-  boxNum: number;
-  downClueNum: number;
-  acrossClueNum: number;
-
-  constructor(
-    index: number = -1,
-    value: string = " ",
-    boxNum: number = -1,
-    acrossClueNum: number = -1,
-    downClueNum: number = -1,
-    type: SquareType = SquareType.Letter,
-    overlay: OverlayType = OverlayType.None
-  ) {
-    this.index = index;
-    this.value = value;
-    this.boxNum = boxNum;
-    this.acrossClueNum = acrossClueNum;
-    this.downClueNum = downClueNum;
-    this.type = type;
-    this.overlay = overlay;
-  }
-}
-
-export enum SquareType {
-  Letter,
-  Spacer,
-}
-
-export enum OverlayType {
-  None,
-  Circle,
-  Shade,
-}
+import { LoadService } from "./load.service";
+import { Clue, ClueType } from "../models/clue.model";
+import { PuzzleDoc, Puzzle, Square, SquareType, OverlayType } from "../models/puzzle.model";
 
 @Injectable({
   providedIn: "root",
@@ -118,15 +15,22 @@ export class PuzzleService {
     return this._puzzle;
   }
 
-  public set locked(value: boolean) {
-    this._puzzle.locked = value;
-  }
-
   public activeAcrossClue$: BehaviorSubject<number> = new BehaviorSubject(0);
   public activeDownClue$: BehaviorSubject<number> = new BehaviorSubject(0);
 
   private _puzzle: Puzzle = new Puzzle();
-  constructor(private saveService: SaveService) {}
+
+  constructor(private loadService: LoadService, private saveService: SaveService) {
+    this.loadService.activePuzzleId$.pipe(switchMap((id: string) => this.loadService.getPuzzle(id))).subscribe((puzzleDoc: PuzzleDoc) => {
+      if (puzzleDoc) {
+        this.activatePuzzle(puzzleDoc);
+      }
+    });
+
+    this.loadService.activePuzzlePatch$.subscribe((patch: Partial<PuzzleDoc>) => {
+      this._puzzle = { ...this._puzzle, ...patch };
+    });
+  }
 
   /**
    * Activates puzzle with the provided puzzle data
@@ -154,8 +58,7 @@ export class PuzzleService {
    * @returns and Observable
    */
   public savePuzzle(): Observable<void> {
-    let puzzle: PuzzleDoc = {
-      id: this._puzzle.id,
+    let puzzle = {
       name: this._puzzle.name,
       createdBy: this._puzzle.createdBy,
       width: this._puzzle.width,
@@ -169,7 +72,7 @@ export class PuzzleService {
       "down-clues": this._puzzle.downClues.map((clue: Clue) => clue.text),
     };
 
-    return this.saveService.savePuzzle(puzzle).pipe(
+    return this.saveService.savePuzzle(this._puzzle.id, puzzle).pipe(
       catchError((error: ErrorEvent) => {
         throw error;
       })

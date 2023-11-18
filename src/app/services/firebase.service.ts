@@ -5,6 +5,7 @@ import {
   doc,
   DocumentData,
   DocumentReference,
+  DocumentSnapshot,
   addDoc,
   deleteDoc,
   getDoc,
@@ -15,7 +16,6 @@ import {
   QuerySnapshot,
 } from "firebase/firestore";
 import { Observable, from } from "rxjs";
-import { map } from "rxjs/operators";
 
 @Injectable({
   providedIn: "root",
@@ -44,11 +44,11 @@ export class FirebaseService {
     return from(setDoc(doc(coll, docId), data));
   }
 
-  public getDoc(path: string, docId: string): Observable<DocumentData | undefined> {
+  public getDoc(path: string, docId: string): Observable<DocumentSnapshot<DocumentData>> {
     const db = getFirestore();
     const coll = collection(db, path);
 
-    return from(getDoc(doc(coll, docId))).pipe(map((doc) => doc.data()));
+    return from(getDoc(doc(coll, docId)));
   }
 
   public getDocs(path: string): Observable<QuerySnapshot<DocumentData>> {

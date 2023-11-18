@@ -1,6 +1,9 @@
 import { Component, OnInit } from "@angular/core";
-import { Clue, PuzzleService, SquareType } from "../services/puzzle.service";
-import { Card, Status, Type } from "../components/metric-group/metric-group.component";
+
+import { Card, Status, Type } from "src/app/components/metric-group/metric-group.component";
+import { PuzzleService } from "src/app/services/puzzle.service";
+import { Clue } from "src/app/models/clue.model";
+import { SquareType } from "src/app/models/puzzle.model";
 
 interface Metric {
   name: string;

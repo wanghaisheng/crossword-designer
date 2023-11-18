@@ -1,8 +1,10 @@
 import { Component, OnInit } from "@angular/core";
-import { PuzzleService } from "../services/puzzle.service";
-import { EditMode, HighlightMode, GridConfig } from "../components/grid/grid.component";
+
 import { BehaviorSubject } from "rxjs";
-import { AnswerService } from "../services/answer.service";
+
+import { EditMode, HighlightMode, GridConfig } from "src/app/components/grid/grid.component";
+import { AnswerService } from "src/app/services/answer.service";
+import { PuzzleService } from "src/app/services/puzzle.service";
 
 @Component({
   selector: "app-puzzle-editing",

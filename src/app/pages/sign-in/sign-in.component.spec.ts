@@ -1,9 +1,10 @@
 import { ComponentFixture, TestBed } from "@angular/core/testing";
+import { Router } from "@angular/router";
+
+import { of, throwError } from "rxjs";
 
 import { SignInComponent } from "./sign-in.component";
-import { AuthService } from "../services/auth.service";
-import { Router } from "@angular/router";
-import { of, throwError } from "rxjs";
+import { AuthService } from "src/app/services/auth.service";
 
 describe("SignInComponent", () => {
   let component: SignInComponent;

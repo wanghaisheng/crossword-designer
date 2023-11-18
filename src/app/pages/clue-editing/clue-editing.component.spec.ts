@@ -1,9 +1,12 @@
 import { ComponentFixture, TestBed } from "@angular/core/testing";
+import { FormArray, ReactiveFormsModule } from "@angular/forms";
+
+import { of, throwError } from "rxjs";
 
 import { ClueEditingComponent } from "./clue-editing.component";
-import { Clue, ClueType, Puzzle, PuzzleService, Square } from "../services/puzzle.service";
-import { FormArray, ReactiveFormsModule } from "@angular/forms";
-import { of, throwError } from "rxjs";
+import { PuzzleService } from "src/app/services/puzzle.service";
+import { Clue, ClueType } from "src/app/models/clue.model";
+import { Puzzle, Square } from "src/app/models/puzzle.model";
 
 describe("ClueEditingComponent", () => {
   let component: ClueEditingComponent;
