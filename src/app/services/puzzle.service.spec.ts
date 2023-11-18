@@ -2,32 +2,58 @@ import { TestPuzzle } from "src/environments/environment";
 import { TestBed } from "@angular/core/testing";
 
 import { Clue, ClueType, OverlayType, PuzzleDoc, PuzzleService, Square, SquareType } from "./puzzle.service";
-import { of, throwError } from "rxjs";
+import { BehaviorSubject, of, throwError } from "rxjs";
 import { SaveService } from "./save.service";
+import { LoadService } from "./load.service";
 
 describe("PuzzleService", () => {
-  const testPuzzleDoc: PuzzleDoc = TestPuzzle;
+  const testId = "test-id";
+  const testPuzzleDoc = { id: testId, ...TestPuzzle } as PuzzleDoc;
 
   let service: PuzzleService;
 
+  const loadServiceSpy = jasmine.createSpyObj("LoadService", ["getPuzzle", "activePuzzleId$"]);
   const saveServiceSpy = jasmine.createSpyObj("SaveService", ["savePuzzle"]);
 
   beforeEach(() => {
+    loadServiceSpy.activePuzzleId$ = new BehaviorSubject<string>(testId);
+    loadServiceSpy.activePuzzlePatch$ = new BehaviorSubject<Partial<PuzzleDoc>>({});
+    loadServiceSpy.getPuzzle.and.returnValue(of(testPuzzleDoc));
     saveServiceSpy.savePuzzle.and.returnValue(of(undefined));
 
     TestBed.configureTestingModule({
-      providers: [{ provide: SaveService, useValue: saveServiceSpy }],
+      providers: [
+        { provide: LoadService, useValue: loadServiceSpy },
+        { provide: SaveService, useValue: saveServiceSpy },
+      ],
     });
 
     service = TestBed.inject(PuzzleService);
-    service.activatePuzzle(testPuzzleDoc);
   });
 
   it("should be created", () => {
     expect(service).toBeTruthy();
   });
 
-  describe("loadPuzzle", () => {
+  describe("constructor", () => {
+    it("should get puzzle with next puzzle id", () => {
+      loadServiceSpy.activePuzzleId$.next("test2");
+      loadServiceSpy.activePuzzleId$.subscribe(() => {
+        expect(loadServiceSpy.getPuzzle).toHaveBeenCalledWith("test2");
+      });
+    });
+
+    it("should patch puzzle with new data", () => {
+      const patch = { locked: true };
+
+      loadServiceSpy.activePuzzlePatch$.next(patch);
+      loadServiceSpy.activePuzzlePatch$.subscribe(() => {
+        expect(service.puzzle.locked).toEqual(true);
+      });
+    });
+  });
+
+  describe("activatePuzzle", () => {
     it("should return true number squares when successful", () => {
       expect(service.puzzle.grid[0]).toEqual(new Square(0, "Y", 1, 1, 1));
       expect(service.puzzle.grid[198]).toEqual(new Square(198, "U", -1, 63, 50));

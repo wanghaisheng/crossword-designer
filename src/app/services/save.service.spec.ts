@@ -12,9 +12,9 @@ describe("SaveService", () => {
   const firebaseServiceSpy = jasmine.createSpyObj("FirebaseService", ["setDoc"]);
 
   const testId = "testId";
-  const puzzleDoc = { id: testId, locked: false } as PuzzleDoc;
-  const lockedPuzzleDoc = { id: testId, locked: true } as PuzzleDoc;
-  const answerDoc = { id: testId } as AnswerDoc;
+  const puzzleDoc = { locked: false } as PuzzleDoc;
+  const lockedPuzzleDoc = { locked: true } as PuzzleDoc;
+  const answerDoc = { answers: ["test answer"] } as AnswerDoc;
 
   beforeEach(() => {
     firebaseServiceSpy.setDoc.withArgs("puzzle", testId, puzzleDoc).and.returnValue(of(undefined));
@@ -33,19 +33,15 @@ describe("SaveService", () => {
 
   describe("savePuzzle", () => {
     it("should do nothing when successful", () => {
-      service.savePuzzle(puzzleDoc).subscribe(() => {
+      service.savePuzzle(testId, puzzleDoc).subscribe(() => {
         expect(firebaseServiceSpy.setDoc).toHaveBeenCalledWith("puzzle", testId, puzzleDoc);
       });
     });
 
-    it("should throw error when puzzle locked", () => {
-      service.savePuzzle(lockedPuzzleDoc).subscribe(
-        () => {},
-        (err) => {
-          expect(firebaseServiceSpy.setDoc).not.toHaveBeenCalled();
-          expect(err.message).toEqual("Puzzle is locked");
-        }
-      );
+    it("should not save when puzzle locked", () => {
+      service.savePuzzle(testId, lockedPuzzleDoc).subscribe(() => {
+        expect(firebaseServiceSpy.setDoc).not.toHaveBeenCalled();
+      });
     });
 
     it("should throw error when unsuccessful", () => {
@@ -55,7 +51,7 @@ describe("SaveService", () => {
         return throwError(new Error(errorMsg));
       });
 
-      service.savePuzzle(puzzleDoc).subscribe(
+      service.savePuzzle(testId, puzzleDoc).subscribe(
         () => {},
         (err) => {
           expect(err.message).toEqual(errorMsg);
@@ -66,7 +62,7 @@ describe("SaveService", () => {
 
   describe("saveAnswers", () => {
     it("should do nothing when successful", () => {
-      service.saveAnswers(answerDoc).subscribe(() => {
+      service.saveAnswers(testId, answerDoc).subscribe(() => {
         expect(firebaseServiceSpy.setDoc).toHaveBeenCalledWith("answers", testId, answerDoc);
       });
     });
@@ -78,7 +74,7 @@ describe("SaveService", () => {
         return throwError(new Error(errorMsg));
       });
 
-      service.saveAnswers(answerDoc).subscribe(
+      service.saveAnswers(testId, answerDoc).subscribe(
         () => {},
         (err) => {
           expect(err.message).toEqual(errorMsg);

@@ -30,13 +30,9 @@ export class LoadPuzzleComponent implements OnInit {
     });
   }
 
-  public loadPuzzle(id: string): void {
-    this.loadService.loadPuzzle(id).subscribe(
-      () => this.router.navigateByUrl("/answers"),
-      (err: ErrorEvent) => {
-        alert("Failed to load puzzle: " + err.message);
-      }
-    );
+  public onPuzzleSelect(id: string): void {
+    this.loadService.setActiveId(id);
+    this.router.navigateByUrl("/answers");
   }
 
   public createPuzzle(): void {

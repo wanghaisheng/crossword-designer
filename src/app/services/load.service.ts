@@ -1,58 +1,24 @@
 import { Injectable } from "@angular/core";
 import { FirebaseService } from "./firebase.service";
-import { BehaviorSubject, Observable, from, of } from "rxjs";
-import { PuzzleDoc, PuzzleService } from "./puzzle.service";
+import { BehaviorSubject, Observable, from } from "rxjs";
+import { PuzzleDoc } from "./puzzle.service";
 import { catchError, map, switchMap } from "rxjs/operators";
-import { DocumentData, DocumentReference, QuerySnapshot } from "@angular/fire/firestore";
-import { AnswerDoc, AnswerService } from "./answer.service";
-
-export interface Patch {
-  locked?: boolean;
-  name?: string;
-  width?: number;
-  height?: number;
-}
+import { DocumentData, DocumentReference, DocumentSnapshot, QuerySnapshot } from "@angular/fire/firestore";
+import { AnswerDoc } from "./answer.service";
 
 @Injectable({
   providedIn: "root",
 })
 export class LoadService {
   public activePuzzleId$: BehaviorSubject<string> = new BehaviorSubject("");
+  public activePuzzlePatch$: BehaviorSubject<Partial<PuzzleDoc>> = new BehaviorSubject({});
   private _activePuzzleId: string = "";
-  private _puzzleList: Array<PuzzleDoc> = [];
 
-  constructor(private firebaseService: FirebaseService, private answerService: AnswerService, private puzzleService: PuzzleService) {}
-
-  /**
-   * Retrieves a list of puzzles from the database
-   * @returns an Observable containing an Array of PuzzleDocs
-   */
-  public getPuzzleList(): Observable<Array<PuzzleDoc>> {
-    // TODO: periodically check for updates
-    if (this._puzzleList.length > 0) {
-      return of(this._puzzleList);
-    }
-
-    return from(this.firebaseService.getDocs("puzzle")).pipe(
-      map((snap: QuerySnapshot) => {
-        return snap.docs.map((d) => {
-          let doc = d.data() as PuzzleDoc;
-          doc.id = d.id;
-          return doc;
-        });
-      }),
-      map((puzzles: Array<PuzzleDoc>) => (this._puzzleList = puzzles)),
-      catchError((error: ErrorEvent) => {
-        throw error;
-      })
-    );
-  }
+  constructor(private firebaseService: FirebaseService) {}
 
   public setActiveId(id: string): void {
-    if (id) {
-      this._activePuzzleId = id;
-      this.activePuzzleId$.next(id);
-    }
+    this._activePuzzleId = id;
+    this.activePuzzleId$.next(id);
   }
 
   /**
@@ -63,16 +29,14 @@ export class LoadService {
    * @returns an Observable
    */
   public createPuzzle(title: string, width: number, height: number): Observable<void> {
-    let newAnswerBank: AnswerDoc = {
-      id: "",
+    let newAnswerBank = {
       themeAnswers: {},
       answers: [],
     };
 
-    let newPuzzle: PuzzleDoc = {
-      id: "",
+    let newPuzzle = {
       name: title,
-      createdBy: this.firebaseService.getCurrentUser()?.uid || "",
+      createdBy: this.firebaseService.getCurrentUser()?.uid,
       width: width,
       height: height,
       locked: false,
@@ -85,16 +49,28 @@ export class LoadService {
     };
 
     return this.firebaseService.addDoc("puzzle", newPuzzle).pipe(
-      map((ref: DocumentReference) => {
-        newAnswerBank.id = ref.id;
-        this.firebaseService.updateDoc("puzzle", ref.id, { id: ref.id });
-      }),
-      map(() => this.firebaseService.setDoc("answers", newAnswerBank.id, newAnswerBank)),
-      switchMap(() => this.loadPuzzle(newAnswerBank.id)),
-      map(() => {
-        // Add new puzzle doc to list
-        newPuzzle.id = newAnswerBank.id;
-        this._puzzleList.push(newPuzzle);
+      switchMap((docRef: DocumentReference<DocumentData>) =>
+        this.firebaseService.setDoc("answers", docRef.id, newAnswerBank).pipe(map(() => docRef.id))
+      ),
+      map((docId: string) => this.setActiveId(docId)),
+      catchError((error: ErrorEvent) => {
+        throw error;
+      })
+    );
+  }
+
+  /**
+   * Retrieves a list of puzzles from the database
+   * @returns an Observable containing an Array of PuzzleDocs
+   */
+  public getPuzzleList(): Observable<Array<PuzzleDoc>> {
+    return from(this.firebaseService.getDocs("puzzle")).pipe(
+      map((snap: QuerySnapshot) => {
+        return snap.docs.map((d) => {
+          let doc = d.data() as PuzzleDoc;
+          doc.id = d.id;
+          return doc;
+        });
       }),
       catchError((error: ErrorEvent) => {
         throw error;
@@ -103,16 +79,37 @@ export class LoadService {
   }
 
   /**
-   * Loads puzzle with the provided id from the database
+   * Retrieves puzzle with the provided id from the database
    * @param id puzzle id
    * @returns an Observable
    */
-  public loadPuzzle(id: string): Observable<void> {
+  public getPuzzle(id: string): Observable<PuzzleDoc> {
     return this.firebaseService.getDoc("puzzle", id).pipe(
-      map((docData: DocumentData | undefined) => docData && this.puzzleService.activatePuzzle(docData as PuzzleDoc)),
-      switchMap(() => this.firebaseService.getDoc("answers", id)),
-      map((docData: DocumentData | undefined) => docData && this.answerService.activateAnswers(docData as AnswerDoc)),
-      map(() => this.setActiveId(id)),
+      map((doc: DocumentSnapshot) => {
+        return {
+          id: doc.id,
+          ...doc.data(),
+        } as PuzzleDoc;
+      }),
+      catchError((error: ErrorEvent) => {
+        throw error;
+      })
+    );
+  }
+
+  /**
+   * Loads answers with the provided id from the database
+   * @param id puzzle id
+   * @returns an Observable
+   */
+  public getAnswers(id: string): Observable<AnswerDoc> {
+    return this.firebaseService.getDoc("answers", id).pipe(
+      map((doc: DocumentSnapshot) => {
+        return {
+          id: doc.id,
+          ...doc.data(),
+        } as AnswerDoc;
+      }),
       catchError((error: ErrorEvent) => {
         throw error;
       })
@@ -125,14 +122,9 @@ export class LoadService {
    * @param data updated field data
    * @returns an Observable
    */
-  public updatePuzzle(id: string, data: Patch): Observable<void> {
+  public updatePuzzle(id: string, data: Partial<PuzzleDoc>): Observable<void> {
     return this.firebaseService.updateDoc("puzzle", id, data).pipe(
-      map(() => {
-        // Update active puzzle if needed
-        if (id == this._activePuzzleId && data.locked != undefined) {
-          this.puzzleService.locked = data.locked;
-        }
-      }),
+      map(() => (id == this._activePuzzleId ? this.activePuzzlePatch$.next(data) : undefined)),
       catchError((error: ErrorEvent) => {
         throw error;
       })

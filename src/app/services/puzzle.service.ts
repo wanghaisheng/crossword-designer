@@ -1,7 +1,8 @@
 import { Injectable } from "@angular/core";
 import { BehaviorSubject, Observable } from "rxjs";
-import { catchError } from "rxjs/operators";
+import { catchError, switchMap } from "rxjs/operators";
 import { SaveService } from "./save.service";
+import { LoadService } from "./load.service";
 
 export interface PuzzleDoc {
   id: string;
@@ -118,15 +119,22 @@ export class PuzzleService {
     return this._puzzle;
   }
 
-  public set locked(value: boolean) {
-    this._puzzle.locked = value;
-  }
-
   public activeAcrossClue$: BehaviorSubject<number> = new BehaviorSubject(0);
   public activeDownClue$: BehaviorSubject<number> = new BehaviorSubject(0);
 
   private _puzzle: Puzzle = new Puzzle();
-  constructor(private saveService: SaveService) {}
+
+  constructor(private loadService: LoadService, private saveService: SaveService) {
+    this.loadService.activePuzzleId$.pipe(switchMap((id: string) => this.loadService.getPuzzle(id))).subscribe((puzzleDoc: PuzzleDoc) => {
+      if (puzzleDoc) {
+        this.activatePuzzle(puzzleDoc);
+      }
+    });
+
+    this.loadService.activePuzzlePatch$.subscribe((patch: Partial<PuzzleDoc>) => {
+      this._puzzle = { ...this._puzzle, ...patch };
+    });
+  }
 
   /**
    * Activates puzzle with the provided puzzle data
@@ -154,8 +162,7 @@ export class PuzzleService {
    * @returns and Observable
    */
   public savePuzzle(): Observable<void> {
-    let puzzle: PuzzleDoc = {
-      id: this._puzzle.id,
+    let puzzle = {
       name: this._puzzle.name,
       createdBy: this._puzzle.createdBy,
       width: this._puzzle.width,
@@ -169,7 +176,7 @@ export class PuzzleService {
       "down-clues": this._puzzle.downClues.map((clue: Clue) => clue.text),
     };
 
-    return this.saveService.savePuzzle(puzzle).pipe(
+    return this.saveService.savePuzzle(this._puzzle.id, puzzle).pipe(
       catchError((error: ErrorEvent) => {
         throw error;
       })

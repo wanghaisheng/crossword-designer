@@ -1,9 +1,7 @@
 import { Injectable } from "@angular/core";
-import { PuzzleDoc } from "./puzzle.service";
 import { FirebaseService } from "./firebase.service";
-import { Observable, from, of, throwError } from "rxjs";
-import { catchError, mergeMap } from "rxjs/operators";
-import { AnswerDoc } from "./answer.service";
+import { Observable, of } from "rxjs";
+import { catchError } from "rxjs/operators";
 
 @Injectable({
   providedIn: "root",
@@ -16,9 +14,8 @@ export class SaveService {
    * @param docData data to save
    * @returns an Observable
    */
-  public savePuzzle(docData: PuzzleDoc): Observable<void> {
-    return from(this.puzzleLocked(docData)).pipe(
-      mergeMap(() => this.firebaseService.setDoc("puzzle", docData.id, docData)),
+  public savePuzzle(id: string, docData: any): Observable<void> {
+    return (docData?.locked == false ? this.firebaseService.setDoc("puzzle", id, docData) : of(undefined)).pipe(
       catchError((error: ErrorEvent) => {
         throw error;
       })
@@ -30,19 +27,11 @@ export class SaveService {
    * @param docData data to save
    * @returns an Observable
    */
-  public saveAnswers(docData: AnswerDoc): Observable<void> {
-    return this.firebaseService.setDoc("answers", docData.id, docData).pipe(
+  public saveAnswers(id: string, docData: any): Observable<void> {
+    return this.firebaseService.setDoc("answers", id, docData).pipe(
       catchError((error: ErrorEvent) => {
         throw error;
       })
     );
-  }
-
-  private puzzleLocked(docData: PuzzleDoc): Observable<void> {
-    if (docData.locked) {
-      return throwError(new Error("Puzzle is locked"));
-    }
-
-    return of(undefined);
   }
 }

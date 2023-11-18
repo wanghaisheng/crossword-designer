@@ -1,11 +1,11 @@
 import { TestBed } from "@angular/core/testing";
 
 import { LoadService } from "./load.service";
-import { PuzzleDoc, PuzzleService } from "./puzzle.service";
+import { PuzzleDoc } from "./puzzle.service";
 import { of, throwError } from "rxjs";
 import { FirebaseService } from "./firebase.service";
 import { DocumentData, DocumentReference, Query, QueryDocumentSnapshot, QuerySnapshot, SnapshotMetadata } from "@angular/fire/firestore";
-import { AnswerDoc, AnswerService } from "./answer.service";
+import { AnswerDoc } from "./answer.service";
 
 describe("LoadService", () => {
   let service: LoadService;
@@ -19,15 +19,12 @@ describe("LoadService", () => {
     "updateDoc",
     "getCurrentUser",
   ]);
-  const answerServiceSpy = jasmine.createSpyObj("AnswerService", ["activateAnswers"]);
-  const puzzleServiceSpy = jasmine.createSpyObj("PuzzleService", ["activatePuzzle"]);
 
   const testId = "testId";
-  const puzzleDoc = { id: testId } as PuzzleDoc;
-  const answerDoc = { id: testId } as AnswerDoc;
+  const puzzleDoc = { name: "Test Puzzle" } as PuzzleDoc;
+  const answerDoc = { answers: ["test answer"] } as AnswerDoc;
 
-  const newAnswerBank: AnswerDoc = {
-    id: testId,
+  const newAnswerBank = {
     answers: [],
     themeAnswers: {},
   };
@@ -38,8 +35,8 @@ describe("LoadService", () => {
     firebaseServiceSpy.setDoc.and.returnValue(of(undefined));
     firebaseServiceSpy.deleteDoc.and.returnValue(of(undefined));
     firebaseServiceSpy.updateDoc.and.returnValue(of(undefined));
-    firebaseServiceSpy.getDoc.withArgs("puzzle", testId).and.returnValue(of(puzzleDoc));
-    firebaseServiceSpy.getDoc.withArgs("answers", testId).and.returnValue(of(answerDoc));
+    firebaseServiceSpy.getDoc.withArgs("puzzle", testId).and.returnValue(of({ data: () => puzzleDoc, id: testId }));
+    firebaseServiceSpy.getDoc.withArgs("answers", testId).and.returnValue(of({ data: () => answerDoc, id: testId }));
     firebaseServiceSpy.getDocs.and.returnValue(
       of({
         docs: [
@@ -68,15 +65,9 @@ describe("LoadService", () => {
     );
 
     firebaseServiceSpy.getDoc.calls.reset();
-    puzzleServiceSpy.activatePuzzle.calls.reset();
-    answerServiceSpy.activateAnswers.calls.reset();
 
     TestBed.configureTestingModule({
-      providers: [
-        { provide: FirebaseService, useValue: firebaseServiceSpy },
-        { provide: AnswerService, useValue: answerServiceSpy },
-        { provide: PuzzleService, useValue: puzzleServiceSpy },
-      ],
+      providers: [{ provide: FirebaseService, useValue: firebaseServiceSpy }],
     });
     service = TestBed.inject(LoadService);
   });
@@ -142,23 +133,46 @@ describe("LoadService", () => {
     });
   });
 
-  describe("loadPuzzle", () => {
-    it("should call activate functions when successful", () => {
-      service.loadPuzzle(testId).subscribe(() => {
+  describe("getPuzzle", () => {
+    it("should return puzzle doc when successful", () => {
+      service.getPuzzle(testId).subscribe((doc) => {
         expect(firebaseServiceSpy.getDoc).toHaveBeenCalledWith("puzzle", testId);
-        expect(puzzleServiceSpy.activatePuzzle).toHaveBeenCalledWith(puzzleDoc);
-        expect(firebaseServiceSpy.getDoc).toHaveBeenCalledWith("answers", testId);
-        expect(answerServiceSpy.activateAnswers).toHaveBeenCalledWith(answerDoc);
+        expect(doc.id).toEqual(testId);
+        expect(doc.name).toEqual(puzzleDoc.name);
       });
     });
 
-    it("should return throw error when unsuccessful", () => {
+    it("should throw error when unsuccessful", () => {
       const errorMsg = "Failed to get doc";
       firebaseServiceSpy.getDoc.withArgs("puzzle", testId).and.callFake(() => {
         return throwError(new Error(errorMsg));
       });
 
-      service.loadPuzzle(testId).subscribe(
+      service.getPuzzle(testId).subscribe(
+        () => {},
+        (err) => {
+          expect(err.message).toEqual(errorMsg);
+        }
+      );
+    });
+  });
+
+  describe("getAnswers", () => {
+    it("should return answer doc when successful", () => {
+      service.getAnswers(testId).subscribe((doc) => {
+        expect(firebaseServiceSpy.getDoc).toHaveBeenCalledWith("answers", testId);
+        expect(doc.id).toEqual(testId);
+        expect(doc.answers).toEqual(answerDoc.answers);
+      });
+    });
+
+    it("should throw error when unsuccessful", () => {
+      const errorMsg = "Failed to get doc";
+      firebaseServiceSpy.getDoc.withArgs("answers", testId).and.callFake(() => {
+        return throwError(new Error(errorMsg));
+      });
+
+      service.getAnswers(testId).subscribe(
         () => {},
         (err) => {
           expect(err.message).toEqual(errorMsg);
@@ -168,11 +182,21 @@ describe("LoadService", () => {
   });
 
   describe("updatePuzzle", () => {
-    it("should do nothing when successful", () => {
+    it("should do nothing when successful and not active id", () => {
       const patch = { name: "New Name" };
 
       service.updatePuzzle(testId, patch).subscribe(() => {
         expect(firebaseServiceSpy.updateDoc).toHaveBeenCalledWith("puzzle", testId, patch);
+      });
+    });
+
+    it("should update puzzle patch when successful and active id", () => {
+      const patch = { name: "New Name" };
+
+      service.setActiveId(testId);
+      service.updatePuzzle(testId, patch).subscribe(() => {
+        expect(firebaseServiceSpy.updateDoc).toHaveBeenCalledWith("puzzle", testId, patch);
+        expect(service.activePuzzlePatch$.value).toEqual(patch);
       });
     });
 

@@ -1,8 +1,9 @@
 import { Injectable } from "@angular/core";
 import { Observable } from "rxjs";
 import { DocumentData } from "@angular/fire/firestore";
-import { catchError } from "rxjs/operators";
+import { catchError, switchMap } from "rxjs/operators";
 import { SaveService } from "./save.service";
+import { LoadService } from "./load.service";
 
 export class AnswerBank {
   id: string;
@@ -32,7 +33,13 @@ export class AnswerService {
 
   private _answerBank: AnswerBank = new AnswerBank();
 
-  constructor(private saveService: SaveService) {}
+  constructor(private loadService: LoadService, private saveService: SaveService) {
+    this.loadService.activePuzzleId$.pipe(switchMap((id: string) => this.loadService.getAnswers(id))).subscribe((answersDoc: AnswerDoc) => {
+      if (answersDoc) {
+        this.activateAnswers(answersDoc);
+      }
+    });
+  }
 
   /**
    * Activates answer bank with the provided answer data
@@ -106,13 +113,12 @@ export class AnswerService {
    * @returns an Observable
    */
   public saveAnswers(): Observable<void> {
-    let answers: AnswerDoc = {
-      id: this._answerBank.id,
+    let answers = {
       themeAnswers: Object.fromEntries(this._answerBank.themeAnswers.entries()),
       answers: this._answerBank.answers,
     };
 
-    return this.saveService.saveAnswers(answers).pipe(
+    return this.saveService.saveAnswers(this._answerBank.id, answers).pipe(
       catchError((error: ErrorEvent) => {
         throw error;
       })

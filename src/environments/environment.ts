@@ -25,7 +25,6 @@ export const environment = {
 // import 'zone.js/plugins/zone-error';  // Included with Angular CLI.
 
 export const TestPuzzle = {
-  id: "testId",
   name: "Stitchin' Time",
   createdBy: "test-user-id",
   size: 21,

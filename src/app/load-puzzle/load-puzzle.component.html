@@ -82,7 +82,9 @@
             </div>
           </div>
           <div class="p-1">
-            <strong class="card-title d-inline-block text-truncate text-center" (click)="loadPuzzle(puzzle.id)">{{ puzzle.name }}</strong>
+            <strong class="card-title d-inline-block text-truncate text-center" (click)="onPuzzleSelect(puzzle.id)">{{
+              puzzle.name
+            }}</strong>
           </div>
           <div class="p-1">
             <div>{{ puzzle.width }}x{{ puzzle.height }}</div>
