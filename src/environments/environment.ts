@@ -27,10 +27,12 @@ export const environment = {
 export const TestPuzzle = {
   name: "Stitchin' Time",
   createdBy: "test-user-id",
+  lastEdited: new Date(Date.now()),
   size: 21,
   width: 21,
   height: 21,
   locked: false,
+  public: false,
   answers:
     "yesandnonasalactividitaroditprothamespartnerincrimelalalamernohitblankcdsaidetessartistscheckindeskdryginfosterdadhueencamplotatonassetsgijoeacerwaitinlineramsthreatsouleurocratshoesleepgaulredpandanyetsiestaoreoendintearsskisamensafroeduclaoakrapduaeatstrikeoneinniesmotherinlawspendernopewanttonkatsuaccraereelninobackinbusinesspounceegretinastatesidedreedstothemax".split(
       ""

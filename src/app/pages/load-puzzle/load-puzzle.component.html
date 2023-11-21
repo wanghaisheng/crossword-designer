@@ -1,5 +1,5 @@
 <div class="container-fluid">
-  <div class="row"><h1>My Puzzles</h1></div>
+  <div class="row"><h2>My Puzzles</h2></div>
   <div class="row">
     <div class="col">
       <div class="card new" role="button" type="button" data-bs-toggle="modal" data-bs-target="#createModal">
@@ -20,7 +20,7 @@
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header">
-          <h1 class="modal-title fs-5" id="exampleModalLabel">Create New Puzzle</h1>
+          <h1 class="modal-title fs-5" id="createModal">Create New Puzzle</h1>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body">
@@ -40,57 +40,18 @@
       </div>
     </div>
   </div>
-  <div *ngIf="listLoaded" class="row gy-4">
-    <div *ngFor="let puzzle of puzzleList" class="col-3">
-      <div class="card existing h-100">
-        <div class="card-body">
-          <div class="hstack gap-3">
-            <div>
-              <svg
-                *ngIf="puzzle.locked"
-                xmlns="http://www.w3.org/2000/svg"
-                width="16"
-                height="16"
-                fill="currentColor"
-                class="bi bi-lock-fill"
-                viewBox="0 0 16 16">
-                <path
-                  d="M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2zm3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z" />
-              </svg>
-            </div>
-            <div class="ms-auto">
-              <svg
-                type="button"
-                class="btn btn-secondary dropdown-toggle"
-                data-bs-toggle="dropdown"
-                aria-expanded="false"
-                xmlns="http://www.w3.org/2000/svg"
-                width="16"
-                height="16"
-                fill="currentColor"
-                class="bi bi-three-dots"
-                viewBox="0 0 16 16">
-                <path
-                  d="M3 9.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm5 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm5 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3z" />
-              </svg>
-              <ul class="dropdown-menu dropdown-menu-end">
-                <li *ngIf="puzzle.locked"><a role="button" class="dropdown-item" (click)="setPuzzleLock(puzzle.id, false)">Unlock</a></li>
-                <li *ngIf="!puzzle.locked"><a role="button" class="dropdown-item" (click)="setPuzzleLock(puzzle.id, true)">Lock</a></li>
-                <li><hr class="dropdown-divider" /></li>
-                <li><a role="button" class="dropdown-item text-danger" (click)="deletePuzzle(puzzle.id)">Delete</a></li>
-              </ul>
-            </div>
-          </div>
-          <div class="p-1">
-            <strong class="card-title d-inline-block text-truncate text-center" (click)="onPuzzleSelect(puzzle.id)">{{
-              puzzle.name
-            }}</strong>
-          </div>
-          <div class="p-1">
-            <div>{{ puzzle.width }}x{{ puzzle.height }}</div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
+  <app-puzzle-group
+    *ngIf="listLoaded"
+    [puzzles]="userPuzzleCards"
+    [config]="{ readonly: false, showOwner: false }"
+    (selectEvent)="selectPuzzle($event)"
+    (lockEvent)="setPuzzleLock($event.id, $event.value)"
+    (shareEvent)="setPuzzleShare($event.id, $event.value)"
+    (deleteEvent)="deletePuzzle($event)"></app-puzzle-group>
+  <div class="row"><h2>Public Puzzles</h2></div>
+  <app-puzzle-group
+    *ngIf="listLoaded"
+    [puzzles]="publicPuzzleCards"
+    [config]="{ readonly: true, showOwner: true }"
+    (selectEvent)="selectPuzzle($event)"></app-puzzle-group>
 </div>

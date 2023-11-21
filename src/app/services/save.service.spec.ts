@@ -63,7 +63,7 @@ describe("SaveService", () => {
 
   describe("saveAnswers", () => {
     it("should do nothing when successful", () => {
-      service.saveAnswers(testId, answerDoc).subscribe(() => {
+      service.saveAnswerBank(testId, answerDoc).subscribe(() => {
         expect(firebaseServiceSpy.setDoc).toHaveBeenCalledWith("answers", testId, answerDoc);
       });
     });
@@ -75,7 +75,7 @@ describe("SaveService", () => {
         return throwError(new Error(errorMsg));
       });
 
-      service.saveAnswers(testId, answerDoc).subscribe(
+      service.saveAnswerBank(testId, answerDoc).subscribe(
         () => {},
         (err) => {
           expect(err.message).toEqual(errorMsg);

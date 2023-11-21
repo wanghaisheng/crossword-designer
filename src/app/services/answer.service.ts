@@ -19,11 +19,13 @@ export class AnswerService {
   private _answerBank: AnswerBank = new AnswerBank();
 
   constructor(private loadService: LoadService, private saveService: SaveService) {
-    this.loadService.activePuzzleId$.pipe(switchMap((id: string) => this.loadService.getAnswers(id))).subscribe((answersDoc: AnswerDoc) => {
-      if (answersDoc) {
-        this.activateAnswers(answersDoc);
-      }
-    });
+    this.loadService.activePuzzleId$
+      .pipe(switchMap((id: string) => this.loadService.getAnswerBank(id)))
+      .subscribe((answersDoc: AnswerDoc) => {
+        if (answersDoc) {
+          this.activateAnswers(answersDoc);
+        }
+      });
   }
 
   /**
@@ -103,7 +105,7 @@ export class AnswerService {
       answers: this._answerBank.answers,
     };
 
-    return this.saveService.saveAnswers(this._answerBank.id, answers).pipe(
+    return this.saveService.saveAnswerBank(this._answerBank.id, answers).pipe(
       catchError((error: ErrorEvent) => {
         throw error;
       })

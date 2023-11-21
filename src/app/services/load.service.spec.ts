@@ -1,5 +1,13 @@
 import { TestBed } from "@angular/core/testing";
-import { DocumentData, DocumentReference, Query, QueryDocumentSnapshot, QuerySnapshot, SnapshotMetadata } from "@angular/fire/firestore";
+import {
+  DocumentData,
+  DocumentReference,
+  Query,
+  QueryDocumentSnapshot,
+  QuerySnapshot,
+  SnapshotMetadata,
+  Timestamp,
+} from "@angular/fire/firestore";
 
 import { of, throwError } from "rxjs";
 
@@ -7,6 +15,7 @@ import { LoadService } from "./load.service";
 import { FirebaseService } from "./firebase.service";
 import { AnswerDoc } from "src/app/models/answer.model";
 import { PuzzleDoc } from "src/app/models/puzzle.model";
+import { UserDoc } from "../models/user.model";
 
 describe("LoadService", () => {
   let service: LoadService;
@@ -15,7 +24,8 @@ describe("LoadService", () => {
     "addDoc",
     "setDoc",
     "getDoc",
-    "getDocs",
+    "getDocsWhereEquals",
+    "getDocsWithIds",
     "deleteDoc",
     "updateDoc",
     "getCurrentUser",
@@ -38,25 +48,51 @@ describe("LoadService", () => {
     firebaseServiceSpy.updateDoc.and.returnValue(of(undefined));
     firebaseServiceSpy.getDoc.withArgs("puzzle", testId).and.returnValue(of({ data: () => puzzleDoc, id: testId }));
     firebaseServiceSpy.getDoc.withArgs("answers", testId).and.returnValue(of({ data: () => answerDoc, id: testId }));
-    firebaseServiceSpy.getDocs.and.returnValue(
+    firebaseServiceSpy.getDocsWhereEquals.and.returnValue(
       of({
         docs: [
           {
             id: "testId1",
             data: () => {
-              return { name: "Test 1" } as DocumentData;
+              return { name: "Test 1", lastEdited: Timestamp.fromDate(new Date(2001, 1, 1)) } as DocumentData;
             },
           } as QueryDocumentSnapshot,
           {
             id: "testId2",
             data: () => {
-              return { name: "Test 2" } as DocumentData;
+              return { name: "Test 2", lastEdited: Timestamp.fromDate(new Date(2001, 1, 1)) } as DocumentData;
             },
           } as QueryDocumentSnapshot,
         ],
         metadata: {} as SnapshotMetadata,
         query: {} as Query,
-        size: 3,
+        size: 2,
+        empty: false,
+        forEach: () => {},
+        docChanges: () => {
+          return [];
+        },
+      } as QuerySnapshot)
+    );
+    firebaseServiceSpy.getDocsWithIds.and.returnValue(
+      of({
+        docs: [
+          {
+            id: "testUserId1",
+            data: () => {
+              return { name: "User 1" } as DocumentData;
+            },
+          } as QueryDocumentSnapshot,
+          {
+            id: "testUserId2",
+            data: () => {
+              return { name: "User 2" } as DocumentData;
+            },
+          } as QueryDocumentSnapshot,
+        ],
+        metadata: {} as SnapshotMetadata,
+        query: {} as Query,
+        size: 2,
         empty: false,
         forEach: () => {},
         docChanges: () => {
@@ -80,17 +116,42 @@ describe("LoadService", () => {
   describe("getPuzzleList", () => {
     it("should return data when successful", () => {
       service.getPuzzleList().subscribe((result) => {
-        expect(result).toEqual([{ name: "Test 1", id: "testId1" } as PuzzleDoc, { name: "Test 2", id: "testId2" } as PuzzleDoc]);
+        expect(result).toEqual([
+          { name: "Test 1", id: "testId1", lastEdited: new Date(2001, 1, 1) } as PuzzleDoc,
+          { name: "Test 2", id: "testId2", lastEdited: new Date(2001, 1, 1) } as PuzzleDoc,
+        ]);
       });
     });
 
-    it("should return throw error when unsuccessful", () => {
+    it("should throw error when unsuccessful", () => {
       const errorMsg = "Failed to get docs";
-      firebaseServiceSpy.getDocs.and.callFake(() => {
+      firebaseServiceSpy.getDocsWhereEquals.and.callFake(() => {
         return throwError(new Error(errorMsg));
       });
 
       service.getPuzzleList().subscribe(
+        () => {},
+        (err) => {
+          expect(err.message).toEqual(errorMsg);
+        }
+      );
+    });
+  });
+
+  describe("getUserList", () => {
+    it("should return data when successful", () => {
+      service.getUserList(["testUserId1", "testUserId2"]).subscribe((result) => {
+        expect(result).toEqual([{ name: "User 1", id: "testUserId1" } as UserDoc, { name: "User 2", id: "testUserId2" } as UserDoc]);
+      });
+    });
+
+    it("should throw error when unsuccessful", () => {
+      const errorMsg = "Failed to get docs";
+      firebaseServiceSpy.getDocsWithIds.and.callFake(() => {
+        return throwError(new Error(errorMsg));
+      });
+
+      service.getUserList(["userId1", "userId2"]).subscribe(
         () => {},
         (err) => {
           expect(err.message).toEqual(errorMsg);
@@ -160,7 +221,7 @@ describe("LoadService", () => {
 
   describe("getAnswers", () => {
     it("should return answer doc when successful", () => {
-      service.getAnswers(testId).subscribe((doc) => {
+      service.getAnswerBank(testId).subscribe((doc) => {
         expect(firebaseServiceSpy.getDoc).toHaveBeenCalledWith("answers", testId);
         expect(doc.id).toEqual(testId);
         expect(doc.answers).toEqual(answerDoc.answers);
@@ -173,7 +234,7 @@ describe("LoadService", () => {
         return throwError(new Error(errorMsg));
       });
 
-      service.getAnswers(testId).subscribe(
+      service.getAnswerBank(testId).subscribe(
         () => {},
         (err) => {
           expect(err.message).toEqual(errorMsg);

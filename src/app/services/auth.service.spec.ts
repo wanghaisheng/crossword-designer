@@ -1,9 +1,11 @@
 import { TestBed } from "@angular/core/testing";
+import { User, UserInfo } from "@angular/fire/auth";
 
-import { AuthService, User } from "./auth.service";
-import { FirebaseService } from "./firebase.service";
 import { of, throwError } from "rxjs";
-import { UserInfo } from "@angular/fire/auth";
+
+import { AuthService } from "./auth.service";
+import { FirebaseService } from "./firebase.service";
+import { UserDoc } from "../models/user.model";
 
 describe("AuthService", () => {
   let service: AuthService;
@@ -19,7 +21,7 @@ describe("AuthService", () => {
     providerId: "",
   };
 
-  const testUser: User = {
+  const testUser: UserDoc = {
     name: "Test Name",
     email: "test@email.com",
     id: "test-uid",
@@ -41,9 +43,9 @@ describe("AuthService", () => {
   });
 
   describe("signIn", () => {
-    it("should emit new user", () => {
+    it("should do nothing when successful", () => {
       service.signIn("test@email.com", "password").subscribe(() => {
-        expect(service.currentUser$.value).toEqual(testUser);
+        expect(firebaseServiceSpy.signInUser).toHaveBeenCalledWith("test@email.com", "password", service.authChangeCallback);
       });
     });
 
@@ -63,9 +65,9 @@ describe("AuthService", () => {
   });
 
   describe("signOut", () => {
-    it("should emit null user", () => {
+    it("should do nothing when successful", () => {
       service.signOut().subscribe(() => {
-        expect(service.currentUser$.value).toBeNull();
+        expect(firebaseServiceSpy.signOutUser).toHaveBeenCalled();
       });
     });
 
@@ -86,13 +88,22 @@ describe("AuthService", () => {
 
   describe("getCurrentUser", () => {
     it("should return current user", () => {
-      expect(service.getCurrentUser()).toEqual(testUser);
+      expect(service.currentUser).toEqual(testUser);
     });
 
     it("should return null", () => {
       firebaseServiceSpy.getCurrentUser.and.returnValue(null);
 
-      expect(service.getCurrentUser()).toBeNull();
+      expect(service.currentUser).toBeNull();
+    });
+  });
+
+  describe("authChangeCallback", () => {
+    it("should emit current user", () => {
+      service.authChangeCallback({ uid: "test-callback-id" } as User);
+      service.currentUserId$.subscribe((id) => {
+        expect(id).toEqual("test-callback-id");
+      });
     });
   });
 });

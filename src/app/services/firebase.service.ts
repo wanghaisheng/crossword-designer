@@ -1,5 +1,15 @@
 import { Injectable } from "@angular/core";
-import { User, UserCredential, createUserWithEmailAndPassword, getAuth, signInWithEmailAndPassword, signOut } from "@angular/fire/auth";
+import {
+  User,
+  UserCredential,
+  browserLocalPersistence,
+  createUserWithEmailAndPassword,
+  getAuth,
+  signInWithEmailAndPassword,
+  signOut,
+  updateProfile,
+} from "@angular/fire/auth";
+import { documentId, or, query, where } from "@angular/fire/firestore";
 import {
   collection,
   doc,
@@ -14,8 +24,10 @@ import {
   updateDoc,
   getFirestore,
   QuerySnapshot,
+  QueryCompositeFilterConstraint,
 } from "firebase/firestore";
 import { Observable, from } from "rxjs";
+import { switchMap } from "rxjs/operators";
 
 @Injectable({
   providedIn: "root",
@@ -51,11 +63,19 @@ export class FirebaseService {
     return from(getDoc(doc(coll, docId)));
   }
 
-  public getDocs(path: string): Observable<QuerySnapshot<DocumentData>> {
+  public getDocsWithIds(path: string, ids: Array<string>): Observable<QuerySnapshot<DocumentData>> {
     const db = getFirestore();
-    const coll = collection(db, path);
+    const q = query(collection(db, path), where(documentId(), "in", ids));
 
-    return from(getDocs(coll));
+    return from(getDocs(q));
+  }
+
+  public getDocsWhereEquals(path: string, props: Array<{ key: string; value: any }>): Observable<QuerySnapshot<DocumentData>> {
+    const db = getFirestore();
+    const constraints = props.map((p) => where(p.key, "==", p.value));
+    const q = query(collection(db, path), or(...constraints));
+
+    return from(getDocs(q));
   }
 
   public deleteDoc(path: string, docId: string): Observable<void> {
@@ -65,14 +85,18 @@ export class FirebaseService {
     return from(deleteDoc(doc(coll, docId)));
   }
 
-  public createUser(email: string, password: string): Observable<UserCredential> {
+  public createUser(email: string, password: string, name: string): Observable<void> {
     const auth = getAuth();
 
-    return from(createUserWithEmailAndPassword(auth, email, password));
+    return from(createUserWithEmailAndPassword(auth, email, password)).pipe(
+      switchMap((cred: UserCredential) => from(updateProfile(cred.user, { displayName: name })))
+    );
   }
 
-  public signInUser(email: string, password: string): Observable<UserCredential> {
+  public signInUser(email: string, password: string, callback: (user: User | null) => void): Observable<UserCredential> {
     const auth = getAuth();
+    auth.onAuthStateChanged(callback);
+    auth.setPersistence(browserLocalPersistence);
 
     return from(signInWithEmailAndPassword(auth, email, password));
   }

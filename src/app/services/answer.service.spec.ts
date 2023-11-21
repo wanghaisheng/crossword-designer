@@ -10,8 +10,8 @@ import { AnswerDoc } from "../models/answer.model";
 describe("AnswerService", () => {
   let service: AnswerService;
 
-  const loadServiceSpy = jasmine.createSpyObj("LoadService", ["getAnswers", "activePuzzleId$"]);
-  const saveServiceSpy = jasmine.createSpyObj("SaveService", ["saveAnswers"]);
+  const loadServiceSpy = jasmine.createSpyObj("LoadService", ["getAnswerBank", "activePuzzleId$"]);
+  const saveServiceSpy = jasmine.createSpyObj("SaveService", ["saveAnswerBank"]);
 
   const testId1 = "test-id-1";
   const testId2 = "test-id-2";
@@ -28,9 +28,9 @@ describe("AnswerService", () => {
 
   beforeEach(() => {
     loadServiceSpy.activePuzzleId$ = new BehaviorSubject<string>(testId1);
-    loadServiceSpy.getAnswers.withArgs(testId1).and.returnValue(of(new Object({ id: testId1, ...testAnswerDoc1 }) as AnswerDoc));
-    loadServiceSpy.getAnswers.withArgs(testId2).and.returnValue(of(new Object({ id: testId2, ...testAnswerDoc2 }) as AnswerDoc));
-    saveServiceSpy.saveAnswers.and.returnValue(of(undefined));
+    loadServiceSpy.getAnswerBank.withArgs(testId1).and.returnValue(of(new Object({ id: testId1, ...testAnswerDoc1 }) as AnswerDoc));
+    loadServiceSpy.getAnswerBank.withArgs(testId2).and.returnValue(of(new Object({ id: testId2, ...testAnswerDoc2 }) as AnswerDoc));
+    saveServiceSpy.saveAnswerBank.and.returnValue(of(undefined));
 
     TestBed.configureTestingModule({
       providers: [
@@ -50,7 +50,7 @@ describe("AnswerService", () => {
     it("should get answers with next puzzle id", () => {
       loadServiceSpy.activePuzzleId$.next(testId2);
       loadServiceSpy.activePuzzleId$.subscribe(() => {
-        expect(loadServiceSpy.getAnswers).toHaveBeenCalledWith(testId2);
+        expect(loadServiceSpy.getAnswerBank).toHaveBeenCalledWith(testId2);
       });
     });
   });
@@ -129,13 +129,13 @@ describe("AnswerService", () => {
   describe("saveAnswers", () => {
     it("should save answers successfully", () => {
       service.saveAnswers().subscribe(() => {
-        expect(saveServiceSpy.saveAnswers).toHaveBeenCalledWith(testId1, testAnswerDoc1);
+        expect(saveServiceSpy.saveAnswerBank).toHaveBeenCalledWith(testId1, testAnswerDoc1);
       });
     });
 
     it("should throw error when unsuccessful", () => {
       const errorMsg = "Failed to set doc";
-      saveServiceSpy.saveAnswers.and.callFake(() => {
+      saveServiceSpy.saveAnswerBank.and.callFake(() => {
         return throwError(new Error(errorMsg));
       });
 
