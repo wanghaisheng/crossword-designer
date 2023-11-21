@@ -1,46 +1,19 @@
 import { Injectable } from "@angular/core";
-import { FirebaseService } from "./firebase.service";
-import { BehaviorSubject, Observable } from "rxjs";
-import { catchError, map } from "rxjs/operators";
-import { FirebaseError } from "@angular/fire/app";
+import { User, UserCredential } from "@angular/fire/auth";
 
-export interface User {
-  id: string;
-  email: string | null;
-  name: string | null;
-}
+import { BehaviorSubject, Observable } from "rxjs";
+import { catchError } from "rxjs/operators";
+
+import { FirebaseService } from "./firebase.service";
+import { UserDoc } from "../models/user.model";
 
 @Injectable({
   providedIn: "root",
 })
 export class AuthService {
-  public currentUser$: BehaviorSubject<User | null> = new BehaviorSubject<User | null>(null);
+  public currentUserId$: BehaviorSubject<string | undefined> = new BehaviorSubject<string | undefined>(undefined);
 
-  constructor(private firebaseService: FirebaseService) {}
-
-  public signIn(email: string, password: string): Observable<void> {
-    return this.firebaseService.signInUser(email, password).pipe(
-      map(() => {
-        this.currentUser$.next(this.getCurrentUser());
-      }),
-      catchError((error: ErrorEvent) => {
-        throw error;
-      })
-    );
-  }
-
-  public signOut(): Observable<void> {
-    return this.firebaseService.signOutUser().pipe(
-      map(() => {
-        this.currentUser$.next(null);
-      }),
-      catchError((error: ErrorEvent) => {
-        throw error;
-      })
-    );
-  }
-
-  public getCurrentUser(): User | null {
+  public get currentUser(): UserDoc | null {
     const user = this.firebaseService.getCurrentUser();
     return user
       ? {
@@ -50,4 +23,28 @@ export class AuthService {
         }
       : null;
   }
+
+  constructor(private firebaseService: FirebaseService) {
+    this.currentUserId$.next(this.firebaseService.getCurrentUser()?.uid);
+  }
+
+  public signIn(email: string, password: string): Observable<UserCredential | null> {
+    return this.firebaseService.signInUser(email, password, this.authChangeCallback).pipe(
+      catchError((error: ErrorEvent) => {
+        throw error;
+      })
+    );
+  }
+
+  public signOut(): Observable<void> {
+    return this.firebaseService.signOutUser().pipe(
+      catchError((error: ErrorEvent) => {
+        throw error;
+      })
+    );
+  }
+
+  public authChangeCallback = (user: User | null) => {
+    this.currentUserId$.next(user?.uid);
+  };
 }

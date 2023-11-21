@@ -1,5 +1,5 @@
 import { Injectable } from "@angular/core";
-import { DocumentData, DocumentReference, DocumentSnapshot, QuerySnapshot } from "@angular/fire/firestore";
+import { DocumentData, DocumentReference, DocumentSnapshot, QuerySnapshot, Timestamp } from "@angular/fire/firestore";
 
 import { BehaviorSubject, Observable, from } from "rxjs";
 import { catchError, map, switchMap } from "rxjs/operators";
@@ -7,6 +7,7 @@ import { catchError, map, switchMap } from "rxjs/operators";
 import { FirebaseService } from "./firebase.service";
 import { AnswerDoc } from "../models/answer.model";
 import { PuzzleDoc } from "../models/puzzle.model";
+import { UserDoc } from "../models/user.model";
 
 @Injectable({
   providedIn: "root",
@@ -39,9 +40,11 @@ export class LoadService {
     let newPuzzle = {
       name: title,
       createdBy: this.firebaseService.getCurrentUser()?.uid,
+      lastEdited: Timestamp.fromDate(new Date(Date.now())),
       width: width,
       height: height,
       locked: false,
+      public: false,
       answers: Array(width * height).fill(" "),
       spacers: [],
       circles: [],
@@ -66,10 +69,36 @@ export class LoadService {
    * @returns an Observable containing an Array of PuzzleDocs
    */
   public getPuzzleList(): Observable<Array<PuzzleDoc>> {
-    return from(this.firebaseService.getDocs("puzzle")).pipe(
+    const userId = this.firebaseService.getCurrentUser()?.uid;
+    return from(
+      this.firebaseService.getDocsWhereEquals("puzzle", [
+        { key: "createdBy", value: userId },
+        { key: "public", value: true },
+      ])
+    ).pipe(
       map((snap: QuerySnapshot) => {
         return snap.docs.map((d) => {
           let doc = d.data() as PuzzleDoc;
+          doc.id = d.id;
+          doc.lastEdited = d.data()?.lastEdited.toDate();
+          return doc;
+        });
+      }),
+      catchError((error: ErrorEvent) => {
+        throw error;
+      })
+    );
+  }
+
+  /**
+   * Retrieves a list of users with the provided ids from the database
+   * @returns an Observable containing an Array of UserDocs
+   */
+  public getUserList(ids: Array<string>): Observable<Array<UserDoc>> {
+    return from(this.firebaseService.getDocsWithIds("users", ids)).pipe(
+      map((snap: QuerySnapshot) => {
+        return snap.docs.map((d) => {
+          let doc = d.data() as UserDoc;
           doc.id = d.id;
           return doc;
         });
@@ -104,7 +133,7 @@ export class LoadService {
    * @param id puzzle id
    * @returns an Observable
    */
-  public getAnswers(id: string): Observable<AnswerDoc> {
+  public getAnswerBank(id: string): Observable<AnswerDoc> {
     return this.firebaseService.getDoc("answers", id).pipe(
       map((doc: DocumentSnapshot) => {
         return {

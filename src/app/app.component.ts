@@ -1,5 +1,5 @@
 import { Component, OnInit } from "@angular/core";
-import { AuthService, User } from "./services/auth.service";
+import { AuthService } from "./services/auth.service";
 import { Router } from "@angular/router";
 
 @Component({
@@ -14,13 +14,11 @@ export class AppComponent implements OnInit {
   constructor(private router: Router, private authService: AuthService) {}
 
   ngOnInit(): void {
-    this.authService.currentUser$.subscribe((user: User | null) => {
-      this.signedIn = user != null;
+    this.authService.currentUserId$.subscribe((userId: string | undefined) => {
+      this.signedIn = userId != undefined;
 
       // Re-route to sign-in page if user not signed in
-      if (!this.signedIn) {
-        this.router.navigateByUrl("/");
-      }
+      this.router.navigateByUrl("/");
     });
   }
 }

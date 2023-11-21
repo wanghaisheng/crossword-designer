@@ -2,8 +2,13 @@ import { Component, OnInit } from "@angular/core";
 import { FormControl, FormGroup } from "@angular/forms";
 import { Router } from "@angular/router";
 
+import { map, switchMap } from "rxjs/operators";
+
 import { LoadService } from "src/app/services/load.service";
+import { AuthService } from "src/app/services/auth.service";
 import { PuzzleDoc } from "src/app/models/puzzle.model";
+import { UserDoc } from "src/app/models/user.model";
+import { PuzzleCard } from "src/app/models/card.model";
 
 @Component({
   selector: "app-load-puzzle",
@@ -12,6 +17,8 @@ import { PuzzleDoc } from "src/app/models/puzzle.model";
 })
 export class LoadPuzzleComponent implements OnInit {
   public puzzleList: Array<PuzzleDoc> = [];
+  public userPuzzleCards: Array<PuzzleCard> = [];
+  public publicPuzzleCards: Array<PuzzleCard> = [];
   public listLoaded: boolean = false;
 
   public newPuzzleForm = new FormGroup({
@@ -20,19 +27,22 @@ export class LoadPuzzleComponent implements OnInit {
     height: new FormControl(""),
   });
 
-  constructor(private router: Router, private loadService: LoadService) {}
+  constructor(private router: Router, private authService: AuthService, private loadService: LoadService) {}
 
   ngOnInit(): void {
-    this.loadService.getPuzzleList().subscribe((puzzles: Array<PuzzleDoc>) => {
-      this.puzzleList = puzzles;
-
-      this.listLoaded = true;
-    });
-  }
-
-  public onPuzzleSelect(id: string): void {
-    this.loadService.setActiveId(id);
-    this.router.navigateByUrl("/answers");
+    this.loadService
+      .getPuzzleList()
+      .pipe(
+        map((puzzles: Array<PuzzleDoc>) => {
+          this.puzzleList = puzzles;
+          return puzzles.map((p) => p.createdBy);
+        }),
+        switchMap((userIds: Array<string>) => this.loadService.getUserList(userIds))
+      )
+      .subscribe((users: Array<UserDoc>) => {
+        this.buildPuzzleCards(users);
+        this.listLoaded = true;
+      });
   }
 
   public createPuzzle(): void {
@@ -46,9 +56,14 @@ export class LoadPuzzleComponent implements OnInit {
       );
   }
 
+  public selectPuzzle(id: string): void {
+    this.loadService.setActiveId(id);
+    this.router.navigateByUrl("/answers");
+  }
+
   public deletePuzzle(id: string): void {
     this.loadService.deletePuzzle(id).subscribe(
-      () => (this.puzzleList = this.puzzleList.filter((p) => p.id != id)),
+      () => {},
       (err: ErrorEvent) => {
         alert("Failed to delete puzzle: " + err.message);
       }
@@ -57,15 +72,41 @@ export class LoadPuzzleComponent implements OnInit {
 
   public setPuzzleLock(id: string, value: boolean): void {
     this.loadService.updatePuzzle(id, { locked: value }).subscribe(
-      () => {
-        let puzzle = this.puzzleList.find((p) => p.id == id);
-        if (puzzle) {
-          puzzle.locked = value;
-        }
-      },
+      () => {},
       (err: ErrorEvent) => {
         alert("Failed to update puzzle: " + err.message);
       }
     );
+  }
+
+  public setPuzzleShare(id: string, value: boolean): void {
+    this.loadService.updatePuzzle(id, { public: value }).subscribe(
+      () => {},
+      (err: ErrorEvent) => {
+        alert("Failed to update puzzle: " + err.message);
+      }
+    );
+  }
+
+  private buildPuzzleCards(users: Array<UserDoc>): void {
+    this.puzzleList.forEach((puzzle: PuzzleDoc) => {
+      const creator = users.find((u) => (u.id = puzzle.createdBy));
+      const card = {
+        id: puzzle.id,
+        name: puzzle.name,
+        owner: creator?.name ? creator.name : "",
+        lastEdited: puzzle.lastEdited,
+        width: puzzle.width,
+        height: puzzle.height,
+        locked: puzzle.locked,
+        public: puzzle.public,
+      };
+
+      if (puzzle.createdBy == this.authService.currentUser?.id) {
+        this.userPuzzleCards.push(card);
+      } else {
+        this.publicPuzzleCards.push(card);
+      }
+    });
   }
 }

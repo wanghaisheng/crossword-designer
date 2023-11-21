@@ -7,17 +7,20 @@ import { of, throwError } from "rxjs";
 import { TestPuzzle } from "src/environments/environment";
 import { LoadPuzzleComponent } from "./load-puzzle.component";
 import { LoadService } from "src/app/services/load.service";
+import { AuthService } from "src/app/services/auth.service";
 
 describe("LoadPuzzleComponent", () => {
   let component: LoadPuzzleComponent;
   let fixture: ComponentFixture<LoadPuzzleComponent>;
 
+  const authServiceSpy = jasmine.createSpyObj("AuthService", ["currentUser"]);
   const loadServiceSpy = jasmine.createSpyObj("LoadService", [
     "setActiveId",
     "createPuzzle",
     "loadPuzzle",
     "deletePuzzle",
     "getPuzzleList",
+    "getUserList",
     "updatePuzzle",
   ]);
   const routerSpy = jasmine.createSpyObj("Router", ["navigateByUrl"]);
@@ -25,10 +28,17 @@ describe("LoadPuzzleComponent", () => {
   const testId = "test-id";
 
   beforeEach(async () => {
-    loadServiceSpy.getPuzzleList.and.returnValue(of([{ id: testId, ...TestPuzzle }]));
+    loadServiceSpy.getPuzzleList.and.returnValue(
+      of([
+        { id: testId, ...TestPuzzle },
+        { id: "not-mine", createdBy: "someone-else" },
+      ])
+    );
+    loadServiceSpy.getUserList.and.returnValue(of([{ id: TestPuzzle.createdBy, name: "Test User" }]));
     loadServiceSpy.createPuzzle.and.returnValue(of(undefined));
     loadServiceSpy.deletePuzzle.and.returnValue(of(undefined));
     loadServiceSpy.updatePuzzle.and.returnValue(of(undefined));
+    authServiceSpy.currentUser = { id: "test-user-id" };
 
     spyOn(window, "alert");
     spyOn(console, "error");
@@ -37,6 +47,7 @@ describe("LoadPuzzleComponent", () => {
       imports: [ReactiveFormsModule],
       declarations: [LoadPuzzleComponent],
       providers: [
+        { provide: AuthService, useValue: authServiceSpy },
         { provide: LoadService, useValue: loadServiceSpy },
         { provide: Router, useValue: routerSpy },
       ],
@@ -53,9 +64,16 @@ describe("LoadPuzzleComponent", () => {
     expect(component).toBeTruthy();
   });
 
+  describe("ngOnInit", () => {
+    it("should build puzzle cards", () => {
+      expect(component.userPuzzleCards.length).toEqual(1);
+      expect(component.publicPuzzleCards.length).toEqual(1);
+    });
+  });
+
   describe("onPuzzleSelect", () => {
     it("should set active id and re-route", () => {
-      component.onPuzzleSelect(testId);
+      component.selectPuzzle(testId);
 
       expect(loadServiceSpy.setActiveId).toHaveBeenCalledWith(testId);
       expect(routerSpy.navigateByUrl).toHaveBeenCalledWith("/answers");
@@ -89,11 +107,10 @@ describe("LoadPuzzleComponent", () => {
   });
 
   describe("deletePuzzle", () => {
-    it("should remote puzzle from list when puzzle successfully deleted", () => {
+    it("should do nothing when puzzle deletion successful", () => {
       component.deletePuzzle(testId);
 
       expect(loadServiceSpy.deletePuzzle).toHaveBeenCalledWith(testId);
-      expect(component.puzzleList.findIndex((p) => p.id == testId)).toEqual(-1);
     });
 
     it("should alert failure when puzzle deletion fails", () => {
@@ -110,12 +127,10 @@ describe("LoadPuzzleComponent", () => {
   });
 
   describe("setPuzzleLock", () => {
-    it("should set puzzle lock when update successful", () => {
+    it("should do nothing when update successful", () => {
       component.setPuzzleLock(testId, true);
-      const puzzle = component.puzzleList.find((p) => p.id == testId);
 
       expect(loadServiceSpy.updatePuzzle).toHaveBeenCalledWith(testId, { locked: true });
-      expect(puzzle?.locked).toEqual(true);
     });
 
     it("should alert failure when update fails", () => {
@@ -127,6 +142,26 @@ describe("LoadPuzzleComponent", () => {
       component.setPuzzleLock(testId, false);
 
       expect(loadServiceSpy.updatePuzzle).toHaveBeenCalledWith(testId, { locked: false });
+      expect(window.alert).toHaveBeenCalledWith("Failed to update puzzle: Failed to update doc");
+    });
+  });
+
+  describe("setPuzzleShare", () => {
+    it("should do nothing when update successful", () => {
+      component.setPuzzleShare(testId, false);
+
+      expect(loadServiceSpy.updatePuzzle).toHaveBeenCalledWith(testId, { public: false });
+    });
+
+    it("should alert failure when update fails", () => {
+      const errorMsg = "Failed to update doc";
+      loadServiceSpy.updatePuzzle.and.callFake(() => {
+        return throwError(new Error(errorMsg));
+      });
+
+      component.setPuzzleShare(testId, true);
+
+      expect(loadServiceSpy.updatePuzzle).toHaveBeenCalledWith(testId, { public: true });
       expect(window.alert).toHaveBeenCalledWith("Failed to update puzzle: Failed to update doc");
     });
   });

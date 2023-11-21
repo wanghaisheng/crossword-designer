@@ -1,27 +1,6 @@
-import { Component, EventEmitter, Input, OnInit, Output } from "@angular/core";
+import { Component, Input, OnInit } from "@angular/core";
 
-export interface Card {
-  id: string;
-  title: string;
-  metricType: Type;
-  value: any;
-  progress?: number;
-  status?: Status;
-}
-
-export enum Type {
-  Text,
-  Check,
-  Percent,
-  Number,
-}
-
-export enum Status {
-  None = "None",
-  Success = "Success",
-  Warning = "Warning",
-  Danger = "Danger",
-}
+import { MetricCard } from "src/app/models/card.model";
 
 @Component({
   selector: "app-metric-group",
@@ -29,7 +8,7 @@ export enum Status {
   styleUrls: ["./metric-group.component.scss"],
 })
 export class MetricGroupComponent implements OnInit {
-  @Input() cards: Array<Card> = [];
+  @Input() cards: Array<MetricCard> = [];
 
   constructor() {}
 

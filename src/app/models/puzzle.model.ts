@@ -7,9 +7,11 @@ export interface PuzzleDoc {
   id: string;
   name: string;
   createdBy: string;
+  lastEdited: Date;
   width: number;
   height: number;
   locked: boolean;
+  public: boolean;
   answers: Array<string>;
   spacers: Array<number>;
   circles: Array<number>;

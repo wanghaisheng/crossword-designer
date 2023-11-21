@@ -1,28 +1,29 @@
 import { ComponentFixture, TestBed } from "@angular/core/testing";
 
-import { Card, MetricGroupComponent, Type } from "./metric-group.component";
+import { MetricGroupComponent } from "./metric-group.component";
+import { MetricCard, MetricType } from "src/app/models/card.model";
 
 describe("MetricGroupComponent", () => {
   let component: MetricGroupComponent;
   let fixture: ComponentFixture<MetricGroupComponent>;
 
-  const testCards: Array<Card> = [
+  const testCards: Array<MetricCard> = [
     {
       id: "card-1",
       title: "Card 1",
-      metricType: Type.Check,
+      metricType: MetricType.Check,
       value: true,
     },
     {
       id: "card-2",
       title: "Card 3",
-      metricType: Type.Number,
+      metricType: MetricType.Number,
       value: 0,
     },
     {
       id: "card-3",
       title: "Card 3",
-      metricType: Type.Check,
+      metricType: MetricType.Check,
       value: false,
     },
   ];

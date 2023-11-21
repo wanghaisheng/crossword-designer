@@ -21,6 +21,7 @@ import { SignInComponent } from "./pages/sign-in/sign-in.component";
 
 import { GridComponent } from "./components/grid/grid.component";
 import { MetricGroupComponent } from "./components/metric-group/metric-group.component";
+import { PuzzleGroupComponent } from "./components/puzzle-group/puzzle-group.component";
 import { SelectedClueComponent } from "./components/selected-clue/selected-clue.component";
 import { SidebarNavComponent } from "./components/sidebar-nav/sidebar-nav.component";
 
@@ -40,6 +41,7 @@ import { environment } from "../environments/environment";
     PuzzleStatsComponent,
     MetricGroupComponent,
     SignInComponent,
+    PuzzleGroupComponent,
   ],
   imports: [
     BrowserModule,
