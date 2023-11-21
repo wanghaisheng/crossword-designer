@@ -1,8 +1,8 @@
 <div class="container-fluid">
   <div class="row">
     <div class="hstack gap-3">
-      <button class="ms-auto btn btn-success" type="submit" (click)="onSave()">Save</button>
-      <button class="btn btn-danger" type="submit" (click)="onClear()">Clear</button>
+      <button class="ms-auto btn btn-success" [ngClass]="{ 'disabled': locked }" type="submit" (click)="onSave()">Save</button>
+      <button class="btn btn-danger" [ngClass]="{ 'disabled': locked }" type="submit" (click)="onClear()">Clear</button>
     </div>
   </div>
   <div class="row">

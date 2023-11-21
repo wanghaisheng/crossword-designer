@@ -2,7 +2,7 @@ import { Component, OnInit } from "@angular/core";
 import { FormControl, FormGroup } from "@angular/forms";
 
 import { AnswerService } from "src/app/services/answer.service";
-import { LoadService } from "src/app/services/load.service";
+import { PuzzleService } from "src/app/services/puzzle.service";
 
 @Component({
   selector: "app-answer-drafting",
@@ -18,6 +18,10 @@ export class AnswerDraftingComponent implements OnInit {
     return this.answerService.answerBank.answers;
   }
 
+  public get locked(): boolean {
+    return this.puzzleService.puzzle.locked;
+  }
+
   public newThemeAnswerForm = new FormGroup({
     answer: new FormControl(""),
   });
@@ -26,7 +30,7 @@ export class AnswerDraftingComponent implements OnInit {
     answer: new FormControl(""),
   });
 
-  constructor(private answerService: AnswerService, private loadService: LoadService) {}
+  constructor(private answerService: AnswerService, private puzzleService: PuzzleService) {}
 
   ngOnInit(): void {}
 

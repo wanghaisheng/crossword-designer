@@ -6,11 +6,13 @@ import { of, throwError } from "rxjs";
 import { AnswerDraftingComponent } from "./answer-drafting.component";
 import { AnswerService } from "src/app/services/answer.service";
 import { AnswerBank } from "src/app/models/answer.model";
+import { PuzzleService } from "src/app/services/puzzle.service";
 
 describe("AnswerDraftingComponent", () => {
   let component: AnswerDraftingComponent;
   let fixture: ComponentFixture<AnswerDraftingComponent>;
 
+  const puzzleServiceSpy = jasmine.createSpyObj("PuzzleService", ["puzzle"]);
   const answerServiceSpy = jasmine.createSpyObj("AnswerService", [
     "answerBank",
     "loadAnswers",
@@ -39,7 +41,10 @@ describe("AnswerDraftingComponent", () => {
     await TestBed.configureTestingModule({
       imports: [ReactiveFormsModule],
       declarations: [AnswerDraftingComponent],
-      providers: [{ provide: AnswerService, useValue: answerServiceSpy }],
+      providers: [
+        { provide: AnswerService, useValue: answerServiceSpy },
+        { provide: PuzzleService, useValue: puzzleServiceSpy },
+      ],
     }).compileComponents();
   });
 
