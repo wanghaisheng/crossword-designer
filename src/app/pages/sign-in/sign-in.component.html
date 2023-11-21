@@ -26,7 +26,7 @@
           <div *ngIf="password?.invalid && (password?.dirty || password?.touched)" class="invalid-feedback">Password is required.</div>
         </div>
         <div class="d-grid gap-2">
-          <button class="btn btn-primary" [disabled]="email?.invalid || password?.invalid" type="submit">Sign In</button>
+          <button class="btn btn-primary" [disabled]="signInForm.invalid" type="submit">Sign In</button>
         </div>
       </form>
     </div>
