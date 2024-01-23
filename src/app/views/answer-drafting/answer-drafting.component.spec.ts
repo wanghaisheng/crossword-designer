@@ -12,7 +12,7 @@ describe("AnswerDraftingComponent", () => {
   let component: AnswerDraftingComponent;
   let fixture: ComponentFixture<AnswerDraftingComponent>;
 
-  const puzzleServiceSpy = jasmine.createSpyObj("PuzzleService", ["puzzle"]);
+  const puzzleServiceSpy = jasmine.createSpyObj("PuzzleService", ["puzzle", "togglePuzzleLock"]);
   const answerServiceSpy = jasmine.createSpyObj("AnswerService", [
     "answerBank",
     "loadAnswers",
@@ -105,6 +105,14 @@ describe("AnswerDraftingComponent", () => {
     });
   });
 
+  describe("onLock", () => {
+    it("should call togglePuzzleLock", () => {
+      component.onLock();
+
+      expect(puzzleServiceSpy.togglePuzzleLock).toHaveBeenCalled();
+    });
+  });
+
   describe("onSave", () => {
     it("should call saveAnswers and alert on success", () => {
       component.onSave();
@@ -131,6 +139,25 @@ describe("AnswerDraftingComponent", () => {
       component.onClear();
 
       expect(answerServiceSpy.clearAnswers).toHaveBeenCalled();
+    });
+  });
+
+  describe("onSort", () => {
+    it("should toggle sort reverse", () => {
+      component.sortReverse = false;
+      component.onSort();
+
+      expect(component.sortReverse).toEqual(true);
+    });
+  });
+
+  describe("onFilter", () => {
+    it("should set filter", () => {
+      const filter = { length: 3, contains: "A" };
+      component.filter = { length: null, contains: null };
+      component.onFilter(filter);
+
+      expect(component.filter).toEqual(filter);
     });
   });
 });

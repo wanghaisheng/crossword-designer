@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from "@angular/core/testing";
 
 import { of, throwError } from "rxjs";
 
-import { EditMode, HighlightMode } from "src/app/components/grid/grid.component";
+import { EditMode, ViewMode } from "src/app/components/grid/grid.component";
 import { PuzzleEditingComponent } from "./puzzle-editing.component";
 import { PuzzleService } from "src/app/services/puzzle.service";
 import { Puzzle, Square } from "src/app/models/puzzle.model";
@@ -56,14 +56,14 @@ describe("PuzzleEditingComponent", () => {
 
       component.answersHidden = true;
       component.editMode = EditMode.Circle;
-      component.highlightMode = HighlightMode.Down;
+      component.viewMode = ViewMode.Down;
       component.onUpdateConfig();
 
       expect(component.gridConfig$.next).toHaveBeenCalledWith({
         readonly: false,
         answersHidden: true,
         editMode: EditMode.Circle,
-        highlightMode: HighlightMode.Down,
+        viewMode: ViewMode.Down,
       });
     });
   });

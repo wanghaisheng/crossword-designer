@@ -17,6 +17,7 @@ export class PuzzleService {
 
   public activeAcrossClue$: BehaviorSubject<number> = new BehaviorSubject(0);
   public activeDownClue$: BehaviorSubject<number> = new BehaviorSubject(0);
+  public puzzleLock$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(true);
 
   private _puzzle: Puzzle = new Puzzle();
 
@@ -51,6 +52,7 @@ export class PuzzleService {
 
     this.numberPuzzle(this._puzzle);
     this.selectSquare(this.getFirstLetterIndex());
+    this.puzzleLock$.next(this._puzzle.locked);
   }
 
   /**
@@ -77,6 +79,16 @@ export class PuzzleService {
         throw error;
       })
     );
+  }
+
+  /**
+   * Locks puzzle if unlocked and vice versa
+   */
+  public togglePuzzleLock(): void {
+    let value = !this._puzzle.locked;
+
+    this._puzzle.locked = value;
+    this.puzzleLock$.next(value);
   }
 
   /**

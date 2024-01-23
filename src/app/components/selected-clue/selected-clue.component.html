@@ -16,7 +16,8 @@
         id="acrossText"
         rows="2"
         placeholder="Your clue here..."
-        (blur)="saveClues()"></textarea>
+        (blur)="saveClues()"
+        (keydown)="$event.cancelBubble = true"></textarea>
     </div>
     <div class="p-3">
       <div class="hstack gap-2 p-3">
@@ -34,7 +35,8 @@
         id="downText"
         rows="2"
         placeholder="Your clue here..."
-        (blur)="saveClues()"></textarea>
+        (blur)="saveClues()"
+        (keydown)="$event.cancelBubble = true"></textarea>
     </div>
   </form>
 </div>

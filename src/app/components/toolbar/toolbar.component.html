@@ -1,0 +1,120 @@
+<div class="row">
+  <div class="btn-toolbar" role="toolbar" aria-label="Toolbar with button groups">
+    <div class="section" id="info">
+      <input
+        [formControl]="nameInput"
+        type="text"
+        class="form-control"
+        placeholder="Crossword Title"
+        aria-label="Input group example"
+        aria-describedby="btnGroupAddon"
+        (keydown)="$event.cancelBubble = true" />
+    </div>
+    <div class="section" id="file">
+      <button type="button" class="btn btn-light control" (click)="onLock()">
+        <svg-icon [name]="locked ? 'lock-locked' : 'lock-unlocked'"></svg-icon>
+      </button>
+      <button type="button" class="btn btn-light control" [ngClass]="{ 'disabled': locked }" (click)="onSave()">
+        <svg-icon name="floppy-disk"></svg-icon>
+      </button>
+    </div>
+    <div class="section" id="edit">
+      <div class="btn-group control" role="group" aria-label="Button group with nested dropdown">
+        <button
+          *ngIf="config.type == 2"
+          type="button"
+          class="btn btn-light"
+          [ngClass]="{ 'selected': editMode == 0, 'disabled': locked }"
+          (click)="onEditModeChange(0)">
+          <svg-icon name="write-square"></svg-icon>
+        </button>
+        <button
+          *ngIf="config.type == 2"
+          type="button"
+          class="btn btn-light"
+          [ngClass]="{ 'selected': editMode == 1, 'disabled': locked }"
+          (click)="onEditModeChange(1)">
+          <svg-icon name="filled-square"></svg-icon>
+        </button>
+        <button
+          *ngIf="config.type == 1 || config.type == 2"
+          type="button"
+          class="btn btn-light"
+          [ngClass]="{ 'selected': editMode == 2, 'disabled': locked }"
+          (click)="onEditModeChange(2)">
+          <svg-icon name="overlay-circle"></svg-icon>
+        </button>
+        <button
+          *ngIf="config.type == 1 || config.type == 2"
+          type="button"
+          class="btn btn-light"
+          [ngClass]="{ 'selected': editMode == 3, 'disabled': config.type == 1 || locked }"
+          (click)="onEditModeChange(3)">
+          <svg-icon name="overlay-shade"></svg-icon>
+        </button>
+      </div>
+      <button type="button" class="btn btn-light control" [ngClass]="{ 'disabled': locked }" (click)="onClear()">
+        <svg-icon name="garbage-can"></svg-icon>
+      </button>
+    </div>
+    <div class="section" id="view">
+      <div class="btn-group control" role="group" aria-label="Button group with nested dropdown">
+        <button
+          *ngIf="config.type == 2"
+          type="button"
+          class="btn btn-light"
+          [ngClass]="{ 'selected': viewMode == 0 }"
+          (click)="onViewModeChange(0)">
+          <svg-icon name="across-highlight"></svg-icon>
+        </button>
+        <button
+          *ngIf="config.type == 2"
+          type="button"
+          class="btn btn-light"
+          [ngClass]="{ 'selected': viewMode == 1 }"
+          (click)="onViewModeChange(1)">
+          <svg-icon name="down-highlight"></svg-icon>
+        </button>
+        <button
+          *ngIf="config.type == 2"
+          type="button"
+          class="btn btn-light"
+          [ngClass]="{ 'selected': viewMode == 2 }"
+          (click)="onViewModeChange(2)">
+          <svg-icon name="intersect-highlight"></svg-icon>
+        </button>
+      </div>
+      <button *ngIf="config.type == 2" type="button" class="btn btn-light control" (click)="onShowHide()">
+        <svg-icon [name]="answersHidden ? 'eye-closed' : 'eye-open'"></svg-icon>
+      </button>
+      <button *ngIf="config.type == 1" type="button" class="btn btn-light control" (click)="onSort()">
+        <svg-icon [name]="sortReverse ? 'sort-up' : 'sort-down'"></svg-icon>
+      </button>
+      <button
+        *ngIf="config.type == 1"
+        type="button"
+        class="btn btn-light control"
+        [ngClass]="{ 'selected': filtersOn }"
+        data-bs-toggle="dropdown"
+        aria-expanded="false">
+        <svg-icon name="filter-lines"></svg-icon>
+      </button>
+      <form class="dropdown-menu" id="filter-form">
+        <div class="row justify-content-between">
+          <div class="col">
+            <label for="inputWordLength" class="col-form-label">Word Length</label>
+            <label for="inputWordLength" class="col-form-label">Contains Letter</label>
+          </div>
+          <div class="col">
+            <input [formControl]="lengthInput" type="number" min="3" max="25" id="inputWordLength" class="form-control" />
+            <input [formControl]="containsInput" type="text" maxlength="1" id="inputContainsLetter" class="form-control" />
+          </div>
+        </div>
+        <div class="hstack gap-2">
+          <button type="button" type="submit" class="btn btn-dark" (click)="onFilterClear()">Clear</button>
+          <button type="submit" class="btn btn-primary" (click)="onFilter()">Apply</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

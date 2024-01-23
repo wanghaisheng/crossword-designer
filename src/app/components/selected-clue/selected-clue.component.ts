@@ -23,7 +23,10 @@ export class SelectedClueComponent implements OnInit {
       if (index != -1) {
         this.acrossClue = this.puzzleService.puzzle.acrossClues[index];
         this.acrossInput.setValue(this.acrossClue.text);
-        this.acrossInput.enable();
+
+        if (!this.puzzleService.puzzleLock$.value) {
+          this.acrossInput.enable();
+        }
       } else {
         this.acrossClue = new Clue();
         this.acrossInput.reset();
@@ -35,11 +38,24 @@ export class SelectedClueComponent implements OnInit {
       if (index != -1) {
         this.downClue = this.puzzleService.puzzle.downClues[index];
         this.downInput.setValue(this.downClue.text);
-        this.downInput.enable();
+
+        if (!this.puzzleService.puzzleLock$.value) {
+          this.downInput.enable();
+        }
       } else {
         this.downClue = new Clue();
         this.downInput.reset();
         this.downInput.disable();
+      }
+    });
+
+    this.puzzleService.puzzleLock$.subscribe((locked: boolean) => {
+      if (locked) {
+        this.acrossInput.disable();
+        this.downInput.disable();
+      } else {
+        this.acrossInput.enable();
+        this.downInput.enable();
       }
     });
   }

@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from "@angular/core";
+import { Component, HostListener, Input, OnInit } from "@angular/core";
 
 import { BehaviorSubject } from "rxjs";
 
@@ -9,7 +9,7 @@ export interface GridConfig {
   readonly: boolean;
   answersHidden: boolean;
   editMode?: EditMode;
-  highlightMode?: HighlightMode;
+  viewMode?: ViewMode;
 }
 
 export enum EditMode {
@@ -19,7 +19,7 @@ export enum EditMode {
   Shade,
 }
 
-export enum HighlightMode {
+export enum ViewMode {
   Across,
   Down,
   Intersect,
@@ -50,7 +50,7 @@ export class GridComponent implements OnInit {
     readonly: false,
     answersHidden: false,
     editMode: EditMode.Value,
-    highlightMode: HighlightMode.Intersect,
+    viewMode: ViewMode.Intersect,
   };
 
   @Input() config$: BehaviorSubject<GridConfig> = new BehaviorSubject(this.config);
@@ -60,7 +60,12 @@ export class GridComponent implements OnInit {
   ngOnInit(): void {
     this.config$.subscribe((config: GridConfig) => {
       this.config = config;
-      this.selectedIndex = config.readonly ? -1 : this.puzzleService.getFirstLetterIndex();
+
+      if (config.readonly) {
+        this.selectedIndex = -1;
+      } else if (this.selectedIndex == -1) {
+        this.selectedIndex = this.puzzleService.getFirstLetterIndex();
+      }
     });
   }
 
@@ -78,6 +83,7 @@ export class GridComponent implements OnInit {
     }
   }
 
+  @HostListener("window:keydown", ["$event"])
   public onKeyDown(event: KeyboardEvent) {
     let square = this.puzzleGrid[this.selectedIndex];
 
@@ -111,27 +117,25 @@ export class GridComponent implements OnInit {
    * @returns true if square should be highlighted, false otherwise
    */
   public isHighlighted(square: Square): boolean {
-    if (this.config.editMode == EditMode.Value && square.type == SquareType.Letter) {
-      if (this.config.highlightMode == HighlightMode.Across) {
-        return square.acrossClueNum == this.puzzleGrid[this.selectedIndex].acrossClueNum;
-      } else if (this.config.highlightMode == HighlightMode.Down) {
-        return square.downClueNum == this.puzzleGrid[this.selectedIndex].downClueNum;
-      } else {
-        return (
-          square.acrossClueNum == this.puzzleGrid[this.selectedIndex].acrossClueNum ||
-          square.downClueNum == this.puzzleGrid[this.selectedIndex].downClueNum
-        );
-      }
-    } else {
+    if (this.selectedIndex == -1 || this.puzzleGrid[this.selectedIndex].type == SquareType.Spacer) {
       return false;
+    } else if (this.config.viewMode == ViewMode.Across) {
+      return square.acrossClueNum == this.puzzleGrid[this.selectedIndex].acrossClueNum;
+    } else if (this.config.viewMode == ViewMode.Down) {
+      return square.downClueNum == this.puzzleGrid[this.selectedIndex].downClueNum;
+    } else {
+      return (
+        square.acrossClueNum == this.puzzleGrid[this.selectedIndex].acrossClueNum ||
+        square.downClueNum == this.puzzleGrid[this.selectedIndex].downClueNum
+      );
     }
   }
 
   private selectNextSquare(index: number): void {
     if (!this.puzzleService.isPuzzleEnd(index)) {
-      if (this.config.highlightMode == HighlightMode.Across) {
+      if (this.config.viewMode == ViewMode.Across) {
         this.selectSquare(this.getNextIndex(index, "ArrowRight"));
-      } else if (this.config.highlightMode == HighlightMode.Down) {
+      } else if (this.config.viewMode == ViewMode.Down) {
         this.selectSquare(this.getNextIndex(index, "ArrowDown"));
       }
     }
@@ -139,9 +143,9 @@ export class GridComponent implements OnInit {
 
   private selectPrevSquare(index: number): void {
     if (!this.puzzleService.isPuzzleStart(index)) {
-      if (this.config.highlightMode == HighlightMode.Across) {
+      if (this.config.viewMode == ViewMode.Across) {
         this.selectSquare(this.getNextIndex(index, "ArrowLeft"));
-      } else if (this.config.highlightMode == HighlightMode.Down) {
+      } else if (this.config.viewMode == ViewMode.Down) {
         this.selectSquare(this.getNextIndex(index, "ArrowUp"));
       }
     }

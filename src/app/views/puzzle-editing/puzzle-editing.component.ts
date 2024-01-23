@@ -2,7 +2,7 @@ import { Component, OnInit } from "@angular/core";
 
 import { BehaviorSubject } from "rxjs";
 
-import { EditMode, HighlightMode, GridConfig } from "src/app/components/grid/grid.component";
+import { EditMode, ViewMode, GridConfig } from "src/app/components/grid/grid.component";
 import { AnswerService } from "src/app/services/answer.service";
 import { PuzzleService } from "src/app/services/puzzle.service";
 
@@ -16,10 +16,14 @@ export class PuzzleEditingComponent implements OnInit {
 
   public answersHidden: boolean = false;
   public editMode: EditMode = EditMode.Value;
-  public highlightMode: HighlightMode = HighlightMode.Across;
+  public viewMode: ViewMode = ViewMode.Across;
 
   public get locked(): boolean {
     return this.puzzleService.puzzle.locked;
+  }
+
+  public get name(): string {
+    return this.puzzleService.puzzle.name;
   }
 
   public get answers(): Array<string> {
@@ -34,7 +38,7 @@ export class PuzzleEditingComponent implements OnInit {
     readonly: false,
     answersHidden: this.answersHidden,
     editMode: this.editMode,
-    highlightMode: this.highlightMode,
+    viewMode: this.viewMode,
   } as GridConfig);
 
   constructor(private puzzleService: PuzzleService, private answerService: AnswerService) {}
@@ -50,7 +54,7 @@ export class PuzzleEditingComponent implements OnInit {
       readonly: false,
       answersHidden: this.answersHidden,
       editMode: this.editMode,
-      highlightMode: this.highlightMode,
+      viewMode: this.viewMode,
     });
   }
 
@@ -61,6 +65,10 @@ export class PuzzleEditingComponent implements OnInit {
         alert("Puzzle failed to save: " + err.message);
       }
     );
+  }
+
+  public onLock(): void {
+    this.puzzleService.togglePuzzleLock();
   }
 
   public onClear(): void {

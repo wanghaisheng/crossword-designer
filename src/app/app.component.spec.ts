@@ -1,9 +1,11 @@
 import { ComponentFixture, TestBed } from "@angular/core/testing";
-import { RouterTestingModule } from "@angular/router/testing";
-import { AppComponent } from "./app.component";
-import { BehaviorSubject } from "rxjs";
-import { AuthService } from "./services/auth.service";
 import { Router } from "@angular/router";
+import { RouterTestingModule } from "@angular/router/testing";
+import { BehaviorSubject } from "rxjs";
+
+import { AppComponent } from "./app.component";
+import { AuthService } from "./services/auth.service";
+import { SvgIconRegistryService } from "angular-svg-icon";
 
 describe("AppComponent", () => {
   let component: AppComponent;
@@ -11,6 +13,7 @@ describe("AppComponent", () => {
 
   const routerSpy = jasmine.createSpyObj("Router", ["navigateByUrl"]);
   const authServiceSpy = jasmine.createSpyObj("AuthService", ["currentUserId$"]);
+  const svgIconRegistryServiceSpy = jasmine.createSpyObj("SvgIconRegistryService", ["addSvg"]);
 
   beforeEach(async () => {
     authServiceSpy.currentUserId$ = new BehaviorSubject<string | undefined>("user-id");
@@ -21,6 +24,7 @@ describe("AppComponent", () => {
       providers: [
         { provide: AuthService, useValue: authServiceSpy },
         { provide: Router, useValue: routerSpy },
+        { provide: SvgIconRegistryService, useValue: svgIconRegistryServiceSpy },
       ],
     }).compileComponents();
   });
@@ -42,6 +46,10 @@ describe("AppComponent", () => {
   });
 
   describe("ngOnInit", () => {
+    it("should register icons", () => {
+      expect(svgIconRegistryServiceSpy.addSvg).toHaveBeenCalled();
+    });
+
     it("should re-route to sign-in when user id undefined", () => {
       authServiceSpy.currentUserId$.next(undefined);
       authServiceSpy.currentUserId$.subscribe(() => {

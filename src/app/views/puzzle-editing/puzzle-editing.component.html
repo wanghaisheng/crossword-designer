@@ -1,0 +1,35 @@
+<div class="container-fluid">
+  <div class="row">
+    <app-toolbar
+      [locked]="locked"
+      [name]="name"
+      [config]="{ type: 2 }"
+      (editModeChange$)="editMode = $event; onUpdateConfig()"
+      (viewModeChange$)="viewMode = $event; onUpdateConfig()"
+      (showHideEvent$)="answersHidden = !answersHidden; onUpdateConfig()"
+      (saveEvent$)="onSave()"
+      (lockEvent$)="onLock()"
+      (clearEvent$)="onClear()"></app-toolbar>
+  </div>
+  <div class="row mt-4" *ngIf="puzzleLoaded">
+    <div class="col">
+      <app-grid [config$]="gridConfig$"></app-grid>
+    </div>
+    <div class="col">
+      <app-selected-clue></app-selected-clue>
+      <div class="answer-component">
+        <div class="card">
+          <div class="card-body">
+            <p><strong>Answer Bank</strong></p>
+            <div class="theme-answers list-unstyled">
+              <li *ngFor="let answer of themeAnswers">{{ answer }}</li>
+            </div>
+            <div class="answer-bank list-unstyled">
+              <li *ngFor="let answer of answers">{{ answer }}</li>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
