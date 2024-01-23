@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from "@angular/core/testing";
 import { FormArray, ReactiveFormsModule } from "@angular/forms";
 
-import { of, throwError } from "rxjs";
+import { BehaviorSubject, of, throwError } from "rxjs";
 
 import { ClueEditingComponent } from "./clue-editing.component";
 import { PuzzleService } from "src/app/services/puzzle.service";
@@ -12,7 +12,7 @@ describe("ClueEditingComponent", () => {
   let component: ClueEditingComponent;
   let fixture: ComponentFixture<ClueEditingComponent>;
 
-  const puzzleServiceSpy = jasmine.createSpyObj("PuzzleService", ["puzzle", "savePuzzle", "clearPuzzle", "setClueText"]);
+  const puzzleServiceSpy = jasmine.createSpyObj("PuzzleService", ["puzzle", "savePuzzle", "clearPuzzle", "setClueText", "puzzleLock$"]);
 
   const testId = "testId";
   const testPuzzle: Puzzle = {
@@ -31,6 +31,7 @@ describe("ClueEditingComponent", () => {
     puzzleServiceSpy.puzzle = testPuzzle;
     puzzleServiceSpy.savePuzzle.and.returnValue(of(undefined));
     puzzleServiceSpy.setClueText.calls.reset();
+    puzzleServiceSpy.puzzleLock$ = new BehaviorSubject(false);
 
     spyOn(window, "alert");
 
@@ -49,6 +50,16 @@ describe("ClueEditingComponent", () => {
 
   it("should create", () => {
     expect(component).toBeTruthy();
+  });
+
+  describe("ngOnInit", () => {
+    it("should disable clues on puzzle lock", () => {
+      puzzleServiceSpy.puzzleLock$.next(true);
+
+      fixture.detectChanges();
+
+      expect(component.cluesForm.disabled).toBeTruthy();
+    });
   });
 
   describe("updateAcrossClue", () => {

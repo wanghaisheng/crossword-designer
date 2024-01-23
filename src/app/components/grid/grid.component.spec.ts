@@ -2,11 +2,11 @@ import { ComponentFixture, TestBed } from "@angular/core/testing";
 import { DebugElement } from "@angular/core";
 import { By } from "@angular/platform-browser";
 
-import { EditMode, HighlightMode, GridComponent } from "./grid.component";
+import { EditMode, ViewMode, GridComponent } from "./grid.component";
 import { PuzzleService } from "src/app/services/puzzle.service";
 import { OverlayType, Puzzle, Square } from "src/app/models/puzzle.model";
 
-describe("PuzzleComponent", () => {
+describe("GridComponent", () => {
   let component: GridComponent;
   let fixture: ComponentFixture<GridComponent>;
   let squareEls: Array<DebugElement>;
@@ -145,7 +145,7 @@ describe("PuzzleComponent", () => {
 
     it("should set square to Spacer and select next when enter and edit mode is Value", () => {
       component.config.editMode = EditMode.Value;
-      component.config.highlightMode = HighlightMode.Across;
+      component.config.viewMode = ViewMode.Across;
       component.selectedIndex = 4;
 
       tableEl.triggerEventHandler("keydown", { key: "Enter" });
@@ -167,7 +167,7 @@ describe("PuzzleComponent", () => {
 
     it("should set square value to space and select previous square when backspace and highlight mode Across", () => {
       component.config.editMode = EditMode.Value;
-      component.config.highlightMode = HighlightMode.Across;
+      component.config.viewMode = ViewMode.Across;
       component.selectedIndex = 2;
 
       tableEl.triggerEventHandler("keydown", { key: "Backspace" });
@@ -179,7 +179,7 @@ describe("PuzzleComponent", () => {
 
     it("should set square value to space and select previous square when backspace and highlight mode Down", () => {
       component.config.editMode = EditMode.Value;
-      component.config.highlightMode = HighlightMode.Down;
+      component.config.viewMode = ViewMode.Down;
       component.selectedIndex = 5;
 
       tableEl.triggerEventHandler("keydown", { key: "Backspace" });
@@ -192,7 +192,7 @@ describe("PuzzleComponent", () => {
     it("should set square value and not select previous square when backspace and puzzle start", () => {
       puzzleServiceSpy.isPuzzleStart.and.returnValue(true);
       component.config.editMode = EditMode.Value;
-      component.config.highlightMode = HighlightMode.Down;
+      component.config.viewMode = ViewMode.Down;
       component.selectedIndex = 3;
 
       tableEl.triggerEventHandler("keydown", { key: "Backspace" });
@@ -204,7 +204,7 @@ describe("PuzzleComponent", () => {
 
     it("should set square value and select next square when alphanumeric char and highlight mode Across", () => {
       component.config.editMode = EditMode.Value;
-      component.config.highlightMode = HighlightMode.Across;
+      component.config.viewMode = ViewMode.Across;
       component.selectedIndex = 0;
 
       tableEl.triggerEventHandler("keydown", { key: "X" });
@@ -216,7 +216,7 @@ describe("PuzzleComponent", () => {
 
     it("should set square value and select next square when alphanumeric char and highlight mode Down", () => {
       component.config.editMode = EditMode.Value;
-      component.config.highlightMode = HighlightMode.Down;
+      component.config.viewMode = ViewMode.Down;
       component.selectedIndex = 0;
 
       tableEl.triggerEventHandler("keydown", { key: "X" });
@@ -229,7 +229,7 @@ describe("PuzzleComponent", () => {
     it("should set square value and not select next square when alphanumeric char and puzzle end", () => {
       puzzleServiceSpy.isPuzzleEnd.and.returnValue(true);
       component.config.editMode = EditMode.Value;
-      component.config.highlightMode = HighlightMode.Down;
+      component.config.viewMode = ViewMode.Down;
       component.selectedIndex = 19;
 
       tableEl.triggerEventHandler("keydown", { key: "X" });
@@ -243,7 +243,7 @@ describe("PuzzleComponent", () => {
   describe("isHighlighted", () => {
     it("should return true when highlight mode is Across and in across answer", () => {
       component.config.editMode = EditMode.Value;
-      component.config.highlightMode = HighlightMode.Across;
+      component.config.viewMode = ViewMode.Across;
       component.selectedIndex = 0;
 
       expect(component.isHighlighted(component.puzzleGrid[1])).toEqual(true);
@@ -251,7 +251,7 @@ describe("PuzzleComponent", () => {
 
     it("should return true when highlight mode is Down and in down answer", () => {
       component.config.editMode = EditMode.Value;
-      component.config.highlightMode = HighlightMode.Down;
+      component.config.viewMode = ViewMode.Down;
       component.selectedIndex = 0;
 
       expect(component.isHighlighted(component.puzzleGrid[4])).toEqual(true);
@@ -259,7 +259,7 @@ describe("PuzzleComponent", () => {
 
     it("should return true when highlight mode is Intersect and in across or down answer", () => {
       component.config.editMode = EditMode.Value;
-      component.config.highlightMode = HighlightMode.Intersect;
+      component.config.viewMode = ViewMode.Intersect;
       component.selectedIndex = 0;
 
       expect(component.isHighlighted(component.puzzleGrid[1])).toEqual(true);
@@ -268,15 +268,24 @@ describe("PuzzleComponent", () => {
 
     it("should return false when highlight mode is Intersect and not in across or down answer", () => {
       component.config.editMode = EditMode.Value;
-      component.config.highlightMode = HighlightMode.Intersect;
+      component.config.viewMode = ViewMode.Intersect;
       component.selectedIndex = 0;
 
       expect(component.isHighlighted(component.puzzleGrid[5])).toEqual(false);
     });
 
-    it("should return false when edit mode is not Value", () => {
-      component.config.editMode = EditMode.Spacer;
-      component.selectedIndex = 0;
+    it("should return false when selected index -1", () => {
+      component.config.editMode = EditMode.Value;
+      component.config.viewMode = ViewMode.Intersect;
+      component.selectedIndex = -1;
+
+      expect(component.isHighlighted(component.puzzleGrid[0])).toEqual(false);
+    });
+
+    it("should return false when selected square is spacer", () => {
+      component.config.editMode = EditMode.Value;
+      component.config.viewMode = ViewMode.Intersect;
+      component.selectedIndex = -1;
 
       expect(component.isHighlighted(component.puzzleGrid[0])).toEqual(false);
     });

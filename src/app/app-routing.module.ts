@@ -1,12 +1,12 @@
 import { NgModule } from "@angular/core";
 import { RouterModule, Routes } from "@angular/router";
-import { PuzzleEditingComponent } from "./pages/puzzle-editing/puzzle-editing.component";
-import { ClueEditingComponent } from "./pages/clue-editing/clue-editing.component";
-import { PuzzleReviewComponent } from "./pages/puzzle-review/puzzle-review.component";
-import { LoadPuzzleComponent } from "./pages/load-puzzle/load-puzzle.component";
-import { AnswerDraftingComponent } from "./pages/answer-drafting/answer-drafting.component";
-import { PuzzleStatsComponent } from "./pages/puzzle-stats/puzzle-stats.component";
-import { SignInComponent } from "./pages/sign-in/sign-in.component";
+import { PuzzleEditingComponent } from "./views/puzzle-editing/puzzle-editing.component";
+import { ClueEditingComponent } from "./views/clue-editing/clue-editing.component";
+import { PuzzleReviewComponent } from "./views/puzzle-review/puzzle-review.component";
+import { LoadPuzzleComponent } from "./views/load-puzzle/load-puzzle.component";
+import { AnswerDraftingComponent } from "./views/answer-drafting/answer-drafting.component";
+import { PuzzleStatsComponent } from "./views/puzzle-stats/puzzle-stats.component";
+import { SignInComponent } from "./views/sign-in/sign-in.component";
 
 const routes: Routes = [
   { path: "", component: SignInComponent },

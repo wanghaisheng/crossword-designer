@@ -1,11 +1,14 @@
 <div class="container-fluid">
   <div class="row">
-    <div class="hstack gap-3">
-      <button class="ms-auto btn btn-success" [ngClass]="{ 'disabled': locked }" type="submit" (click)="onSave()">Save</button>
-      <button class="btn btn-danger" [ngClass]="{ 'disabled': locked }" type="submit" (click)="onClear()">Clear</button>
-    </div>
+    <app-toolbar
+      [locked]="locked"
+      [name]="name"
+      [config]="{ type: 3 }"
+      (saveEvent$)="onSave()"
+      (lockEvent$)="onLock()"
+      (clearEvent$)="onClear()"></app-toolbar>
   </div>
-  <form class="row" [formGroup]="cluesForm">
+  <form class="row mt-4" [formGroup]="cluesForm">
     <div class="col">
       <h2>Across</h2>
       <div [formArrayName]="'across'">

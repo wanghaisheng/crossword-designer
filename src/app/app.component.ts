@@ -1,6 +1,10 @@
 import { Component, OnInit } from "@angular/core";
-import { AuthService } from "./services/auth.service";
 import { Router } from "@angular/router";
+
+import { SvgIconRegistryService } from "angular-svg-icon";
+import { Icon, icons } from "../assets/icons";
+
+import { AuthService } from "./services/auth.service";
 
 @Component({
   selector: "app-root",
@@ -11,9 +15,14 @@ export class AppComponent implements OnInit {
   public title = "crossword-designer";
   public signedIn = false;
 
-  constructor(private router: Router, private authService: AuthService) {}
+  constructor(private router: Router, private iconRegistryService: SvgIconRegistryService, private authService: AuthService) {}
 
   ngOnInit(): void {
+    // Register custom icons
+    icons.forEach((icon: Icon) => {
+      this.iconRegistryService.addSvg(icon.name, icon.path);
+    });
+
     this.authService.currentUserId$.subscribe((userId: string | undefined) => {
       this.signedIn = userId != undefined;
 

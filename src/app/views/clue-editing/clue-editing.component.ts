@@ -15,6 +15,10 @@ export class ClueEditingComponent implements OnInit {
     down: new FormArray([]),
   });
 
+  public get name(): string {
+    return this.puzzleService.puzzle.name;
+  }
+
   public get locked(): boolean {
     return this.puzzleService.puzzle.locked;
   }
@@ -33,6 +37,14 @@ export class ClueEditingComponent implements OnInit {
     this.cluesForm = new FormGroup({
       across: new FormArray(this.puzzleService.puzzle.acrossClues.map((clue) => new FormControl(clue.text))),
       down: new FormArray(this.puzzleService.puzzle.downClues.map((clue) => new FormControl(clue.text))),
+    });
+
+    this.puzzleService.puzzleLock$.subscribe((locked: boolean) => {
+      if (locked) {
+        this.cluesForm.disable();
+      } else {
+        this.cluesForm.enable();
+      }
     });
   }
 
@@ -71,5 +83,9 @@ export class ClueEditingComponent implements OnInit {
 
   public onClear(): void {
     this.puzzleService.clearPuzzle();
+  }
+
+  public onLock(): void {
+    this.puzzleService.togglePuzzleLock();
   }
 }

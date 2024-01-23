@@ -5,11 +5,11 @@
     padding: 35px 28px;
 
     .card {
-      height: 260px;
-      overflow: scroll;
+      height: auto;
+      overflow: hidden;
 
       .theme-answers {
-        overflow: scroll;
+        overflow: hidden;
         margin-bottom: 20px;
 
         li {
@@ -19,7 +19,7 @@
 
       .answer-bank {
         column-count: 2;
-        overflow: scroll;
+        overflow: hidden;
 
         li {
           margin-bottom: 6px;

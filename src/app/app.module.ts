@@ -1,4 +1,5 @@
 import { NgModule } from "@angular/core";
+import { HttpClientModule } from "@angular/common/http";
 import { provideAnalytics, getAnalytics, ScreenTrackingService, UserTrackingService } from "@angular/fire/analytics";
 import { initializeApp, provideFirebaseApp } from "@angular/fire/app";
 import { provideAuth, getAuth } from "@angular/fire/auth";
@@ -10,14 +11,15 @@ import { BrowserModule } from "@angular/platform-browser";
 
 import { AppRoutingModule } from "./app-routing.module";
 import { AppComponent } from "./app.component";
+import { AngularSvgIconModule } from "angular-svg-icon";
 
-import { AnswerDraftingComponent } from "./pages/answer-drafting/answer-drafting.component";
-import { ClueEditingComponent } from "./pages/clue-editing/clue-editing.component";
-import { LoadPuzzleComponent } from "./pages/load-puzzle/load-puzzle.component";
-import { PuzzleEditingComponent } from "./pages/puzzle-editing/puzzle-editing.component";
-import { PuzzleReviewComponent } from "./pages/puzzle-review/puzzle-review.component";
-import { PuzzleStatsComponent } from "./pages/puzzle-stats/puzzle-stats.component";
-import { SignInComponent } from "./pages/sign-in/sign-in.component";
+import { AnswerDraftingComponent } from "./views/answer-drafting/answer-drafting.component";
+import { ClueEditingComponent } from "./views/clue-editing/clue-editing.component";
+import { LoadPuzzleComponent } from "./views/load-puzzle/load-puzzle.component";
+import { PuzzleEditingComponent } from "./views/puzzle-editing/puzzle-editing.component";
+import { PuzzleReviewComponent } from "./views/puzzle-review/puzzle-review.component";
+import { PuzzleStatsComponent } from "./views/puzzle-stats/puzzle-stats.component";
+import { SignInComponent } from "./views/sign-in/sign-in.component";
 
 import { GridComponent } from "./components/grid/grid.component";
 import { MetricGroupComponent } from "./components/metric-group/metric-group.component";
@@ -26,6 +28,7 @@ import { SelectedClueComponent } from "./components/selected-clue/selected-clue.
 import { SidebarNavComponent } from "./components/sidebar-nav/sidebar-nav.component";
 
 import { environment } from "../environments/environment";
+import { ToolbarComponent } from "./components/toolbar/toolbar.component";
 
 @NgModule({
   declarations: [
@@ -42,12 +45,15 @@ import { environment } from "../environments/environment";
     MetricGroupComponent,
     SignInComponent,
     PuzzleGroupComponent,
+    ToolbarComponent,
   ],
   imports: [
     BrowserModule,
     AppRoutingModule,
     FormsModule,
     ReactiveFormsModule,
+    HttpClientModule,
+    AngularSvgIconModule.forRoot(),
     provideFirebaseApp(() => initializeApp(environment.firebase)),
     provideAnalytics(() => getAnalytics()),
     provideAuth(() => getAuth()),

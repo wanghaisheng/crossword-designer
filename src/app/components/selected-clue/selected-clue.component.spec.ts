@@ -12,7 +12,13 @@ describe("SelectedClueComponent", () => {
   let component: SelectedClueComponent;
   let fixture: ComponentFixture<SelectedClueComponent>;
 
-  const puzzleServiceSpy = jasmine.createSpyObj("PuzzleService", ["puzzle", "activeAcrossClue$", "activeDownClue$", "setClueText"]);
+  const puzzleServiceSpy = jasmine.createSpyObj("PuzzleService", [
+    "puzzle",
+    "activeAcrossClue$",
+    "activeDownClue$",
+    "puzzleLock$",
+    "setClueText",
+  ]);
 
   const testAcross: Clue = {
     num: 1,
@@ -32,6 +38,7 @@ describe("SelectedClueComponent", () => {
     puzzleServiceSpy.puzzle = { acrossClues: [testAcross], downClues: [testDown] } as Puzzle;
     puzzleServiceSpy.activeAcrossClue$ = new BehaviorSubject(0);
     puzzleServiceSpy.activeDownClue$ = new BehaviorSubject(0);
+    puzzleServiceSpy.puzzleLock$ = new BehaviorSubject(false);
     puzzleServiceSpy.setClueText.and.callFake(() => {});
 
     await TestBed.configureTestingModule({
@@ -51,7 +58,11 @@ describe("SelectedClueComponent", () => {
   });
 
   describe("ngOnInit", () => {
-    it("should set value and enable clues when index != -1", () => {
+    beforeEach(() => {
+      fixture.detectChanges();
+    });
+
+    it("should set value and enable clues when index != -1 and puzzled unlocked", () => {
       puzzleServiceSpy.activeAcrossClue$.next(0);
       puzzleServiceSpy.activeDownClue$.next(0);
 
@@ -59,6 +70,20 @@ describe("SelectedClueComponent", () => {
 
       expect(component.acrossInput.disabled).toBeFalsy();
       expect(component.downInput.disabled).toBeFalsy();
+
+      expect(component.acrossInput.value).toEqual(testAcross.text);
+      expect(component.downInput.value).toEqual(testDown.text);
+    });
+
+    it("should set value when index != -1 and puzzled locked", () => {
+      puzzleServiceSpy.puzzleLock$.next(true);
+      puzzleServiceSpy.activeAcrossClue$.next(0);
+      puzzleServiceSpy.activeDownClue$.next(0);
+
+      fixture.detectChanges();
+
+      expect(component.acrossInput.disabled).toBeTruthy();
+      expect(component.downInput.disabled).toBeTruthy();
 
       expect(component.acrossInput.value).toEqual(testAcross.text);
       expect(component.downInput.value).toEqual(testDown.text);
@@ -75,6 +100,15 @@ describe("SelectedClueComponent", () => {
 
       expect(component.acrossInput.value).toBeNull();
       expect(component.downInput.value).toBeNull();
+    });
+
+    it("should disable clues on puzzle lock", () => {
+      puzzleServiceSpy.puzzleLock$.next(true);
+
+      fixture.detectChanges();
+
+      expect(component.acrossInput.disabled).toBeTruthy();
+      expect(component.downInput.disabled).toBeTruthy();
     });
   });
 

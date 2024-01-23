@@ -1,0 +1,43 @@
+.btn-toolbar {
+  .section {
+    margin-right: 18px;
+
+    .control {
+      margin: 0px 4px;
+    }
+
+    .btn {
+      color: #212529;
+      padding: 4px 8px 8px;
+      background: none;
+      border-color: #e9ecef;
+
+      svg {
+        width: 20px;
+        height: 20px;
+      }
+    }
+
+    .btn:hover,
+    .btn.selected {
+      background-color: #e9ecef;
+    }
+
+    .btn.disabled {
+      opacity: 40%;
+    }
+
+    #filter-form {
+      padding: 10px 20px;
+
+      input {
+        width: 65px;
+      }
+
+      .btn-dark {
+        background-color: #212529;
+        color: white;
+      }
+    }
+  }
+}
