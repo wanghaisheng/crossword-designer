@@ -4,8 +4,13 @@
   .heading {
     margin-top: 10px;
 
+    svg {
+      width: 18px;
+      height: 18px;
+    }
+
     .card-title {
-      margin-bottom: 0px;
+      margin: 6px 0px 0px;
     }
   }
 }
