@@ -7,21 +7,12 @@
             <small>Edited {{ puzzle.lastEdited | date : "shortDate" }}</small>
           </div>
           <div *ngIf="!config.readonly" class="ms-auto">
-            <svg
+            <svg-icon
+              name="three-dots"
               type="button"
-              class="btn btn-secondary dropdown-toggle"
               (click)="$event.stopPropagation()"
               data-bs-toggle="dropdown"
-              aria-expanded="false"
-              xmlns="http://www.w3.org/2000/svg"
-              width="16"
-              height="16"
-              fill="currentColor"
-              class="bi bi-three-dots"
-              viewBox="0 0 16 16">
-              <path
-                d="M3 9.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm5 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm5 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3z" />
-            </svg>
+              aria-expanded="false"></svg-icon>
             <ul class="dropdown-menu dropdown-menu-end">
               <li>
                 <a role="button" class="dropdown-item lock-item" (click)="onPuzzleLock($event, i)">{{
@@ -39,24 +30,12 @@
           </div>
         </div>
         <div class="hstack gap-2 heading">
-          <svg
-            *ngIf="puzzle.locked"
-            xmlns="http://www.w3.org/2000/svg"
-            width="16"
-            height="16"
-            fill="currentColor"
-            class="bi bi-lock-fill"
-            viewBox="0 0 16 16">
-            <path
-              d="M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2zm3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z" />
-          </svg>
+          <svg-icon *ngIf="puzzle.locked" name="lock-locked"></svg-icon>
           <strong class="card-title d-inline-block text-truncate text-center">{{ puzzle.name }}</strong>
         </div>
         <div class="text-body-secondary">
           <span>{{ config.showOwner ? "By " + puzzle.owner : puzzle.public ? "Public" : "Private" }}</span>
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-dot" viewBox="0 0 16 16">
-            <path d="M8 9.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z" />
-          </svg>
+          <svg-icon name="one-dot"></svg-icon>
           <span>{{ puzzle.width }}x{{ puzzle.height }}</span>
         </div>
       </div>

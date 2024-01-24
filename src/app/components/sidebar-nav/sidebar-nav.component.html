@@ -11,11 +11,11 @@
         data-bs-placement="right"
         [routerLinkActive]="'active'"
         [ngClass]="{ 'disabled': page.index != 0 && !puzzleLoaded }">
-        <div class="icon"></div>
+        <svg-icon [name]="page.icon"></svg-icon>
       </a>
     </li>
   </ul>
-  <ul class="nav mt-auto">
+  <ul class="nav nav-pills mt-auto">
     <li *ngFor="let button of buttons" class="nav-item">
       <a
         #userButton
@@ -25,7 +25,7 @@
         data-bs-toggle="tooltip"
         data-bs-placement="right"
         (click)="button.action()">
-        <div class="icon"></div>
+        <svg-icon [name]="button.icon"></svg-icon>
       </a>
     </li>
   </ul>
