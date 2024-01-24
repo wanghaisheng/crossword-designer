@@ -17,19 +17,7 @@
     </div>
     <div class="col">
       <app-selected-clue></app-selected-clue>
-      <div class="answer-component">
-        <div class="card">
-          <div class="card-body">
-            <p><strong>Answer Bank</strong></p>
-            <div class="theme-answers list-unstyled">
-              <li *ngFor="let answer of themeAnswers">{{ answer }}</li>
-            </div>
-            <div class="answer-bank list-unstyled">
-              <li *ngFor="let answer of answers">{{ answer }}</li>
-            </div>
-          </div>
-        </div>
-      </div>
+      <app-answer-bank></app-answer-bank>
     </div>
   </div>
 </div>

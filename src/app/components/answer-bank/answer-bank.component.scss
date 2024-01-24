@@ -1,0 +1,26 @@
+.answer-component {
+  padding: 35px 28px;
+
+  .card {
+    height: auto;
+    overflow: hidden;
+
+    .theme-answers {
+      overflow: hidden;
+      margin-bottom: 20px;
+
+      li {
+        margin-bottom: 6px;
+      }
+    }
+
+    .answer-bank {
+      column-count: 2;
+      overflow: hidden;
+
+      li {
+        margin-bottom: 6px;
+      }
+    }
+  }
+}

@@ -29,6 +29,7 @@ import { SidebarNavComponent } from "./components/sidebar-nav/sidebar-nav.compon
 
 import { environment } from "../environments/environment";
 import { ToolbarComponent } from "./components/toolbar/toolbar.component";
+import { AnswerBankComponent } from './components/answer-bank/answer-bank.component';
 
 @NgModule({
   declarations: [
@@ -46,6 +47,7 @@ import { ToolbarComponent } from "./components/toolbar/toolbar.component";
     SignInComponent,
     PuzzleGroupComponent,
     ToolbarComponent,
+    AnswerBankComponent,
   ],
   imports: [
     BrowserModule,
