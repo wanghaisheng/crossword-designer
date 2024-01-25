@@ -1,10 +1,10 @@
-<div *ngIf="puzzleLoaded" class="container-fluid">
+<div class="container-fluid">
   <div class="row">
     <h2 class="text-uppercase">{{ title }}</h2>
   </div>
   <div class="row flex-nowrap">
     <div class="col grid">
-      <app-grid [config$]="gridConfig$"></app-grid>
+      <app-grid [readonly]="true"></app-grid>
     </div>
     <div class="col">
       <div class="clues list-unstyled">

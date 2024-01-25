@@ -1,13 +1,17 @@
-import { TestPuzzle } from "src/environments/environment";
+import { EventEmitter } from "@angular/core";
 import { TestBed } from "@angular/core/testing";
 
 import { BehaviorSubject, of, throwError } from "rxjs";
 
-import { SaveService } from "./save.service";
+import { TestPuzzle } from "src/environments/environment";
+
 import { LoadService } from "./load.service";
 import { PuzzleService } from "./puzzle.service";
+import { SaveService } from "./save.service";
+import { ToolbarService } from "./toolbar.service";
+
 import { Clue, ClueType } from "../models/clue.model";
-import { PuzzleDoc, Square, SquareType, OverlayType } from "../models/puzzle.model";
+import { PuzzleDoc, Square, SquareType, OverlayType, PuzzleMetadata } from "../models/puzzle.model";
 
 describe("PuzzleService", () => {
   const testId = "test-id";
@@ -15,19 +19,23 @@ describe("PuzzleService", () => {
 
   let service: PuzzleService;
 
-  const loadServiceSpy = jasmine.createSpyObj("LoadService", ["getPuzzle", "activePuzzleId$"]);
+  const loadServiceSpy = jasmine.createSpyObj("LoadService", ["getPuzzle", "activePuzzle$"]);
   const saveServiceSpy = jasmine.createSpyObj("SaveService", ["savePuzzle"]);
+  const toolbarServiceSpy = jasmine.createSpyObj("ToolbarService", ["nameEvent$", "lockEvent$"]);
 
   beforeEach(() => {
-    loadServiceSpy.activePuzzleId$ = new BehaviorSubject<string>(testId);
+    loadServiceSpy.activePuzzle$ = new BehaviorSubject<PuzzleMetadata>({ id: testId, name: "", locked: false });
     loadServiceSpy.activePuzzlePatch$ = new BehaviorSubject<Partial<PuzzleDoc>>({});
     loadServiceSpy.getPuzzle.and.returnValue(of(testPuzzleDoc));
     saveServiceSpy.savePuzzle.and.returnValue(of(undefined));
+    toolbarServiceSpy.nameEvent$ = new EventEmitter();
+    toolbarServiceSpy.lockEvent$ = new EventEmitter();
 
     TestBed.configureTestingModule({
       providers: [
         { provide: LoadService, useValue: loadServiceSpy },
         { provide: SaveService, useValue: saveServiceSpy },
+        { provide: ToolbarService, useValue: toolbarServiceSpy },
       ],
     });
 
@@ -40,8 +48,8 @@ describe("PuzzleService", () => {
 
   describe("constructor", () => {
     it("should get puzzle with next puzzle id", () => {
-      loadServiceSpy.activePuzzleId$.next("test2");
-      loadServiceSpy.activePuzzleId$.subscribe(() => {
+      loadServiceSpy.activePuzzle$.next({ id: "test2", name: "", locked: false });
+      loadServiceSpy.activePuzzle$.subscribe(() => {
         expect(loadServiceSpy.getPuzzle).toHaveBeenCalledWith("test2");
       });
     });
@@ -53,6 +61,18 @@ describe("PuzzleService", () => {
       loadServiceSpy.activePuzzlePatch$.subscribe(() => {
         expect(service.puzzle.locked).toEqual(true);
       });
+    });
+
+    it("should set name on toolbar event", () => {
+      toolbarServiceSpy.nameEvent$.emit("New name");
+
+      expect(service.puzzle.name).toEqual("New name");
+    });
+
+    it("should set lock on toolbar event", () => {
+      toolbarServiceSpy.lockEvent$.emit(true);
+
+      expect(service.puzzle.locked).toBeTrue();
     });
   });
 

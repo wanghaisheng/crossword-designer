@@ -15,7 +15,7 @@ describe("LoadPuzzleComponent", () => {
 
   const authServiceSpy = jasmine.createSpyObj("AuthService", ["currentUser"]);
   const loadServiceSpy = jasmine.createSpyObj("LoadService", [
-    "setActiveId",
+    "setActivePuzzle",
     "createPuzzle",
     "loadPuzzle",
     "deletePuzzle",
@@ -72,10 +72,11 @@ describe("LoadPuzzleComponent", () => {
   });
 
   describe("onPuzzleSelect", () => {
-    it("should set active id and re-route", () => {
-      component.selectPuzzle(testId);
+    it("should set active puzzle and re-route", () => {
+      const testMetadata = { id: testId, name: "test", locked: false };
+      component.selectPuzzle(testMetadata);
 
-      expect(loadServiceSpy.setActiveId).toHaveBeenCalledWith(testId);
+      expect(loadServiceSpy.setActivePuzzle).toHaveBeenCalledWith(testMetadata);
       expect(routerSpy.navigateByUrl).toHaveBeenCalledWith("/answers");
     });
   });

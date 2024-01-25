@@ -1,10 +1,13 @@
 import { ComponentFixture, TestBed } from "@angular/core/testing";
-import { DebugElement } from "@angular/core";
+import { DebugElement, EventEmitter } from "@angular/core";
 import { By } from "@angular/platform-browser";
 
-import { EditMode, ViewMode, GridComponent } from "./grid.component";
+import { GridComponent } from "./grid.component";
 import { PuzzleService } from "src/app/services/puzzle.service";
+
 import { OverlayType, Puzzle, Square } from "src/app/models/puzzle.model";
+import { EditMode, ViewMode } from "src/app/models/toolbar.model";
+import { ToolbarService } from "src/app/services/toolbar.service";
 
 describe("GridComponent", () => {
   let component: GridComponent;
@@ -12,6 +15,7 @@ describe("GridComponent", () => {
   let squareEls: Array<DebugElement>;
   let tableEl: DebugElement;
 
+  const toolbarServiceSpy = jasmine.createSpyObj("ToolbarService", ["getCurrentEditMode", "getCurrentViewMode", "showHideEvent$"]);
   const puzzleServiceSpy = jasmine.createSpyObj("PuzzleService", [
     "puzzle",
     "selectSquare",
@@ -47,6 +51,9 @@ describe("GridComponent", () => {
     puzzleServiceSpy.isPuzzleStart.and.returnValue(false);
     puzzleServiceSpy.isPuzzleEnd.and.returnValue(false);
     puzzleServiceSpy.selectSquare.calls.reset();
+    toolbarServiceSpy.getCurrentEditMode.and.returnValue(EditMode.Value);
+    toolbarServiceSpy.getCurrentViewMode.and.returnValue(ViewMode.Across);
+    toolbarServiceSpy.showHideEvent$ = new EventEmitter();
 
     puzzleServiceSpy.getNextIndex.and.callFake((index: number, vertical: boolean, skipSpacers: boolean = false) => {
       if (vertical) return index + testPuzzle.width;
@@ -60,20 +67,51 @@ describe("GridComponent", () => {
 
     await TestBed.configureTestingModule({
       declarations: [GridComponent],
-      providers: [{ provide: PuzzleService, useValue: puzzleServiceSpy }],
+      providers: [
+        { provide: PuzzleService, useValue: puzzleServiceSpy },
+        { provide: ToolbarService, useValue: toolbarServiceSpy },
+      ],
     }).compileComponents();
   });
 
   beforeEach(() => {
     fixture = TestBed.createComponent(GridComponent);
     component = fixture.componentInstance;
-    fixture.detectChanges();
 
     tableEl = fixture.debugElement.query(By.css("table"));
   });
 
   it("should create", () => {
     expect(component).toBeTruthy();
+  });
+
+  describe("ngOnInit", () => {
+    it("should set selected and hidden when readonly", () => {
+      component.readonly = true;
+
+      fixture.detectChanges();
+
+      expect(component.selectedIndex).toEqual(-1);
+      expect(component.answersHidden).toBeTruthy();
+    });
+
+    it("should set selected and hidden when not readonly", () => {
+      component.readonly = false;
+
+      fixture.detectChanges();
+
+      expect(component.selectedIndex).toEqual(0);
+      expect(component.answersHidden).toBeFalsy();
+    });
+
+    it("should handle show hide event", () => {
+      fixture.detectChanges();
+
+      component.answersHidden = false;
+      toolbarServiceSpy.showHideEvent$.emit();
+
+      expect(component.answersHidden).toBeTruthy();
+    });
   });
 
   describe("onClickSquare", () => {
@@ -83,8 +121,6 @@ describe("GridComponent", () => {
     });
 
     it("should select square when edit mode is Value", () => {
-      component.config.editMode = EditMode.Value;
-
       squareEls[0].triggerEventHandler("click", undefined);
       fixture.detectChanges();
 
@@ -92,7 +128,7 @@ describe("GridComponent", () => {
     });
 
     it("should toggle square type when edit mode is Spacer", () => {
-      component.config.editMode = EditMode.Spacer;
+      toolbarServiceSpy.getCurrentEditMode.and.returnValue(EditMode.Spacer);
 
       squareEls[1].triggerEventHandler("click", undefined);
       fixture.detectChanges();
@@ -102,7 +138,7 @@ describe("GridComponent", () => {
     });
 
     it("should toggle overlay when edit mode is Circle", () => {
-      component.config.editMode = EditMode.Circle;
+      toolbarServiceSpy.getCurrentEditMode.and.returnValue(EditMode.Circle);
 
       squareEls[2].nativeElement.dispatchEvent(new Event("click"));
       fixture.detectChanges();
@@ -112,7 +148,7 @@ describe("GridComponent", () => {
     });
 
     it("should toggle overlay when edit mode is Shade", () => {
-      component.config.editMode = EditMode.Shade;
+      toolbarServiceSpy.getCurrentEditMode.and.returnValue(EditMode.Shade);
 
       squareEls[3].triggerEventHandler("click", undefined);
       fixture.detectChanges();
@@ -122,7 +158,7 @@ describe("GridComponent", () => {
     });
 
     it("should set square type when overrideMode provided", () => {
-      component.config.editMode = EditMode.Circle;
+      toolbarServiceSpy.getCurrentEditMode.and.returnValue(EditMode.Circle);
 
       component.onClickSquare(4, EditMode.Spacer);
 
@@ -132,8 +168,11 @@ describe("GridComponent", () => {
   });
 
   describe("onKeyDown", () => {
+    beforeEach(() => {
+      fixture.detectChanges();
+    });
+
     it("should call select next index when arrow key", () => {
-      component.config.editMode = EditMode.Value;
       component.selectedIndex = 0;
 
       tableEl.triggerEventHandler("keydown", { key: "ArrowDown" });
@@ -144,8 +183,6 @@ describe("GridComponent", () => {
     });
 
     it("should set square to Spacer and select next when enter and edit mode is Value", () => {
-      component.config.editMode = EditMode.Value;
-      component.config.viewMode = ViewMode.Across;
       component.selectedIndex = 4;
 
       tableEl.triggerEventHandler("keydown", { key: "Enter" });
@@ -156,7 +193,7 @@ describe("GridComponent", () => {
     });
 
     it("should toggle overlay type when enter and edit mode is Circle", () => {
-      component.config.editMode = EditMode.Circle;
+      toolbarServiceSpy.getCurrentEditMode.and.returnValue(EditMode.Circle);
       component.selectedIndex = 1;
 
       tableEl.triggerEventHandler("keydown", { key: "Enter" });
@@ -166,8 +203,6 @@ describe("GridComponent", () => {
     });
 
     it("should set square value to space and select previous square when backspace and highlight mode Across", () => {
-      component.config.editMode = EditMode.Value;
-      component.config.viewMode = ViewMode.Across;
       component.selectedIndex = 2;
 
       tableEl.triggerEventHandler("keydown", { key: "Backspace" });
@@ -178,8 +213,7 @@ describe("GridComponent", () => {
     });
 
     it("should set square value to space and select previous square when backspace and highlight mode Down", () => {
-      component.config.editMode = EditMode.Value;
-      component.config.viewMode = ViewMode.Down;
+      toolbarServiceSpy.getCurrentViewMode.and.returnValue(ViewMode.Down);
       component.selectedIndex = 5;
 
       tableEl.triggerEventHandler("keydown", { key: "Backspace" });
@@ -191,8 +225,7 @@ describe("GridComponent", () => {
 
     it("should set square value and not select previous square when backspace and puzzle start", () => {
       puzzleServiceSpy.isPuzzleStart.and.returnValue(true);
-      component.config.editMode = EditMode.Value;
-      component.config.viewMode = ViewMode.Down;
+      toolbarServiceSpy.getCurrentViewMode.and.returnValue(ViewMode.Down);
       component.selectedIndex = 3;
 
       tableEl.triggerEventHandler("keydown", { key: "Backspace" });
@@ -203,8 +236,6 @@ describe("GridComponent", () => {
     });
 
     it("should set square value and select next square when alphanumeric char and highlight mode Across", () => {
-      component.config.editMode = EditMode.Value;
-      component.config.viewMode = ViewMode.Across;
       component.selectedIndex = 0;
 
       tableEl.triggerEventHandler("keydown", { key: "X" });
@@ -215,8 +246,7 @@ describe("GridComponent", () => {
     });
 
     it("should set square value and select next square when alphanumeric char and highlight mode Down", () => {
-      component.config.editMode = EditMode.Value;
-      component.config.viewMode = ViewMode.Down;
+      toolbarServiceSpy.getCurrentViewMode.and.returnValue(ViewMode.Down);
       component.selectedIndex = 0;
 
       tableEl.triggerEventHandler("keydown", { key: "X" });
@@ -228,8 +258,7 @@ describe("GridComponent", () => {
 
     it("should set square value and not select next square when alphanumeric char and puzzle end", () => {
       puzzleServiceSpy.isPuzzleEnd.and.returnValue(true);
-      component.config.editMode = EditMode.Value;
-      component.config.viewMode = ViewMode.Down;
+      toolbarServiceSpy.getCurrentViewMode.and.returnValue(ViewMode.Down);
       component.selectedIndex = 19;
 
       tableEl.triggerEventHandler("keydown", { key: "X" });
@@ -241,25 +270,25 @@ describe("GridComponent", () => {
   });
 
   describe("isHighlighted", () => {
+    beforeEach(() => {
+      fixture.detectChanges();
+    });
+
     it("should return true when highlight mode is Across and in across answer", () => {
-      component.config.editMode = EditMode.Value;
-      component.config.viewMode = ViewMode.Across;
       component.selectedIndex = 0;
 
       expect(component.isHighlighted(component.puzzleGrid[1])).toEqual(true);
     });
 
     it("should return true when highlight mode is Down and in down answer", () => {
-      component.config.editMode = EditMode.Value;
-      component.config.viewMode = ViewMode.Down;
+      toolbarServiceSpy.getCurrentViewMode.and.returnValue(ViewMode.Down);
       component.selectedIndex = 0;
 
       expect(component.isHighlighted(component.puzzleGrid[4])).toEqual(true);
     });
 
     it("should return true when highlight mode is Intersect and in across or down answer", () => {
-      component.config.editMode = EditMode.Value;
-      component.config.viewMode = ViewMode.Intersect;
+      toolbarServiceSpy.getCurrentViewMode.and.returnValue(ViewMode.Intersect);
       component.selectedIndex = 0;
 
       expect(component.isHighlighted(component.puzzleGrid[1])).toEqual(true);
@@ -267,24 +296,21 @@ describe("GridComponent", () => {
     });
 
     it("should return false when highlight mode is Intersect and not in across or down answer", () => {
-      component.config.editMode = EditMode.Value;
-      component.config.viewMode = ViewMode.Intersect;
+      toolbarServiceSpy.getCurrentViewMode.and.returnValue(ViewMode.Intersect);
       component.selectedIndex = 0;
 
       expect(component.isHighlighted(component.puzzleGrid[5])).toEqual(false);
     });
 
     it("should return false when selected index -1", () => {
-      component.config.editMode = EditMode.Value;
-      component.config.viewMode = ViewMode.Intersect;
+      toolbarServiceSpy.getCurrentViewMode.and.returnValue(ViewMode.Intersect);
       component.selectedIndex = -1;
 
       expect(component.isHighlighted(component.puzzleGrid[0])).toEqual(false);
     });
 
     it("should return false when selected square is spacer", () => {
-      component.config.editMode = EditMode.Value;
-      component.config.viewMode = ViewMode.Intersect;
+      toolbarServiceSpy.getCurrentViewMode.and.returnValue(ViewMode.Intersect);
       component.selectedIndex = -1;
 
       expect(component.isHighlighted(component.puzzleGrid[0])).toEqual(false);

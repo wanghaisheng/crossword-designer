@@ -1,21 +1,20 @@
-import { Component, EventEmitter, Input, OnInit, Output } from "@angular/core";
-import { EditMode, ViewMode } from "../grid/grid.component";
+import { Component, OnInit } from "@angular/core";
 import { FormControl } from "@angular/forms";
+import { NavigationStart, Router } from "@angular/router";
 
-enum ToolbarType {
-  Default,
+import { filter } from "rxjs/operators";
+
+import { LoadService } from "src/app/services/load.service";
+import { ToolbarService } from "src/app/services/toolbar.service";
+
+import { EditMode, ViewMode } from "src/app/models/toolbar.model";
+import { PuzzleMetadata } from "src/app/models/puzzle.model";
+
+export enum ActiveRoute {
+  Unknown,
   AnswerDrafting,
   PuzzleEditing,
   ClueEditing,
-}
-
-export interface ToolbarConfig {
-  type: ToolbarType;
-}
-
-export interface Filter {
-  length: number | null;
-  contains: string | null;
 }
 
 @Component({
@@ -24,72 +23,80 @@ export interface Filter {
   styleUrls: ["./toolbar.component.scss"],
 })
 export class ToolbarComponent implements OnInit {
-  @Input() name: string = "Untitled";
-  @Input() locked: boolean = false;
-  @Input() config: ToolbarConfig = { type: ToolbarType.Default };
-
-  @Output() editModeChange$: EventEmitter<EditMode> = new EventEmitter();
-  @Output() viewModeChange$: EventEmitter<ViewMode> = new EventEmitter();
-  @Output() lockEvent$: EventEmitter<undefined> = new EventEmitter();
-  @Output() saveEvent$: EventEmitter<undefined> = new EventEmitter();
-  @Output() clearEvent$: EventEmitter<undefined> = new EventEmitter();
-  @Output() showHideEvent$: EventEmitter<undefined> = new EventEmitter();
-  @Output() sortEvent$: EventEmitter<undefined> = new EventEmitter();
-  @Output() filterEvent$: EventEmitter<Filter> = new EventEmitter();
-
+  public activeRoute: ActiveRoute = ActiveRoute.Unknown;
   public nameInput: FormControl = new FormControl("");
-  public editMode: number = 0;
-  public viewMode: number = 0;
+  public locked: boolean = true;
+  public editMode: number = EditMode.Value;
+  public viewMode: number = ViewMode.Across;
   public answersHidden: boolean = false;
   public sortReverse: boolean = false;
   public filtersOn: boolean = false;
   public lengthInput: FormControl = new FormControl();
   public containsInput: FormControl = new FormControl();
 
-  constructor() {}
+  constructor(private router: Router, private toolbarService: ToolbarService, private loadService: LoadService) {}
 
   ngOnInit(): void {
-    this.editMode = this.config.type == ToolbarType.AnswerDrafting ? 2 : 0;
-    this.nameInput.setValue(this.name);
+    this.router.events.pipe(filter((e) => e instanceof NavigationStart)).subscribe((e) => {
+      this.activeRoute = this.getRouteFromUrl((e as NavigationStart).url);
+      this.editMode = this.activeRoute == ActiveRoute.AnswerDrafting ? 2 : 0;
+    });
+
+    this.loadService.activePuzzle$.subscribe((metadata: PuzzleMetadata) => {
+      this.locked = metadata.locked;
+
+      this.nameInput.setValue(metadata.name);
+      this.locked ? this.nameInput.disable() : this.nameInput.enable();
+    });
+  }
+
+  public onNameChange(): void {
+    if (this.nameInput.dirty) {
+      this.loadService.updatePuzzle(this.loadService.activePuzzle$.value.id, { name: this.nameInput.value });
+      this.toolbarService.setName(this.nameInput.value);
+    }
+  }
+
+  public onLock(override?: boolean): void {
+    this.locked = override != undefined ? override : !this.locked;
+    this.locked ? this.nameInput.disable() : this.nameInput.enable();
+
+    this.loadService.updatePuzzle(this.loadService.activePuzzle$.value.id, { locked: this.locked });
+    this.toolbarService.setLock(this.locked);
   }
 
   public onEditModeChange(mode: number): void {
     this.editMode = mode;
-    this.editModeChange$.emit(mode);
+    this.toolbarService.setEditMode(mode);
   }
 
   public onViewModeChange(mode: number): void {
     this.viewMode = mode;
-    this.viewModeChange$.emit(mode);
-  }
-
-  public onLock(): void {
-    this.locked = !this.locked;
-    this.lockEvent$.emit();
+    this.toolbarService.setViewMode(mode);
   }
 
   public onSave(): void {
-    this.saveEvent$.emit();
+    this.toolbarService.save();
   }
 
   public onClear(): void {
-    this.clearEvent$.emit();
+    this.toolbarService.clear();
   }
 
   public onShowHide(): void {
     this.answersHidden = !this.answersHidden;
-    this.showHideEvent$.emit();
+    this.toolbarService.showHide();
   }
 
   public onSort(): void {
     this.sortReverse = !this.sortReverse;
-    this.sortEvent$.emit();
+    this.toolbarService.sortReverse();
   }
 
-  public onFilter(): void {
+  public onFilterChange(): void {
     if (this.lengthInput.dirty || this.containsInput.dirty) {
       this.filtersOn = true;
-      this.filterEvent$.emit({ length: this.lengthInput.value, contains: this.containsInput.value });
+      this.toolbarService.setFilter({ length: this.lengthInput.value, contains: this.containsInput.value });
     }
   }
 
@@ -98,6 +105,20 @@ export class ToolbarComponent implements OnInit {
 
     this.lengthInput.reset();
     this.containsInput.reset();
-    this.filterEvent$.emit({ length: null, contains: null });
+    this.toolbarService.setFilter({ length: null, contains: null });
+  }
+
+  // TODO: move somewhere else
+  private getRouteFromUrl(url: string): ActiveRoute {
+    switch (url) {
+      case "/answers":
+        return ActiveRoute.AnswerDrafting;
+      case "/puzzle":
+        return ActiveRoute.PuzzleEditing;
+      case "/clues":
+        return ActiveRoute.ClueEditing;
+      default:
+        return ActiveRoute.Unknown;
+    }
   }
 }

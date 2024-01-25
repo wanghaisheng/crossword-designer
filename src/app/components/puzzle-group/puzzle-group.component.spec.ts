@@ -49,14 +49,15 @@ describe("PuzzleGroupComponent", () => {
   });
 
   describe("onPuzzleSelect", () => {
-    it("should emit selected puzzle id", () => {
+    it("should emit selected puzzle", () => {
       const index = 0;
+      const puzzle = component.puzzles[index];
       spyOn(component.selectEvent, "emit");
       cardEls[index].triggerEventHandler("click", undefined);
 
       fixture.detectChanges();
 
-      expect(component.selectEvent.emit).toHaveBeenCalledWith(component.puzzles[index].id);
+      expect(component.selectEvent.emit).toHaveBeenCalledWith({ id: puzzle.id, name: puzzle.name, locked: puzzle.locked });
     });
   });
 

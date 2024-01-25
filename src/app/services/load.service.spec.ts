@@ -161,14 +161,15 @@ describe("LoadService", () => {
   });
 
   describe("setActiveId", () => {
-    it("should emit new active id", () => {
-      service.setActiveId("testId");
+    it("should emit new active puzzle metadata", () => {
+      const testMetadata = { id: testId, name: "", locked: false };
+      service.setActivePuzzle(testMetadata);
 
-      service.activePuzzleId$.subscribe((id) => {
-        expect(id).toEqual("testId");
+      service.activePuzzle$.subscribe((metadata) => {
+        expect(metadata).toEqual(testMetadata);
       });
 
-      service.activePuzzleId$.unsubscribe();
+      service.activePuzzle$.unsubscribe();
     });
   });
 
@@ -255,7 +256,7 @@ describe("LoadService", () => {
     it("should update puzzle patch when successful and active id", () => {
       const patch = { name: "New Name" };
 
-      service.setActiveId(testId);
+      service.setActivePuzzle({ id: testId, name: "", locked: false });
       service.updatePuzzle(testId, patch).subscribe(() => {
         expect(firebaseServiceSpy.updateDoc).toHaveBeenCalledWith("puzzle", testId, patch);
         expect(service.activePuzzlePatch$.value).toEqual(patch);

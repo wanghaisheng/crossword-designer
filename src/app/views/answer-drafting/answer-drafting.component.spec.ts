@@ -1,3 +1,4 @@
+import { EventEmitter } from "@angular/core";
 import { ComponentFixture, TestBed } from "@angular/core/testing";
 import { ReactiveFormsModule } from "@angular/forms";
 
@@ -5,14 +6,15 @@ import { of, throwError } from "rxjs";
 
 import { AnswerDraftingComponent } from "./answer-drafting.component";
 import { AnswerService } from "src/app/services/answer.service";
+import { ToolbarService } from "src/app/services/toolbar.service";
+
 import { AnswerBank } from "src/app/models/answer.model";
-import { PuzzleService } from "src/app/services/puzzle.service";
 
 describe("AnswerDraftingComponent", () => {
   let component: AnswerDraftingComponent;
   let fixture: ComponentFixture<AnswerDraftingComponent>;
 
-  const puzzleServiceSpy = jasmine.createSpyObj("PuzzleService", ["puzzle", "togglePuzzleLock"]);
+  const toolbarServiceSpy = jasmine.createSpyObj("ToolbarService", ["saveEvent$", "clearEvent$", "sortReverseEvent$", "filterEvent$"]);
   const answerServiceSpy = jasmine.createSpyObj("AnswerService", [
     "answerBank",
     "loadAnswers",
@@ -34,6 +36,10 @@ describe("AnswerDraftingComponent", () => {
   beforeEach(async () => {
     answerServiceSpy.answerBank = testAnswerBank;
     answerServiceSpy.saveAnswers.and.returnValue(of(undefined));
+    toolbarServiceSpy.saveEvent$ = new EventEmitter();
+    toolbarServiceSpy.clearEvent$ = new EventEmitter();
+    toolbarServiceSpy.sortReverseEvent$ = new EventEmitter();
+    toolbarServiceSpy.filterEvent$ = new EventEmitter();
 
     spyOn(window, "alert");
     spyOn(console, "error");
@@ -43,7 +49,7 @@ describe("AnswerDraftingComponent", () => {
       declarations: [AnswerDraftingComponent],
       providers: [
         { provide: AnswerService, useValue: answerServiceSpy },
-        { provide: PuzzleService, useValue: puzzleServiceSpy },
+        { provide: ToolbarService, useValue: toolbarServiceSpy },
       ],
     }).compileComponents();
   });
@@ -55,6 +61,54 @@ describe("AnswerDraftingComponent", () => {
 
   it("should create", () => {
     expect(component).toBeTruthy();
+  });
+
+  describe("ngOnInit", () => {
+    beforeEach(() => {
+      fixture.detectChanges();
+    });
+
+    it("should handle save toolbar event when save successful", () => {
+      toolbarServiceSpy.saveEvent$.emit();
+
+      expect(answerServiceSpy.saveAnswers).toHaveBeenCalled();
+      expect(window.alert).not.toHaveBeenCalled();
+    });
+
+    it("should handle save toolbar event when save unsuccessful", () => {
+      const errorMsg = "Failed to set doc";
+      answerServiceSpy.saveAnswers.and.callFake(() => {
+        return throwError(new Error(errorMsg));
+      });
+
+      toolbarServiceSpy.saveEvent$.emit();
+
+      expect(answerServiceSpy.saveAnswers).toHaveBeenCalled();
+      expect(window.alert).toHaveBeenCalledWith("Answers failed to save: Failed to set doc");
+    });
+
+    it("should handle clear toolbar event", () => {
+      toolbarServiceSpy.clearEvent$.emit();
+
+      expect(answerServiceSpy.clearAnswers).toHaveBeenCalled();
+    });
+
+    it("should handle sort toolbar event", () => {
+      component.sortReverse = false;
+
+      toolbarServiceSpy.sortReverseEvent$.emit();
+
+      expect(component.sortReverse).toBeTruthy();
+    });
+
+    it("should handle filter toolbar event", () => {
+      const filter = { length: 3, contains: "A" };
+      component.filter = { length: null, contains: null };
+
+      toolbarServiceSpy.filterEvent$.emit(filter);
+
+      expect(component.filter).toEqual(filter);
+    });
   });
 
   describe("addAnswer", () => {
@@ -102,62 +156,6 @@ describe("AnswerDraftingComponent", () => {
       component.toggleCircle("testKey", 0);
 
       expect(answerServiceSpy.toggleCircle).toHaveBeenCalledWith("testKey", 0);
-    });
-  });
-
-  describe("onLock", () => {
-    it("should call togglePuzzleLock", () => {
-      component.onLock();
-
-      expect(puzzleServiceSpy.togglePuzzleLock).toHaveBeenCalled();
-    });
-  });
-
-  describe("onSave", () => {
-    it("should call saveAnswers and alert on success", () => {
-      component.onSave();
-
-      expect(answerServiceSpy.saveAnswers).toHaveBeenCalled();
-      expect(window.alert).not.toHaveBeenCalled();
-    });
-
-    it("should alert failure when saveAnswers throws error", () => {
-      const errorMsg = "Failed to set doc";
-      answerServiceSpy.saveAnswers.and.callFake(() => {
-        return throwError(new Error(errorMsg));
-      });
-
-      component.onSave();
-
-      expect(answerServiceSpy.saveAnswers).toHaveBeenCalled();
-      expect(window.alert).toHaveBeenCalledWith("Answers failed to save: Failed to set doc");
-    });
-  });
-
-  describe("onClear", () => {
-    it("should call clearAnswers", () => {
-      component.onClear();
-
-      expect(answerServiceSpy.clearAnswers).toHaveBeenCalled();
-    });
-  });
-
-  describe("onSort", () => {
-    it("should toggle sort reverse", () => {
-      component.sortReverse = false;
-      component.onSort();
-
-      expect(component.sortReverse).toEqual(true);
-    });
-  });
-
-  describe("onFilter", () => {
-    it("should set filter", () => {
-      const filter = { length: 3, contains: "A" };
-      component.filter = { length: null, contains: null };
-      component.onFilter(filter);
-
-      expect(component.filter).toEqual(filter);
     });
   });
 });

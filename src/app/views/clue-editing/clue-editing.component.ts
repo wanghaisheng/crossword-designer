@@ -2,6 +2,8 @@ import { Component, OnInit } from "@angular/core";
 import { FormArray, FormControl, FormGroup } from "@angular/forms";
 
 import { PuzzleService } from "src/app/services/puzzle.service";
+import { ToolbarService } from "src/app/services/toolbar.service";
+
 import { Clue, ClueType } from "src/app/models/clue.model";
 
 @Component({
@@ -15,14 +17,6 @@ export class ClueEditingComponent implements OnInit {
     down: new FormArray([]),
   });
 
-  public get name(): string {
-    return this.puzzleService.puzzle.name;
-  }
-
-  public get locked(): boolean {
-    return this.puzzleService.puzzle.locked;
-  }
-
   public get acrossClues(): Array<Clue> {
     return this.puzzleService.puzzle.acrossClues;
   }
@@ -31,7 +25,7 @@ export class ClueEditingComponent implements OnInit {
     return this.puzzleService.puzzle.downClues;
   }
 
-  constructor(private puzzleService: PuzzleService) {}
+  constructor(private puzzleService: PuzzleService, private toolbarService: ToolbarService) {}
 
   ngOnInit(): void {
     this.cluesForm = new FormGroup({
@@ -39,13 +33,8 @@ export class ClueEditingComponent implements OnInit {
       down: new FormArray(this.puzzleService.puzzle.downClues.map((clue) => new FormControl(clue.text))),
     });
 
-    this.puzzleService.puzzleLock$.subscribe((locked: boolean) => {
-      if (locked) {
-        this.cluesForm.disable();
-      } else {
-        this.cluesForm.enable();
-      }
-    });
+    this.puzzleService.puzzle.locked ? this.cluesForm.disable() : this.cluesForm.enable();
+    this.handleToolbarEvents();
   }
 
   public updateAcrossClue(index: number): void {
@@ -72,7 +61,7 @@ export class ClueEditingComponent implements OnInit {
     }
   }
 
-  public onSave(): void {
+  private onSave(): void {
     this.puzzleService.savePuzzle().subscribe(
       () => {},
       (err: ErrorEvent) => {
@@ -81,11 +70,17 @@ export class ClueEditingComponent implements OnInit {
     );
   }
 
-  public onClear(): void {
+  private onClear(): void {
     this.puzzleService.clearPuzzle();
   }
 
-  public onLock(): void {
-    this.puzzleService.togglePuzzleLock();
+  private handleToolbarEvents(): void {
+    const toolbar = this.toolbarService;
+    toolbar.saveEvent$.subscribe(() => this.onSave());
+    toolbar.clearEvent$.subscribe(() => this.onClear());
+
+    toolbar.lockEvent$.subscribe((lock: boolean) => {
+      lock ? this.cluesForm.disable() : this.cluesForm.enable();
+    });
   }
 }

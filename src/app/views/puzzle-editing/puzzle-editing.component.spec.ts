@@ -1,10 +1,12 @@
+import { EventEmitter } from "@angular/core";
 import { ComponentFixture, TestBed } from "@angular/core/testing";
 
 import { of, throwError } from "rxjs";
 
-import { EditMode, ViewMode } from "src/app/components/grid/grid.component";
 import { PuzzleEditingComponent } from "./puzzle-editing.component";
 import { PuzzleService } from "src/app/services/puzzle.service";
+import { ToolbarService } from "src/app/services/toolbar.service";
+
 import { Puzzle, Square } from "src/app/models/puzzle.model";
 
 describe("PuzzleEditingComponent", () => {
@@ -12,6 +14,7 @@ describe("PuzzleEditingComponent", () => {
   let fixture: ComponentFixture<PuzzleEditingComponent>;
 
   const puzzleServiceSpy = jasmine.createSpyObj("PuzzleService", ["puzzle", "savePuzzle", "clearPuzzle"]);
+  const toolbarServiceSpy = jasmine.createSpyObj("ToolbarService", ["saveEvent$", "clearEvent$"]);
 
   const testId = "testId";
 
@@ -30,13 +33,18 @@ describe("PuzzleEditingComponent", () => {
   beforeEach(async () => {
     puzzleServiceSpy.puzzle = testPuzzle;
     puzzleServiceSpy.savePuzzle.and.returnValue(of(undefined));
+    toolbarServiceSpy.saveEvent$ = new EventEmitter();
+    toolbarServiceSpy.clearEvent$ = new EventEmitter();
 
     spyOn(window, "alert");
     spyOn(console, "error");
 
     await TestBed.configureTestingModule({
       declarations: [PuzzleEditingComponent],
-      providers: [{ provide: PuzzleService, useValue: puzzleServiceSpy }],
+      providers: [
+        { provide: PuzzleService, useValue: puzzleServiceSpy },
+        { provide: ToolbarService, useValue: toolbarServiceSpy },
+      ],
     }).compileComponents();
   });
 
@@ -50,48 +58,28 @@ describe("PuzzleEditingComponent", () => {
     expect(component).toBeTruthy();
   });
 
-  describe("onUpdateConfig", () => {
-    it("should emit new puzzle configuration", () => {
-      spyOn(component.gridConfig$, "next");
-
-      component.answersHidden = true;
-      component.editMode = EditMode.Circle;
-      component.viewMode = ViewMode.Down;
-      component.onUpdateConfig();
-
-      expect(component.gridConfig$.next).toHaveBeenCalledWith({
-        readonly: false,
-        answersHidden: true,
-        editMode: EditMode.Circle,
-        viewMode: ViewMode.Down,
-      });
-    });
-  });
-
-  describe("onSave", () => {
-    it("should do nothing when savePuzzle success", () => {
-      component.onSave();
+  describe("ngOnInit", () => {
+    it("should handle save toolbar event when save successful", () => {
+      toolbarServiceSpy.saveEvent$.emit();
 
       expect(puzzleServiceSpy.savePuzzle).toHaveBeenCalled();
       expect(window.alert).not.toHaveBeenCalled();
     });
 
-    it("should alert failure when savePuzzle throws error", () => {
+    it("should handle save toolbar event when save unsuccessful", () => {
       const errorMsg = "Failed to set doc";
       puzzleServiceSpy.savePuzzle.and.callFake(() => {
         return throwError(new Error(errorMsg));
       });
 
-      component.onSave();
+      toolbarServiceSpy.saveEvent$.emit();
 
       expect(puzzleServiceSpy.savePuzzle).toHaveBeenCalled();
       expect(window.alert).toHaveBeenCalledWith("Puzzle failed to save: Failed to set doc");
     });
-  });
 
-  describe("onClear", () => {
-    it("should call clearPuzzle", () => {
-      component.onClear();
+    it("should handle clear toolbar event", () => {
+      toolbarServiceSpy.clearEvent$.emit();
 
       expect(puzzleServiceSpy.clearPuzzle).toHaveBeenCalled();
     });

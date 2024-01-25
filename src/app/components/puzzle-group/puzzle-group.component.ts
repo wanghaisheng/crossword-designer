@@ -1,6 +1,7 @@
 import { Component, EventEmitter, Input, OnInit, Output } from "@angular/core";
 
 import { CardConfig, PuzzleCard } from "src/app/models/card.model";
+import { PuzzleMetadata } from "src/app/models/puzzle.model";
 
 @Component({
   selector: "app-puzzle-group",
@@ -11,7 +12,7 @@ export class PuzzleGroupComponent implements OnInit {
   @Input() puzzles: Array<PuzzleCard> = [];
   @Input() config: CardConfig = { readonly: false, showOwner: false };
 
-  @Output() selectEvent: EventEmitter<string> = new EventEmitter();
+  @Output() selectEvent: EventEmitter<PuzzleMetadata> = new EventEmitter();
   @Output() deleteEvent: EventEmitter<string> = new EventEmitter();
   @Output() lockEvent: EventEmitter<{ id: string; value: boolean }> = new EventEmitter();
   @Output() shareEvent: EventEmitter<{ id: string; value: boolean }> = new EventEmitter();
@@ -25,7 +26,7 @@ export class PuzzleGroupComponent implements OnInit {
   public onPuzzleSelect(index: number): void {
     const puzzle = this.puzzles[index];
 
-    this.selectEvent.emit(puzzle.id);
+    this.selectEvent.emit({ id: puzzle.id, name: puzzle.name, locked: puzzle.locked });
   }
 
   public onPuzzleLock($event: Event, index: number): void {

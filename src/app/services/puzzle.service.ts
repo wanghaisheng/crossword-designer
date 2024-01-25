@@ -4,8 +4,10 @@ import { catchError, switchMap } from "rxjs/operators";
 
 import { SaveService } from "./save.service";
 import { LoadService } from "./load.service";
+
 import { Clue, ClueType } from "../models/clue.model";
-import { PuzzleDoc, Puzzle, Square, SquareType, OverlayType } from "../models/puzzle.model";
+import { PuzzleDoc, Puzzle, Square, SquareType, OverlayType, PuzzleMetadata } from "../models/puzzle.model";
+import { ToolbarService } from "./toolbar.service";
 
 @Injectable({
   providedIn: "root",
@@ -17,20 +19,24 @@ export class PuzzleService {
 
   public activeAcrossClue$: BehaviorSubject<number> = new BehaviorSubject(0);
   public activeDownClue$: BehaviorSubject<number> = new BehaviorSubject(0);
-  public puzzleLock$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(true);
 
   private _puzzle: Puzzle = new Puzzle();
 
-  constructor(private loadService: LoadService, private saveService: SaveService) {
-    this.loadService.activePuzzleId$.pipe(switchMap((id: string) => this.loadService.getPuzzle(id))).subscribe((puzzleDoc: PuzzleDoc) => {
-      if (puzzleDoc) {
-        this.activatePuzzle(puzzleDoc);
-      }
-    });
+  constructor(private loadService: LoadService, private saveService: SaveService, private toolbarService: ToolbarService) {
+    this.loadService.activePuzzle$
+      .pipe(switchMap((metadata: PuzzleMetadata) => this.loadService.getPuzzle(metadata.id)))
+      .subscribe((puzzleDoc: PuzzleDoc) => {
+        if (puzzleDoc) {
+          this.activatePuzzle(puzzleDoc);
+        }
+      });
 
     this.loadService.activePuzzlePatch$.subscribe((patch: Partial<PuzzleDoc>) => {
       this._puzzle = { ...this._puzzle, ...patch };
     });
+
+    this.toolbarService.nameEvent$.subscribe((name: string) => (this._puzzle.name = name));
+    this.toolbarService.lockEvent$.subscribe((lock: boolean) => (this._puzzle.locked = lock));
   }
 
   /**
@@ -52,7 +58,6 @@ export class PuzzleService {
 
     this.numberPuzzle(this._puzzle);
     this.selectSquare(this.getFirstLetterIndex());
-    this.puzzleLock$.next(this._puzzle.locked);
   }
 
   /**
@@ -85,10 +90,7 @@ export class PuzzleService {
    * Locks puzzle if unlocked and vice versa
    */
   public togglePuzzleLock(): void {
-    let value = !this._puzzle.locked;
-
-    this._puzzle.locked = value;
-    this.puzzleLock$.next(value);
+    this._puzzle.locked = !this._puzzle.locked;
   }
 
   /**

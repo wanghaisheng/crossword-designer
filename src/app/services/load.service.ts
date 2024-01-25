@@ -5,23 +5,24 @@ import { BehaviorSubject, Observable, from } from "rxjs";
 import { catchError, map, switchMap } from "rxjs/operators";
 
 import { FirebaseService } from "./firebase.service";
+
 import { AnswerDoc } from "../models/answer.model";
-import { PuzzleDoc } from "../models/puzzle.model";
+import { PuzzleDoc, PuzzleMetadata } from "../models/puzzle.model";
 import { UserDoc } from "../models/user.model";
 
 @Injectable({
   providedIn: "root",
 })
 export class LoadService {
-  public activePuzzleId$: BehaviorSubject<string> = new BehaviorSubject("");
+  public activePuzzle$: BehaviorSubject<PuzzleMetadata> = new BehaviorSubject<PuzzleMetadata>({ id: "", name: "", locked: true });
   public activePuzzlePatch$: BehaviorSubject<Partial<PuzzleDoc>> = new BehaviorSubject({});
   private _activePuzzleId: string = "";
 
   constructor(private firebaseService: FirebaseService) {}
 
-  public setActiveId(id: string): void {
-    this._activePuzzleId = id;
-    this.activePuzzleId$.next(id);
+  public setActivePuzzle(puzzle: PuzzleMetadata): void {
+    this._activePuzzleId = puzzle.id;
+    this.activePuzzle$.next(puzzle);
   }
 
   /**
@@ -57,7 +58,7 @@ export class LoadService {
       switchMap((docRef: DocumentReference<DocumentData>) =>
         this.firebaseService.setDoc("answers", docRef.id, newAnswerBank).pipe(map(() => docRef.id))
       ),
-      map((docId: string) => this.setActiveId(docId)),
+      map((docId: string) => this.setActivePuzzle({ id: docId, name: title, locked: false })),
       catchError((error: ErrorEvent) => {
         throw error;
       })

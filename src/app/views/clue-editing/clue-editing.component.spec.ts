@@ -1,18 +1,21 @@
 import { ComponentFixture, TestBed } from "@angular/core/testing";
 import { FormArray, ReactiveFormsModule } from "@angular/forms";
 
-import { BehaviorSubject, of, throwError } from "rxjs";
+import { of, throwError } from "rxjs";
 
 import { ClueEditingComponent } from "./clue-editing.component";
 import { PuzzleService } from "src/app/services/puzzle.service";
 import { Clue, ClueType } from "src/app/models/clue.model";
 import { Puzzle, Square } from "src/app/models/puzzle.model";
+import { EventEmitter } from "@angular/core";
+import { ToolbarService } from "src/app/services/toolbar.service";
 
 describe("ClueEditingComponent", () => {
   let component: ClueEditingComponent;
   let fixture: ComponentFixture<ClueEditingComponent>;
 
   const puzzleServiceSpy = jasmine.createSpyObj("PuzzleService", ["puzzle", "savePuzzle", "clearPuzzle", "setClueText", "puzzleLock$"]);
+  const toolbarServiceSpy = jasmine.createSpyObj("ToolbarService", ["saveEvent$", "clearEvent$", "lockEvents$"]);
 
   const testId = "testId";
   const testPuzzle: Puzzle = {
@@ -31,14 +34,19 @@ describe("ClueEditingComponent", () => {
     puzzleServiceSpy.puzzle = testPuzzle;
     puzzleServiceSpy.savePuzzle.and.returnValue(of(undefined));
     puzzleServiceSpy.setClueText.calls.reset();
-    puzzleServiceSpy.puzzleLock$ = new BehaviorSubject(false);
+    toolbarServiceSpy.saveEvent$ = new EventEmitter();
+    toolbarServiceSpy.clearEvent$ = new EventEmitter();
+    toolbarServiceSpy.lockEvent$ = new EventEmitter();
 
     spyOn(window, "alert");
 
     await TestBed.configureTestingModule({
       imports: [ReactiveFormsModule],
       declarations: [ClueEditingComponent],
-      providers: [{ provide: PuzzleService, useValue: puzzleServiceSpy }],
+      providers: [
+        { provide: PuzzleService, useValue: puzzleServiceSpy },
+        { provide: ToolbarService, useValue: toolbarServiceSpy },
+      ],
     }).compileComponents();
   });
 
@@ -53,12 +61,41 @@ describe("ClueEditingComponent", () => {
   });
 
   describe("ngOnInit", () => {
-    it("should disable clues on puzzle lock", () => {
-      puzzleServiceSpy.puzzleLock$.next(true);
+    it("should handle save toolbar event when save successful", () => {
+      toolbarServiceSpy.saveEvent$.emit();
 
-      fixture.detectChanges();
+      expect(puzzleServiceSpy.savePuzzle).toHaveBeenCalled();
+      expect(window.alert).not.toHaveBeenCalled();
+    });
+
+    it("should handle save toolbar event when save unsuccessful", () => {
+      const errorMsg = "Failed to set doc";
+      puzzleServiceSpy.savePuzzle.and.callFake(() => {
+        return throwError(new Error(errorMsg));
+      });
+
+      toolbarServiceSpy.saveEvent$.emit();
+
+      expect(puzzleServiceSpy.savePuzzle).toHaveBeenCalled();
+      expect(window.alert).toHaveBeenCalledWith("Clues failed to save: Failed to set doc");
+    });
+
+    it("should handle clear toolbar event", () => {
+      toolbarServiceSpy.clearEvent$.emit();
+
+      expect(puzzleServiceSpy.clearPuzzle).toHaveBeenCalled();
+    });
+
+    it("should handle lock toolbar event", () => {
+      toolbarServiceSpy.lockEvent$.emit(true);
 
       expect(component.cluesForm.disabled).toBeTruthy();
+    });
+
+    it("should handle unlock toolbar event", () => {
+      toolbarServiceSpy.lockEvent$.emit(false);
+
+      expect(component.cluesForm.disabled).toBeFalsy();
     });
   });
 
@@ -101,35 +138,6 @@ describe("ClueEditingComponent", () => {
       component.updateDownClue(0);
 
       expect(puzzleServiceSpy.setClueText).not.toHaveBeenCalled();
-    });
-  });
-
-  describe("onSave", () => {
-    it("should call savePuzzle", () => {
-      component.onSave();
-
-      expect(puzzleServiceSpy.savePuzzle).toHaveBeenCalled();
-      expect(window.alert).not.toHaveBeenCalled();
-    });
-
-    it("should alert failure when savePuzzle throws error", () => {
-      const errorMsg = "Failed to set doc";
-      puzzleServiceSpy.savePuzzle.and.callFake(() => {
-        return throwError(new Error(errorMsg));
-      });
-
-      component.onSave();
-
-      expect(puzzleServiceSpy.savePuzzle).toHaveBeenCalled();
-      expect(window.alert).toHaveBeenCalledWith("Clues failed to save: Failed to set doc");
-    });
-  });
-
-  describe("onClear", () => {
-    it("should call clearPuzzle", () => {
-      component.onClear();
-
-      expect(puzzleServiceSpy.clearPuzzle).toHaveBeenCalled();
     });
   });
 });

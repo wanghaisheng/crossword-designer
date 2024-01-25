@@ -1,3 +1,4 @@
+import { EventEmitter } from "@angular/core";
 import { ComponentFixture, TestBed } from "@angular/core/testing";
 import { FormsModule, ReactiveFormsModule } from "@angular/forms";
 
@@ -5,6 +6,8 @@ import { BehaviorSubject } from "rxjs";
 
 import { SelectedClueComponent } from "./selected-clue.component";
 import { PuzzleService } from "src/app/services/puzzle.service";
+import { ToolbarService } from "src/app/services/toolbar.service";
+
 import { Clue, ClueType } from "src/app/models/clue.model";
 import { Puzzle } from "src/app/models/puzzle.model";
 
@@ -12,13 +15,8 @@ describe("SelectedClueComponent", () => {
   let component: SelectedClueComponent;
   let fixture: ComponentFixture<SelectedClueComponent>;
 
-  const puzzleServiceSpy = jasmine.createSpyObj("PuzzleService", [
-    "puzzle",
-    "activeAcrossClue$",
-    "activeDownClue$",
-    "puzzleLock$",
-    "setClueText",
-  ]);
+  const toolbarServiceSpy = jasmine.createSpyObj("ToolbarService", ["lockEvent$"]);
+  const puzzleServiceSpy = jasmine.createSpyObj("PuzzleService", ["puzzle", "activeAcrossClue$", "activeDownClue$", "setClueText"]);
 
   const testAcross: Clue = {
     num: 1,
@@ -40,10 +38,14 @@ describe("SelectedClueComponent", () => {
     puzzleServiceSpy.activeDownClue$ = new BehaviorSubject(0);
     puzzleServiceSpy.puzzleLock$ = new BehaviorSubject(false);
     puzzleServiceSpy.setClueText.and.callFake(() => {});
+    toolbarServiceSpy.lockEvent$ = new EventEmitter();
 
     await TestBed.configureTestingModule({
       declarations: [SelectedClueComponent],
-      providers: [{ provide: PuzzleService, useValue: puzzleServiceSpy }],
+      providers: [
+        { provide: PuzzleService, useValue: puzzleServiceSpy },
+        { provide: ToolbarService, useValue: toolbarServiceSpy },
+      ],
       imports: [FormsModule, ReactiveFormsModule],
     }).compileComponents();
   });
@@ -62,7 +64,7 @@ describe("SelectedClueComponent", () => {
       fixture.detectChanges();
     });
 
-    it("should set value and enable clues when index != -1 and puzzled unlocked", () => {
+    it("should set value and enable clues when index != -1", () => {
       puzzleServiceSpy.activeAcrossClue$.next(0);
       puzzleServiceSpy.activeDownClue$.next(0);
 
@@ -70,20 +72,6 @@ describe("SelectedClueComponent", () => {
 
       expect(component.acrossInput.disabled).toBeFalsy();
       expect(component.downInput.disabled).toBeFalsy();
-
-      expect(component.acrossInput.value).toEqual(testAcross.text);
-      expect(component.downInput.value).toEqual(testDown.text);
-    });
-
-    it("should set value when index != -1 and puzzled locked", () => {
-      puzzleServiceSpy.puzzleLock$.next(true);
-      puzzleServiceSpy.activeAcrossClue$.next(0);
-      puzzleServiceSpy.activeDownClue$.next(0);
-
-      fixture.detectChanges();
-
-      expect(component.acrossInput.disabled).toBeTruthy();
-      expect(component.downInput.disabled).toBeTruthy();
 
       expect(component.acrossInput.value).toEqual(testAcross.text);
       expect(component.downInput.value).toEqual(testDown.text);
@@ -102,13 +90,22 @@ describe("SelectedClueComponent", () => {
       expect(component.downInput.value).toBeNull();
     });
 
-    it("should disable clues on puzzle lock", () => {
-      puzzleServiceSpy.puzzleLock$.next(true);
-
+    it("should handle lock toolbar event", () => {
       fixture.detectChanges();
 
-      expect(component.acrossInput.disabled).toBeTruthy();
-      expect(component.downInput.disabled).toBeTruthy();
+      toolbarServiceSpy.lockEvent$.emit(true);
+
+      expect(component.acrossInput.disabled).toBeTrue();
+      expect(component.downInput.disabled).toBeTrue();
+    });
+
+    it("should handle unlock toolbar event", () => {
+      fixture.detectChanges();
+
+      toolbarServiceSpy.lockEvent$.emit(false);
+
+      expect(component.acrossInput.disabled).toBeFalse();
+      expect(component.downInput.disabled).toBeFalse();
     });
   });
 

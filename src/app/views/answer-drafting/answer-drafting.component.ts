@@ -1,9 +1,10 @@
 import { Component, OnInit } from "@angular/core";
 import { FormControl, FormGroup } from "@angular/forms";
-import { Filter } from "src/app/components/toolbar/toolbar.component";
 
 import { AnswerService } from "src/app/services/answer.service";
-import { PuzzleService } from "src/app/services/puzzle.service";
+import { ToolbarService } from "src/app/services/toolbar.service";
+
+import { Filter } from "src/app/models/toolbar.model";
 
 @Component({
   selector: "app-answer-drafting",
@@ -11,6 +12,7 @@ import { PuzzleService } from "src/app/services/puzzle.service";
   styleUrls: ["./answer-drafting.component.scss"],
 })
 export class AnswerDraftingComponent implements OnInit {
+  // TODO: move to pipes
   public get themeAnswers(): Array<[string, Array<number>]> {
     return [...this.answerService.answerBank.themeAnswers]
       .filter((t) => {
@@ -33,14 +35,6 @@ export class AnswerDraftingComponent implements OnInit {
       .sort((a, b) => (this.sortReverse ? b.length - a.length : a.length - b.length));
   }
 
-  public get name(): string {
-    return this.puzzleService.puzzle.name;
-  }
-
-  public get locked(): boolean {
-    return this.puzzleService.puzzle.locked;
-  }
-
   public newThemeAnswerForm = new FormGroup({
     answer: new FormControl(""),
   });
@@ -52,9 +46,11 @@ export class AnswerDraftingComponent implements OnInit {
   public filter: Filter = { length: null, contains: null };
   public sortReverse: boolean = false;
 
-  constructor(private answerService: AnswerService, private puzzleService: PuzzleService) {}
+  constructor(private answerService: AnswerService, private toolbarService: ToolbarService) {}
 
-  ngOnInit(): void {}
+  ngOnInit(): void {
+    this.handleToolbarEvents();
+  }
 
   public addAnswer(isTheme: boolean) {
     if (isTheme) {
@@ -72,11 +68,11 @@ export class AnswerDraftingComponent implements OnInit {
     this.answerService.removeAnswer(key, isTheme);
   }
 
-  public onLock(): void {
-    this.puzzleService.togglePuzzleLock();
+  public toggleCircle(key: string, index: number) {
+    this.answerService.toggleCircle(key, index);
   }
 
-  public onSave(): void {
+  private onSave(): void {
     this.answerService.saveAnswers().subscribe(
       () => {},
       (err: ErrorEvent) => {
@@ -85,23 +81,20 @@ export class AnswerDraftingComponent implements OnInit {
     );
   }
 
-  public onEditModeChange(): void {
+  private onEditModeChange(): void {
     // TODO
   }
 
-  public toggleCircle(key: string, index: number) {
-    this.answerService.toggleCircle(key, index);
-  }
-
-  public onClear(): void {
+  private onClear(): void {
     this.answerService.clearAnswers();
   }
 
-  public onSort(): void {
-    this.sortReverse = !this.sortReverse;
-  }
+  private handleToolbarEvents(): void {
+    const toolbar = this.toolbarService;
+    toolbar.saveEvent$.subscribe(() => this.onSave());
+    toolbar.clearEvent$.subscribe(() => this.onClear());
 
-  public onFilter($event: Filter): void {
-    this.filter = $event;
+    toolbar.sortReverseEvent$.subscribe(() => (this.sortReverse = !this.sortReverse));
+    toolbar.filterEvent$.subscribe((filter: Filter) => (this.filter = filter));
   }
 }
