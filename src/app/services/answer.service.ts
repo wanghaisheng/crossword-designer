@@ -4,9 +4,11 @@ import { DocumentData } from "@angular/fire/firestore";
 
 import { catchError, switchMap } from "rxjs/operators";
 
-import { SaveService } from "./save.service";
 import { LoadService } from "./load.service";
+import { SaveService } from "./save.service";
+
 import { AnswerDoc, AnswerBank } from "../models/answer.model";
+import { PuzzleMetadata } from "../models/puzzle.model";
 
 @Injectable({
   providedIn: "root",
@@ -19,8 +21,8 @@ export class AnswerService {
   private _answerBank: AnswerBank = new AnswerBank();
 
   constructor(private loadService: LoadService, private saveService: SaveService) {
-    this.loadService.activePuzzleId$
-      .pipe(switchMap((id: string) => this.loadService.getAnswerBank(id)))
+    this.loadService.activePuzzle$
+      .pipe(switchMap((metadata: PuzzleMetadata) => this.loadService.getAnswerBank(metadata.id)))
       .subscribe((answersDoc: AnswerDoc) => {
         if (answersDoc) {
           this.activateAnswers(answersDoc);

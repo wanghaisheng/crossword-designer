@@ -20,6 +20,12 @@ export interface PuzzleDoc {
   "down-clues": Array<string>;
 }
 
+export interface PuzzleMetadata {
+  id: string;
+  name: string;
+  locked: boolean;
+}
+
 export class Puzzle {
   id: string;
   name: string;

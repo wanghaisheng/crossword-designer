@@ -4,11 +4,12 @@ import { Router } from "@angular/router";
 
 import { map, switchMap } from "rxjs/operators";
 
-import { LoadService } from "src/app/services/load.service";
 import { AuthService } from "src/app/services/auth.service";
-import { PuzzleDoc } from "src/app/models/puzzle.model";
-import { UserDoc } from "src/app/models/user.model";
+import { LoadService } from "src/app/services/load.service";
+
 import { PuzzleCard } from "src/app/models/card.model";
+import { PuzzleDoc, PuzzleMetadata } from "src/app/models/puzzle.model";
+import { UserDoc } from "src/app/models/user.model";
 
 @Component({
   selector: "app-load-puzzle",
@@ -56,8 +57,8 @@ export class LoadPuzzleComponent implements OnInit {
       );
   }
 
-  public selectPuzzle(id: string): void {
-    this.loadService.setActiveId(id);
+  public selectPuzzle(metadata: PuzzleMetadata): void {
+    this.loadService.setActivePuzzle(metadata);
     this.router.navigateByUrl("/answers");
   }
 

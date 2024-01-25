@@ -1,29 +1,10 @@
 import { Component, HostListener, Input, OnInit } from "@angular/core";
 
-import { BehaviorSubject } from "rxjs";
-
 import { PuzzleService } from "src/app/services/puzzle.service";
+import { ToolbarService } from "src/app/services/toolbar.service";
+
 import { OverlayType, Square, SquareType } from "src/app/models/puzzle.model";
-
-export interface GridConfig {
-  readonly: boolean;
-  answersHidden: boolean;
-  editMode?: EditMode;
-  viewMode?: ViewMode;
-}
-
-export enum EditMode {
-  Value,
-  Spacer,
-  Circle,
-  Shade,
-}
-
-export enum ViewMode {
-  Across,
-  Down,
-  Intersect,
-}
+import { EditMode, ViewMode } from "src/app/models/toolbar.model";
 
 @Component({
   selector: "app-grid",
@@ -31,8 +12,11 @@ export enum ViewMode {
   styleUrls: ["./grid.component.scss"],
 })
 export class GridComponent implements OnInit {
+  @Input() readonly: boolean = false;
+
   public squareHeight: number = 30;
   public selectedIndex: number = -1;
+  public answersHidden: boolean = false;
 
   public get numRows(): number {
     return this.puzzleService.puzzle.height;
@@ -46,32 +30,22 @@ export class GridComponent implements OnInit {
     return this.puzzleService.puzzle.grid;
   }
 
-  public config: GridConfig = {
-    readonly: false,
-    answersHidden: false,
-    editMode: EditMode.Value,
-    viewMode: ViewMode.Intersect,
-  };
-
-  @Input() config$: BehaviorSubject<GridConfig> = new BehaviorSubject(this.config);
-
-  constructor(private puzzleService: PuzzleService) {}
+  constructor(private puzzleService: PuzzleService, private toolbarService: ToolbarService) {}
 
   ngOnInit(): void {
-    this.config$.subscribe((config: GridConfig) => {
-      this.config = config;
+    this.handleToolbarEvents();
 
-      if (config.readonly) {
-        this.selectedIndex = -1;
-      } else if (this.selectedIndex == -1) {
-        this.selectedIndex = this.puzzleService.getFirstLetterIndex();
-      }
-    });
+    if (this.readonly) {
+      this.selectedIndex = -1;
+      this.answersHidden = true;
+    } else if (this.selectedIndex == -1) {
+      this.selectedIndex = this.puzzleService.getFirstLetterIndex();
+    }
   }
 
   public onClickSquare(index: number, overrideMode?: EditMode) {
     let square = this.puzzleGrid[index];
-    let editMode = overrideMode ? overrideMode : this.config.editMode;
+    let editMode = overrideMode ? overrideMode : this.toolbarService.getCurrentEditMode();
     this.selectSquare(index);
 
     if (editMode == EditMode.Spacer) {
@@ -90,7 +64,7 @@ export class GridComponent implements OnInit {
     if (this.isArrowKey(event.key)) {
       this.selectSquare(this.getNextIndex(square.index, event.key));
     } else if (event.key == "Enter") {
-      if (this.config.editMode == EditMode.Value) {
+      if (this.toolbarService.getCurrentEditMode() == EditMode.Value) {
         this.onClickSquare(square.index, EditMode.Spacer);
         this.selectNextSquare(square.index);
       } else {
@@ -117,11 +91,13 @@ export class GridComponent implements OnInit {
    * @returns true if square should be highlighted, false otherwise
    */
   public isHighlighted(square: Square): boolean {
+    const viewMode = this.toolbarService.getCurrentViewMode();
+
     if (this.selectedIndex == -1 || this.puzzleGrid[this.selectedIndex].type == SquareType.Spacer) {
       return false;
-    } else if (this.config.viewMode == ViewMode.Across) {
+    } else if (viewMode == ViewMode.Across) {
       return square.acrossClueNum == this.puzzleGrid[this.selectedIndex].acrossClueNum;
-    } else if (this.config.viewMode == ViewMode.Down) {
+    } else if (viewMode == ViewMode.Down) {
       return square.downClueNum == this.puzzleGrid[this.selectedIndex].downClueNum;
     } else {
       return (
@@ -132,20 +108,24 @@ export class GridComponent implements OnInit {
   }
 
   private selectNextSquare(index: number): void {
+    const viewMode = this.toolbarService.getCurrentViewMode();
+
     if (!this.puzzleService.isPuzzleEnd(index)) {
-      if (this.config.viewMode == ViewMode.Across) {
+      if (viewMode == ViewMode.Across) {
         this.selectSquare(this.getNextIndex(index, "ArrowRight"));
-      } else if (this.config.viewMode == ViewMode.Down) {
+      } else if (viewMode == ViewMode.Down) {
         this.selectSquare(this.getNextIndex(index, "ArrowDown"));
       }
     }
   }
 
   private selectPrevSquare(index: number): void {
+    const viewMode = this.toolbarService.getCurrentViewMode();
+
     if (!this.puzzleService.isPuzzleStart(index)) {
-      if (this.config.viewMode == ViewMode.Across) {
+      if (viewMode == ViewMode.Across) {
         this.selectSquare(this.getNextIndex(index, "ArrowLeft"));
-      } else if (this.config.viewMode == ViewMode.Down) {
+      } else if (viewMode == ViewMode.Down) {
         this.selectSquare(this.getNextIndex(index, "ArrowUp"));
       }
     }
@@ -157,7 +137,7 @@ export class GridComponent implements OnInit {
   }
 
   private getNextIndex(index: number, key: string): number {
-    let skipSpacers = this.config.editMode != EditMode.Spacer;
+    let skipSpacers = this.toolbarService.getCurrentEditMode() != EditMode.Spacer;
     let vertical = key == "ArrowDown" || key == "ArrowUp";
 
     if (key == "ArrowDown" || key == "ArrowRight") {
@@ -176,5 +156,9 @@ export class GridComponent implements OnInit {
 
   private isArrowKey(key: string): boolean {
     return ["ArrowDown", "ArrowUp", "ArrowLeft", "ArrowRight"].includes(key);
+  }
+
+  private handleToolbarEvents(): void {
+    this.toolbarService.showHideEvent$.subscribe(() => (this.answersHidden = !this.answersHidden));
   }
 }

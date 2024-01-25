@@ -2,15 +2,17 @@ import { TestBed, fakeAsync } from "@angular/core/testing";
 
 import { BehaviorSubject, of, throwError } from "rxjs";
 
-import { SaveService } from "./save.service";
-import { LoadService } from "./load.service";
 import { AnswerService } from "./answer.service";
+import { LoadService } from "./load.service";
+import { SaveService } from "./save.service";
+
 import { AnswerDoc } from "../models/answer.model";
+import { PuzzleMetadata } from "../models/puzzle.model";
 
 describe("AnswerService", () => {
   let service: AnswerService;
 
-  const loadServiceSpy = jasmine.createSpyObj("LoadService", ["getAnswerBank", "activePuzzleId$"]);
+  const loadServiceSpy = jasmine.createSpyObj("LoadService", ["getAnswerBank", "activePuzzle$"]);
   const saveServiceSpy = jasmine.createSpyObj("SaveService", ["saveAnswerBank"]);
 
   const testId1 = "test-id-1";
@@ -27,7 +29,7 @@ describe("AnswerService", () => {
   };
 
   beforeEach(() => {
-    loadServiceSpy.activePuzzleId$ = new BehaviorSubject<string>(testId1);
+    loadServiceSpy.activePuzzle$ = new BehaviorSubject<PuzzleMetadata>({ id: testId1, name: "", locked: false });
     loadServiceSpy.getAnswerBank.withArgs(testId1).and.returnValue(of(new Object({ id: testId1, ...testAnswerDoc1 }) as AnswerDoc));
     loadServiceSpy.getAnswerBank.withArgs(testId2).and.returnValue(of(new Object({ id: testId2, ...testAnswerDoc2 }) as AnswerDoc));
     saveServiceSpy.saveAnswerBank.and.returnValue(of(undefined));
@@ -48,8 +50,8 @@ describe("AnswerService", () => {
 
   describe("constructor", () => {
     it("should get answers with next puzzle id", () => {
-      loadServiceSpy.activePuzzleId$.next(testId2);
-      loadServiceSpy.activePuzzleId$.subscribe(() => {
+      loadServiceSpy.activePuzzle$.next({ id: testId2, name: "", locked: false });
+      loadServiceSpy.activePuzzle$.subscribe(() => {
         expect(loadServiceSpy.getAnswerBank).toHaveBeenCalledWith(testId2);
       });
     });

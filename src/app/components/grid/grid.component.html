@@ -2,9 +2,9 @@
   #table
   class="table table-bordered"
   [ngStyle]="{ 'width.px': numCols * squareHeight }"
-  (keydown)="!config.readonly && onKeyDown($event)"
+  (keydown)="!readonly && onKeyDown($event)"
   tabindex="0">
-  <tbody [ngStyle]="{ 'border-color': config.readonly ? '#212529' : '#dee2e6' }">
+  <tbody [ngStyle]="{ 'border-color': readonly ? '#212529' : '#dee2e6' }">
     <tr *ngFor="let row of [].constructor(numRows); index as i">
       <td
         class="square"
@@ -15,10 +15,10 @@
           'selected': square.index == selectedIndex,
           'highlighted': isHighlighted(square)
         }"
-        (click)="!config.readonly && onClickSquare(square.index)">
+        (click)="!readonly && onClickSquare(square.index)">
         <div class="square-contents" [ngStyle]="{ 'height.px': squareHeight, 'width.px': squareHeight }">
           <div class="number" *ngIf="square.boxNum != -1">{{ square.boxNum }}</div>
-          <div class="value text-center" [ngStyle]="{ 'display': config.answersHidden ? 'none' : 'block' }">
+          <div class="value text-center" [ngStyle]="{ 'display': answersHidden ? 'none' : 'block' }">
             <span>{{ square.value }}</span>
           </div>
           <div class="circle" [ngStyle]="{ 'border': square.overlay == 1 ? 'solid' : 'none' }"></div>

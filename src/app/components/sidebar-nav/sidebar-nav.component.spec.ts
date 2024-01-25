@@ -12,11 +12,11 @@ describe("SidebarNavComponent", () => {
   let fixture: ComponentFixture<SidebarNavComponent>;
 
   const routerSpy = jasmine.createSpyObj("RouterService", ["navigateByUrl"]);
-  const loadServiceSpy = jasmine.createSpyObj("LoadService", ["activePuzzleId$"]);
+  const loadServiceSpy = jasmine.createSpyObj("LoadService", ["activePuzzle$"]);
   const authServiceSpy = jasmine.createSpyObj("AuthService", ["signOut"]);
 
   beforeEach(async () => {
-    loadServiceSpy.activePuzzleId$ = new BehaviorSubject("");
+    loadServiceSpy.activePuzzle$ = new BehaviorSubject({ id: "testId", name: "", locked: false });
     authServiceSpy.signOut.and.returnValue(of(undefined));
 
     spyOn(window, "alert");
@@ -42,14 +42,14 @@ describe("SidebarNavComponent", () => {
 
   describe("ngOnInit", () => {
     it("should set puzzle loaded to false when puzzleId empty", () => {
-      loadServiceSpy.activePuzzleId$.next("");
+      loadServiceSpy.activePuzzle$.next({ id: "", name: "", locked: false });
 
       fixture.detectChanges();
       expect(component.puzzleLoaded).toEqual(false);
     });
 
     it("should set puzzle loaded to true when puzzleId", () => {
-      loadServiceSpy.activePuzzleId$.next("puzzleId");
+      loadServiceSpy.activePuzzle$.next({ id: "puzzleId", name: "", locked: false });
 
       fixture.detectChanges();
       expect(component.puzzleLoaded).toEqual(true);

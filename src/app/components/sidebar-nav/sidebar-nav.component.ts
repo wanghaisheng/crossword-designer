@@ -5,6 +5,8 @@ import { Router } from "@angular/router";
 import { LoadService } from "src/app/services/load.service";
 import { AuthService } from "src/app/services/auth.service";
 
+import { PuzzleMetadata } from "src/app/models/puzzle.model";
+
 @Component({
   selector: "app-sidebar-nav",
   templateUrl: "./sidebar-nav.component.html",
@@ -79,8 +81,8 @@ export class SidebarNavComponent implements OnInit {
   ngOnInit(): void {
     this.router.navigateByUrl(this.routes[0]);
 
-    this.loadService.activePuzzleId$.subscribe((id: string) => {
-      this.puzzleLoaded = id ? true : false;
+    this.loadService.activePuzzle$.subscribe((metadata: PuzzleMetadata) => {
+      this.puzzleLoaded = metadata?.id ? true : false;
     });
   }
 

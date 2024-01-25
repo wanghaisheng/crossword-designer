@@ -7,7 +7,8 @@
     <div class="container-fluid">
       <div class="row flex-nowrap">
         <app-sidebar-nav *ngIf="signedIn" class="col-1"></app-sidebar-nav>
-        <div class="col py-3">
+        <div class="col content">
+          <app-toolbar></app-toolbar>
           <router-outlet></router-outlet>
         </div>
       </div>
